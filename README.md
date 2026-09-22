@@ -1,8 +1,9 @@
-# Spell Buddy (Spelling Hangman) — v1.17
+# Spell Buddy (Spelling Hangman) — v1.18
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Parents math gate (v1.18)**: tapping Parents shows an easy single-digit × single-digit problem (hardest facts skipped) with a large craft number pad; correct → Parents dictionary, wrong → gentle retry with a new problem, cancel → back to play
 - **Dominant dictionary words (v1.17)**: on the Parents word list, each word is bold and larger than On/Off toggles, Edit/Delete, and helper labels so the word visually dominates the row
 - **Alphabetical Parents library (v1.16)**: word list stays A–Z after add, paste import, Fry restore, toggle, edit/delete, and load/migrate — sorted on every save and when rendering. Play order remains shuffled (unchanged)
 - **Random play order (v1.14)**: words parents turn On are always shuffled for play — never walked in parent/storage order. Reshuffles when a play session starts, when the enabled set changes, and when looping a new pass of remaining words
@@ -37,7 +38,7 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.17** in the UI
+- Version label **v1.18** in the UI
 
 ## Preview locally
 ```bash
@@ -47,5 +48,5 @@ python3 -m http.server 8765
 ```
 
 ## Parent words
-Tap **Parents** → confirm → toggle words, add custom words, or paste a list. The library always displays and stores in alphabetical order.
+Tap **Parents** → solve the easy multiplication gate → toggle words, add custom words, or paste a list. The library always displays and stores in alphabetical order.
 Storage key: `spellBuddy.words.v2` (`{ word, on }`). Migrates older v1 string lists.

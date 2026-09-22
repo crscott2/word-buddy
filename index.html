@@ -24,7 +24,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.17</span>
+        <span class="version" title="App version">v1.18</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -604,14 +604,30 @@
     </main>
   </div>
 
-  <!-- Parent gate -->
+  <!-- Parent gate — easy multiplication check -->
   <div id="parent-gate" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
     <div class="outcome-card gate-card">
       <h2 id="gate-title">Grown-ups only</h2>
-      <p>This opens the word list. Little fingers, please ask a parent!</p>
+      <p class="gate-hint">Quick times-table check — then the word list opens.</p>
+      <p id="gate-problem" class="gate-problem" aria-live="polite">3 × 4 = ?</p>
+      <div id="gate-answer" class="gate-answer" aria-live="polite" aria-label="Your answer">·</div>
+      <p id="gate-feedback" class="gate-feedback" aria-live="polite"></p>
+      <div id="gate-pad" class="gate-pad" role="group" aria-label="Number pad">
+        <button type="button" class="gate-key" data-digit="1">1</button>
+        <button type="button" class="gate-key" data-digit="2">2</button>
+        <button type="button" class="gate-key" data-digit="3">3</button>
+        <button type="button" class="gate-key" data-digit="4">4</button>
+        <button type="button" class="gate-key" data-digit="5">5</button>
+        <button type="button" class="gate-key" data-digit="6">6</button>
+        <button type="button" class="gate-key" data-digit="7">7</button>
+        <button type="button" class="gate-key" data-digit="8">8</button>
+        <button type="button" class="gate-key" data-digit="9">9</button>
+        <button type="button" class="gate-key gate-key-util" id="gate-backspace" aria-label="Backspace">⌫</button>
+        <button type="button" class="gate-key" data-digit="0">0</button>
+        <button type="button" class="gate-key gate-key-go" id="gate-check" aria-label="Check answer">✓</button>
+      </div>
       <div class="gate-actions">
         <button type="button" id="gate-cancel" class="btn secondary">Oops, go back</button>
-        <button type="button" id="gate-ok" class="btn primary">I’m a parent</button>
       </div>
     </div>
   </div>

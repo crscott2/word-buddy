@@ -1022,8 +1022,88 @@
     renderWordList();
   }
 
+  /* Parent gate: easy single-digit × single-digit (avoid hardest facts) */
+  var gateA = 0;
+  var gateB = 0;
+  var gateExpected = 0;
+  var gateDigits = "";
+
+  function isHardFact(a, b) {
+    /* Skip 6–9 × 6–9 (7×8, 8×9, etc.) — keep adult-easy, kid-proof facts */
+    return Math.min(a, b) >= 6 && Math.max(a, b) >= 6;
+  }
+
+  function newGateProblem() {
+    var a, b, guard = 0;
+    do {
+      a = 2 + Math.floor(Math.random() * 8); /* 2–9 */
+      b = 2 + Math.floor(Math.random() * 8);
+      guard++;
+    } while (isHardFact(a, b) && guard < 40);
+    if (isHardFact(a, b)) {
+      /* fallback ultra-easy */
+      a = 2 + Math.floor(Math.random() * 4); /* 2–5 */
+      b = 2 + Math.floor(Math.random() * 4);
+    }
+    gateA = a;
+    gateB = b;
+    gateExpected = a * b;
+    gateDigits = "";
+    renderGateUI("");
+  }
+
+  function renderGateUI(feedback) {
+    if (els.gateProblem) {
+      els.gateProblem.textContent = gateA + " × " + gateB + " = ?";
+    }
+    if (els.gateAnswer) {
+      els.gateAnswer.textContent = gateDigits.length ? gateDigits : "·";
+    }
+    if (els.gateFeedback) {
+      els.gateFeedback.textContent = feedback || "";
+      els.gateFeedback.classList.toggle("is-ok", feedback === "Nice!");
+    }
+  }
+
+  function appendGateDigit(d) {
+    if (gateDigits.length >= 2) return; /* products are at most 2 digits for easy facts */
+    gateDigits += String(d);
+    renderGateUI("");
+    /* Auto-check when digit count matches the expected product */
+    if (gateDigits.length === String(gateExpected).length) {
+      checkGateAnswer();
+    }
+  }
+
+  function backspaceGate() {
+    gateDigits = gateDigits.slice(0, -1);
+    renderGateUI("");
+  }
+
+  function checkGateAnswer() {
+    if (!gateDigits.length) {
+      renderGateUI("Tap the answer on the pad.");
+      return;
+    }
+    var n = parseInt(gateDigits, 10);
+    if (n === gateExpected) {
+      renderGateUI("Nice!");
+      showWords();
+      return;
+    }
+    /* Wrong — gentle retry with a fresh problem */
+    newGateProblem();
+    renderGateUI("Not quite — try this one!");
+  }
+
   function openParentGate() {
+    newGateProblem();
     els.parentGate.classList.remove("hidden");
+  }
+
+  function closeParentGate() {
+    els.parentGate.classList.add("hidden");
+    gateDigits = "";
   }
 
   function updateCounts() {
@@ -1183,10 +1263,23 @@
 
   function bind() {
     els.btnParents.addEventListener("click", openParentGate);
-    els.gateCancel.addEventListener("click", function () {
-      els.parentGate.classList.add("hidden");
-    });
-    els.gateOk.addEventListener("click", showWords);
+    els.gateCancel.addEventListener("click", closeParentGate);
+    if (els.gatePad) {
+      els.gatePad.addEventListener("click", function (e) {
+        var t = e.target.closest("button");
+        if (!t || !els.gatePad.contains(t)) return;
+        if (t.id === "gate-backspace") {
+          backspaceGate();
+          return;
+        }
+        if (t.id === "gate-check") {
+          checkGateAnswer();
+          return;
+        }
+        var dig = t.getAttribute("data-digit");
+        if (dig != null) appendGateDigit(dig);
+      });
+    }
     els.btnBackPlay.addEventListener("click", function () {
       showPlay();
       startRound();
@@ -1231,6 +1324,23 @@
     });
 
     window.addEventListener("keydown", function (e) {
+      var gateOpen = els.parentGate && !els.parentGate.classList.contains("hidden");
+      if (gateOpen) {
+        if (e.key >= "0" && e.key <= "9") {
+          e.preventDefault();
+          appendGateDigit(e.key);
+        } else if (e.key === "Backspace") {
+          e.preventDefault();
+          backspaceGate();
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          checkGateAnswer();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          closeParentGate();
+        }
+        return;
+      }
       if (els.screenPlay.classList.contains("hidden")) return;
       if (state.over || state.emptyPool) return;
       var k = e.key.toLowerCase();
@@ -1260,7 +1370,11 @@
     els.btnNext = $("btn-next");
     els.btnParents = $("btn-parents");
     els.gateCancel = $("gate-cancel");
-    els.gateOk = $("gate-ok");
+    els.gateProblem = $("gate-problem");
+    els.gateAnswer = $("gate-answer");
+    els.gateFeedback = $("gate-feedback");
+    els.gatePad = $("gate-pad");
+    els.gateCheck = $("gate-check");
     els.btnBackPlay = $("btn-back-play");
     els.addOneForm = $("add-one-form");
     els.wordInput = $("word-input");

@@ -1,4 +1,4 @@
-/* Spell Buddy v1.17 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.18 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -682,6 +682,151 @@ body::before {
   justify-content: center;
   position: relative;
   z-index: 1;
+}
+
+/* ===== Parent math gate — big iPad number pad ===== */
+.gate-card {
+  max-width: 420px;
+}
+
+.gate-hint {
+  margin: 0 0 10px !important;
+  font-size: 0.95rem !important;
+}
+
+.gate-problem {
+  margin: 4px 0 10px !important;
+  font-size: clamp(2.2rem, 8vw, 3.2rem) !important;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--ink) !important;
+  text-shadow: 0 2px 0 rgba(255, 248, 230, 0.9);
+  position: relative;
+  z-index: 1;
+}
+
+.gate-answer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5ch;
+  min-height: 3.1rem;
+  margin: 0 auto 8px;
+  padding: 8px 18px;
+  font-size: clamp(1.8rem, 6vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--accent-dark);
+  background: linear-gradient(180deg, #FFF8EE 0%, #F0E0C8 100%);
+  border: 3px solid var(--cardboard-edge);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 rgba(120, 80, 50, 0.12);
+  position: relative;
+  z-index: 1;
+}
+
+.gate-feedback {
+  min-height: 1.3em;
+  margin: 0 0 10px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700;
+  color: var(--accent-dark) !important;
+}
+
+.gate-feedback.is-ok {
+  color: var(--good-dark) !important;
+}
+
+.gate-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 320px;
+  margin: 0 auto 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.gate-key {
+  min-height: 64px;
+  border-radius: 16px;
+  border: 3px solid var(--key-border);
+  background: linear-gradient(180deg, #FFF6E0 0%, #F0D8A8 100%);
+  color: var(--ink);
+  font-size: 1.55rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--key-stitch);
+  transition: transform 0.08s ease;
+  font-family: inherit;
+  position: relative;
+}
+
+.gate-key::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1.5px dashed rgba(140, 90, 50, 0.28);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.gate-key:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--key-stitch);
+}
+
+.gate-key-util {
+  background: linear-gradient(180deg, #FFE8D8 0%, #F4B07A 100%);
+  border-color: #D4885A;
+  box-shadow: 0 4px 0 #C47848;
+  font-size: 1.35rem;
+}
+
+.gate-key-go {
+  background: linear-gradient(180deg, #D8F5D0 0%, #A8D898 100%);
+  border-color: var(--good-dark);
+  box-shadow: 0 4px 0 var(--good-dark);
+  color: #2A5A2A;
+  font-size: 1.6rem;
+}
+
+@media (orientation: landscape) {
+  .gate-card {
+    max-width: min(520px, 88vw);
+  }
+  .gate-pad {
+    max-width: 360px;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .gate-key {
+    min-height: 52px;
+    font-size: 1.35rem;
+  }
+  .gate-problem {
+    font-size: clamp(1.8rem, 5.5vh, 2.6rem) !important;
+    margin: 2px 0 6px !important;
+  }
+  .gate-answer {
+    min-height: 2.6rem;
+    font-size: clamp(1.5rem, 4.5vh, 2rem);
+    margin-bottom: 4px;
+    padding: 4px 14px;
+  }
+  .gate-feedback {
+    margin: 0 0 6px !important;
+    font-size: 0.88rem !important;
+  }
+  .gate-hint {
+    margin: 0 0 6px !important;
+    font-size: 0.88rem !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .gate-key { min-height: 44px; font-size: 1.2rem; border-radius: 12px; }
+  .gate-pad { gap: 6px; max-width: 300px; }
 }
 
 /* ===== Parents screen — same craft language ===== */
