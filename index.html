@@ -24,7 +24,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.19</span>
+        <span class="version" title="App version">v1.20</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -173,11 +173,13 @@
                 <!-- yarn wave stitches -->
                 <path d="M0 148 Q70 140 140 152 T280 146 T360 154" fill="none" stroke="#E8F8FF" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.7"/>
                 <path d="M0 160 Q90 154 180 164 T360 158" fill="none" stroke="#A8E0F0" stroke-width="2" stroke-dasharray="4 5" opacity="0.5"/>
-                <!-- felt shark fin cutout -->
-                <g id="shark-fin" transform="translate(255,148)">
-                  <path d="M0 20 L15 -2 L24 20 Z" fill="#5A7088" stroke="#3A4858" stroke-width="2"/>
-                  <path d="M0 20 L15 -2 L24 20 Z" fill="none" stroke="#8AA0B0" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
-                  <circle cx="12" cy="14" r="1.8" fill="#3A4858"/>
+                <!-- felt shark fin cutout — swims along ocean (v1.20) -->
+                <g id="shark-fin" transform="translate(40,148)">
+                  <g class="shark-fin-body">
+                    <path d="M0 20 L15 -2 L24 20 Z" fill="#5A7088" stroke="#3A4858" stroke-width="2"/>
+                    <path d="M0 20 L15 -2 L24 20 Z" fill="none" stroke="#8AA0B0" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                    <circle cx="12" cy="14" r="1.8" fill="#3A4858"/>
+                  </g>
                 </g>
                 <!-- cork sand -->
                 <path d="M0 178 Q100 168 180 182 T360 176 L360 280 L0 280 Z" fill="url(#sandGrad)"/>

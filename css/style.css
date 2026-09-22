@@ -1,4 +1,4 @@
-/* Spell Buddy v1.19 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.20 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -1943,13 +1943,34 @@ body::before {
   }
 }
 
+/* v1.20: shark fin swims slowly back and forth along the ocean waves */
 #shark-fin {
-  animation: sharkBob 3.2s ease-in-out infinite;
+  animation: sharkSwim 22s ease-in-out infinite;
 }
 
-@keyframes sharkBob {
-  0%, 100% { transform: translate(255px, 148px); }
-  50% { transform: translate(262px, 146px); }
+@keyframes sharkSwim {
+  0%   { transform: translate(28px, 150px); }
+  12%  { transform: translate(72px, 146px); }
+  25%  { transform: translate(140px, 149px); }
+  38%  { transform: translate(220px, 145px); }
+  48%  { transform: translate(308px, 148px); }
+  50%  { transform: translate(308px, 148px); }
+  62%  { transform: translate(220px, 151px); }
+  75%  { transform: translate(140px, 147px); }
+  88%  { transform: translate(72px, 150px); }
+  100% { transform: translate(28px, 150px); }
+}
+
+/* Mirror fin at turn so tip leans into swim direction */
+#shark-fin .shark-fin-body {
+  transform-origin: 12px 10px;
+  animation: sharkFace 22s ease-in-out infinite;
+}
+
+@keyframes sharkFace {
+  0%, 49.99% { transform: scaleX(1); }
+  50%, 99.99% { transform: scaleX(-1); }
+  100% { transform: scaleX(1); }
 }
 
 /* Felt seagulls drift gently */
