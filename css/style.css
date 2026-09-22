@@ -1,4 +1,4 @@
-/* Spell Buddy v1.12 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.13 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -1672,4 +1672,54 @@ body::before {
 @keyframes gullDrift3 {
   0%, 100% { transform: translate(220px, 48px); }
   50% { transform: translate(232px, 44px); }
+}
+
+
+/* ===== v1.13: attempts fraction craft badge (bottom-right of beach stage) ===== */
+.attempts-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.1em;
+  padding: 0.35em 0.65em 0.4em;
+  background:
+    linear-gradient(165deg, #FFF6E8 0%, #F0D8B0 55%, #E8C999 100%);
+  border: 3px solid var(--cardboard-edge);
+  border-radius: 14px;
+  box-shadow:
+    0 3px 0 rgba(120, 70, 40, 0.28),
+    0 6px 12px rgba(80, 50, 30, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  outline: 2px dashed rgba(120, 70, 50, 0.28);
+  outline-offset: -6px;
+  transform: rotate(-2deg);
+}
+
+.attempts-fraction {
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(0.95rem, 2.4vw, 1.25rem);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.8);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (orientation: landscape) and (min-width: 700px) {
+  .attempts-badge {
+    right: 8px;
+    bottom: 8px;
+    min-width: 2.9em;
+    padding: 0.4em 0.7em 0.45em;
+    border-radius: 12px;
+  }
+  .attempts-fraction {
+    font-size: clamp(1rem, 1.8vw, 1.35rem);
+  }
 }

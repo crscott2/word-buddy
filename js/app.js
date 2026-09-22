@@ -365,16 +365,40 @@
     }, 160);
   }
 
+
+  function updateAttemptsBadge() {
+    var el = els.attemptsFraction || $("attempts-fraction");
+    if (!el) return;
+    var n = state.misses | 0;
+    if (n < 0) n = 0;
+    if (n > MAX_MISSES) n = MAX_MISSES;
+    el.textContent = n + "/" + MAX_MISSES;
+    var badge = els.attemptsBadge || $("attempts-badge");
+    if (badge) {
+      badge.setAttribute(
+        "aria-label",
+        n + " of " + MAX_MISSES + " wrong guesses"
+      );
+    }
+  }
+
   function updateHangman() {
     if (state.skeleton) {
       showSkeleton();
+      updateAttemptsBadge();
       return;
     }
 
     showLivingCharacter();
-    if (!state.character) return;
+    if (!state.character) {
+      updateAttemptsBadge();
+      return;
+    }
     var g = $("char-" + state.character.id);
-    if (!g) return;
+    if (!g) {
+      updateAttemptsBadge();
+      return;
+    }
 
     var newlyShown = null;
     for (var i = 1; i <= MAX_MISSES; i++) {
@@ -403,6 +427,7 @@
       triggerImpactRipple();
     }
 
+    updateAttemptsBadge();
   }
 
   function setCharacterHook() {
@@ -946,6 +971,8 @@
     els.buddyCaption = $("buddy-caption");
     els.characterHook = $("character-hook");
     els.hangman = $("hangman");
+    els.attemptsBadge = $("attempts-badge");
+    els.attemptsFraction = $("attempts-fraction");
     els.wordBlanks = $("word-blanks");
     els.keyboard = $("keyboard");
     els.outcome = $("outcome");

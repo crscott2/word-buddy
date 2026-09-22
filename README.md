@@ -1,8 +1,9 @@
-# Spell Buddy (Spelling Hangman) — v1.12
+# Spell Buddy (Spelling Hangman) — v1.13
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Attempts fraction (v1.13)**: craft badge in the bottom-right of the beach stage shows miss status (`0/6` … `6/6`); updates after each wrong guess; resets each new word
 - **No foreground sword (v1.12)**: pirate sword prop removed from the beach stage
 - **Clearer win run (v1.12)**: Pip’s escape uses a stronger run cycle (alternating limbs), bounce in stride, forward lean, and dust puffs at the feet
 - **Clean play UI (v1.11)**: play view shows only the header (title / Parents) and **Word x of x** progress — no joke lines, character hooks, buddy captions, or other chrome copy
@@ -30,7 +31,7 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Play pool = words that are On; progress shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.12** in the UI
+- Version label **v1.13** in the UI
 
 ## Preview locally
 ```bash
