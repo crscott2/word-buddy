@@ -201,8 +201,17 @@
     return seedFry();
   }
 
+  /** Alphabetical by word (lowercase storage). Parents list stays A–Z; play shuffle is separate. */
+  function sortLibrary(library) {
+    return library.slice().sort(function (a, b) {
+      if (a.word < b.word) return -1;
+      if (a.word > b.word) return 1;
+      return 0;
+    });
+  }
+
   function saveLibrary(library) {
-    state.library = library.slice();
+    state.library = sortLibrary(library);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.library));
     syncPlaySession();
   }
@@ -1026,6 +1035,7 @@
   }
 
   function renderWordList() {
+    state.library = sortLibrary(state.library);
     updateCounts();
     els.wordList.innerHTML = "";
     state.library.forEach(function (entry, idx) {

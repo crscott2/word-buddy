@@ -1,8 +1,9 @@
-# Spell Buddy (Spelling Hangman) — v1.15
+# Spell Buddy (Spelling Hangman) — v1.16
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Alphabetical Parents library (v1.16)**: word list stays A–Z after add, paste import, Fry restore, toggle, edit/delete, and load/migrate — sorted on every save and when rendering. Play order remains shuffled (unchanged)
 - **Random play order (v1.14)**: words parents turn On are always shuffled for play — never walked in parent/storage order. Reshuffles when a play session starts, when the enabled set changes, and when looping a new pass of remaining words
 - **Green progress bar (v1.14)**: play screen shows a landscape-friendly green bar for cleared wins / current set size (subtle aria fraction); replaces “Word x of x” text
 - **Pirate ship sail-by (v1.15)**: when full-set confetti fires (all enabled words cleared correctly), a big LBP craft pirate ship sails across the background with the celebration; pointer-events none so keys stay usable after the same short celebration, then play continues as before
@@ -35,7 +36,7 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.15** in the UI
+- Version label **v1.16** in the UI
 
 ## Preview locally
 ```bash
@@ -45,5 +46,5 @@ python3 -m http.server 8765
 ```
 
 ## Parent words
-Tap **Parents** → confirm → toggle words, add custom words, or paste a list.
+Tap **Parents** → confirm → toggle words, add custom words, or paste a list. The library always displays and stores in alphabetical order.
 Storage key: `spellBuddy.words.v2` (`{ word, on }`). Migrates older v1 string lists.
