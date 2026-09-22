@@ -1,4 +1,4 @@
-/* Spell Buddy v1.4 — LittleBigPlanet craft / handmade aesthetic */
+/* Spell Buddy v1.5 — LittleBigPlanet craft / handmade aesthetic */
 
 :root {
   --bg-top: #F7E8D4;
@@ -771,12 +771,19 @@ body::before {
   text-align: left;
 }
 
-/* --- v1.3/v1.4: trap-door lose sequence (timing unchanged) --- */
+/* --- v1.5: trap-door lose + dust puff --- */
 
 #trap-left,
 #trap-right {
   transform-box: fill-box;
   transition: transform 0.4s ease-in;
+}
+
+#dust-puff .dust-cloud,
+#dust-puff .dust-speck,
+#dust-puff .dust-ring {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 #trap-left {
@@ -793,6 +800,78 @@ body::before {
 
 #hangman.trap-open #trap-right {
   transform: rotate(102deg);
+}
+
+
+/* Cartoon cork/sand dust burst when skeleton drops through trap */
+#dust-puff {
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: 198px 200px;
+}
+
+#dust-puff.dust-burst {
+  animation: dustPuffGroup 0.7s ease-out forwards;
+}
+
+#dust-puff.dust-burst .dust-cloud.d1 { animation: dustCloud 0.7s ease-out forwards; }
+#dust-puff.dust-burst .dust-cloud.d2 { animation: dustCloudL 0.7s ease-out forwards; }
+#dust-puff.dust-burst .dust-cloud.d3 { animation: dustCloudR 0.7s ease-out forwards; }
+#dust-puff.dust-burst .dust-cloud.d4 { animation: dustCloudUpL 0.65s ease-out forwards; }
+#dust-puff.dust-burst .dust-cloud.d5 { animation: dustCloudUpR 0.65s ease-out forwards; }
+#dust-puff.dust-burst .dust-speck.s1 { animation: dustSpeck 0.7s ease-out forwards; --dx: -28px; --dy: -18px; }
+#dust-puff.dust-burst .dust-speck.s2 { animation: dustSpeck 0.7s ease-out 0.02s forwards; --dx: 30px; --dy: -14px; }
+#dust-puff.dust-burst .dust-speck.s3 { animation: dustSpeck 0.65s ease-out 0.04s forwards; --dx: 0px; --dy: -28px; }
+#dust-puff.dust-burst .dust-speck.s4 { animation: dustSpeck 0.75s ease-out 0.05s forwards; --dx: -36px; --dy: 4px; }
+#dust-puff.dust-burst .dust-speck.s5 { animation: dustSpeck 0.75s ease-out 0.05s forwards; --dx: 38px; --dy: 2px; }
+#dust-puff.dust-burst .dust-ring.r1 { animation: dustRing 0.7s ease-out forwards; }
+#dust-puff.dust-burst .dust-ring.r2 { animation: dustRing 0.55s ease-out forwards; }
+
+@keyframes dustPuffGroup {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes dustCloud {
+  0% { transform: translate(0, 0) scale(0.35); opacity: 0.95; }
+  40% { transform: translate(0, -8px) scale(1.35); opacity: 1; }
+  100% { transform: translate(0, -4px) scale(1.8); opacity: 0; }
+}
+
+@keyframes dustCloudL {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0.9; }
+  45% { transform: translate(-22px, -10px) scale(1.4); opacity: 1; }
+  100% { transform: translate(-34px, -6px) scale(1.9); opacity: 0; }
+}
+
+@keyframes dustCloudR {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0.9; }
+  45% { transform: translate(22px, -10px) scale(1.4); opacity: 1; }
+  100% { transform: translate(34px, -6px) scale(1.9); opacity: 0; }
+}
+
+@keyframes dustCloudUpL {
+  0% { transform: translate(0, 0) scale(0.25); opacity: 0.85; }
+  50% { transform: translate(-12px, -22px) scale(1.25); opacity: 1; }
+  100% { transform: translate(-18px, -28px) scale(1.6); opacity: 0; }
+}
+
+@keyframes dustCloudUpR {
+  0% { transform: translate(0, 0) scale(0.25); opacity: 0.85; }
+  50% { transform: translate(12px, -22px) scale(1.25); opacity: 1; }
+  100% { transform: translate(18px, -28px) scale(1.6); opacity: 0; }
+}
+
+@keyframes dustSpeck {
+  0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+  100% { transform: translate(var(--dx, 0), var(--dy, -20px)) scale(0.2); opacity: 0; }
+}
+
+@keyframes dustRing {
+  0% { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
 #actor {

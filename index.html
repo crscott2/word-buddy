@@ -22,7 +22,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.4</span>
+        <span class="version" title="App version">v1.5</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -39,7 +39,7 @@
         <p id="character-hook" class="character-hook">Captain Pip (felt edition) is counting on you!</p>
         <div class="beach-frame">
           <svg id="hangman" viewBox="0 0 360 280" role="img" aria-labelledby="hangman-title">
-            <title id="hangman-title">Craft-world pirate buddy on a felt beach diorama</title>
+            <title id="hangman-title">Craft-world pirate buddy under a big cardboard gallows</title>
             <defs>
               <!-- Felt sky -->
               <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -144,47 +144,67 @@
                 <circle cx="290" cy="252" r="2" fill="#E0C890" opacity="0.6"/>
               </g>
 
-              <!-- ===== CARDBOARD / CORK GALLOWS + PLANK ===== -->
+              <!-- ===== CARDBOARD / CORK GALLOWS + PLANK (v1.5 bigger) ===== -->
               <g id="gallows" aria-hidden="true">
-                <rect x="108" y="198" width="10" height="36" rx="3" fill="#A87848" stroke="#6B4226" stroke-width="2"/>
-                <rect x="242" y="198" width="10" height="36" rx="3" fill="#A87848" stroke="#6B4226" stroke-width="2"/>
-                <!-- cork plank stage -->
-                <rect x="100" y="188" width="160" height="16" rx="4" fill="url(#plankGrad)" stroke="#6B4226" stroke-width="2.5"/>
-                <rect x="100" y="188" width="160" height="16" rx="4" fill="url(#corkSpeck)" opacity="0.5"/>
-                <line x1="132" y1="190" x2="132" y2="202" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.55"/>
-                <line x1="228" y1="190" x2="228" y2="202" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.55"/>
+                <!-- support posts (chunkier) -->
+                <rect x="94" y="206" width="14" height="44" rx="4" fill="#A87848" stroke="#6B4226" stroke-width="2.5"/>
+                <rect x="252" y="206" width="14" height="44" rx="4" fill="#A87848" stroke="#6B4226" stroke-width="2.5"/>
+                <!-- cork plank stage (wider / taller) -->
+                <rect x="86" y="190" width="188" height="20" rx="5" fill="url(#plankGrad)" stroke="#6B4226" stroke-width="3"/>
+                <rect x="86" y="190" width="188" height="20" rx="5" fill="url(#corkSpeck)" opacity="0.5"/>
+                <line x1="120" y1="193" x2="120" y2="207" stroke="#8B5A2B" stroke-width="1.4" stroke-dasharray="2 2" opacity="0.55"/>
+                <line x1="240" y1="193" x2="240" y2="207" stroke="#8B5A2B" stroke-width="1.4" stroke-dasharray="2 2" opacity="0.55"/>
                 <!-- stitch edge on plank -->
-                <rect x="104" y="191" width="152" height="10" rx="2" fill="none" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="3 2" opacity="0.4"/>
-                <rect id="trap-hole" x="150" y="190" width="60" height="12" rx="1" fill="#3D2A1A"/>
+                <rect x="90" y="194" width="180" height="12" rx="3" fill="none" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.4"/>
+                <!-- trap hole + flaps centered under character (x=198) -->
+                <rect id="trap-hole" x="166" y="193" width="64" height="14" rx="1" fill="#3D2A1A"/>
                 <g id="trap-door">
                   <g id="trap-left" class="trap-flap">
-                    <rect x="150" y="190" width="30" height="12" rx="2" fill="#D4A060" stroke="#6B4226" stroke-width="1.5"/>
-                    <line x1="157" y1="192" x2="157" y2="200" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="2 1" opacity="0.6"/>
-                    <circle cx="176" cy="196" r="2.2" fill="#5C4030" stroke="#3A2818" stroke-width="0.8"/>
+                    <rect x="166" y="193" width="32" height="14" rx="2" fill="#D4A060" stroke="#6B4226" stroke-width="1.5"/>
+                    <line x1="174" y1="195" x2="174" y2="205" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="2 1" opacity="0.6"/>
+                    <circle cx="192" cy="200" r="2.4" fill="#5C4030" stroke="#3A2818" stroke-width="0.8"/>
                   </g>
                   <g id="trap-right" class="trap-flap">
-                    <rect x="180" y="190" width="30" height="12" rx="2" fill="#C49050" stroke="#6B4226" stroke-width="1.5"/>
-                    <line x1="203" y1="192" x2="203" y2="200" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="2 1" opacity="0.6"/>
-                    <circle cx="184" cy="196" r="2.2" fill="#5C4030" stroke="#3A2818" stroke-width="0.8"/>
+                    <rect x="198" y="193" width="32" height="14" rx="2" fill="#C49050" stroke="#6B4226" stroke-width="1.5"/>
+                    <line x1="222" y1="195" x2="222" y2="205" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="2 1" opacity="0.6"/>
+                    <circle cx="204" cy="200" r="2.4" fill="#5C4030" stroke="#3A2818" stroke-width="0.8"/>
                   </g>
                 </g>
-                <!-- cardboard upright -->
-                <rect x="118" y="48" width="14" height="142" rx="4" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="2.5"/>
-                <line x1="125" y1="56" x2="125" y2="180" stroke="#8B5A2B" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.45"/>
-                <!-- crossbeam cardboard -->
-                <rect x="118" y="48" width="95" height="12" rx="4" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="2.5"/>
-                <line x1="125" y1="54" x2="205" y2="54" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.4"/>
-                <path d="M132 70 L168 58" fill="none" stroke="#A87848" stroke-width="6" stroke-linecap="round"/>
-                <path d="M132 70 L168 58" fill="none" stroke="#6B4226" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
-                <!-- yarn rope (decorative) -->
-                <path d="M198 60 Q198 72 198 88" fill="none" stroke="#C4A070" stroke-width="4" stroke-linecap="round"/>
-                <path d="M198 60 Q198 72 198 88" fill="none" stroke="#A88850" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
-                <ellipse cx="198" cy="94" rx="11" ry="7" fill="none" stroke="#C4A070" stroke-width="3"/>
-                <ellipse cx="125" cy="198" rx="16" ry="5" fill="#5C4030" opacity="0.3"/>
+                <!-- cardboard upright (taller + thicker) -->
+                <rect x="104" y="20" width="22" height="172" rx="5" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="3"/>
+                <line x1="115" y1="30" x2="115" y2="180" stroke="#8B5A2B" stroke-width="1.8" stroke-dasharray="6 3" opacity="0.45"/>
+                <!-- crossbeam cardboard (longer + thicker) -->
+                <rect x="104" y="20" width="132" height="18" rx="5" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="3"/>
+                <line x1="112" y1="29" x2="226" y2="29" stroke="#8B5A2B" stroke-width="1.4" stroke-dasharray="5 3" opacity="0.4"/>
+                <path d="M128 48 L178 34" fill="none" stroke="#A87848" stroke-width="9" stroke-linecap="round"/>
+                <path d="M128 48 L178 34" fill="none" stroke="#6B4226" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
+                <!-- yarn rope (decorative) — hangs at character center x=198 -->
+                <path d="M198 38 Q198 55 198 78" fill="none" stroke="#C4A070" stroke-width="5" stroke-linecap="round"/>
+                <path d="M198 38 Q198 55 198 78" fill="none" stroke="#A88850" stroke-width="1.8" stroke-dasharray="2 2" opacity="0.6"/>
+                <ellipse cx="198" cy="86" rx="13" ry="8" fill="none" stroke="#C4A070" stroke-width="3.5"/>
+                <ellipse cx="115" cy="206" rx="20" ry="6" fill="#5C4030" opacity="0.3"/>
               </g>
 
-              <!-- ===== ACTOR — craft Captain Pip / felt skeleton ===== -->
+              <!-- ===== DUST PUFF (trap burst on lose) ===== -->
+              <g id="dust-puff" class="dust-puff" opacity="0" pointer-events="none" aria-hidden="true">
+                <ellipse class="dust-cloud d1" cx="198" cy="200" rx="12" ry="8" fill="#E8D4B0" stroke="#C4A070" stroke-width="1.5"/>
+                <ellipse class="dust-cloud d2" cx="178" cy="198" rx="10" ry="7" fill="#D8C098" stroke="#B89060" stroke-width="1.2"/>
+                <ellipse class="dust-cloud d3" cx="218" cy="198" rx="10" ry="7" fill="#E0C8A0" stroke="#B89060" stroke-width="1.2"/>
+                <ellipse class="dust-cloud d4" cx="188" cy="188" rx="8" ry="6" fill="#F0E0C0" stroke="#C4A070" stroke-width="1"/>
+                <ellipse class="dust-cloud d5" cx="208" cy="188" rx="8" ry="6" fill="#E8D4B0" stroke="#C4A070" stroke-width="1"/>
+                <circle class="dust-speck s1" cx="170" cy="192" r="3" fill="#C4A070"/>
+                <circle class="dust-speck s2" cx="226" cy="194" r="2.5" fill="#D4B888"/>
+                <circle class="dust-speck s3" cx="198" cy="182" r="2.8" fill="#E0C090"/>
+                <circle class="dust-speck s4" cx="160" cy="204" r="2" fill="#B89868"/>
+                <circle class="dust-speck s5" cx="236" cy="202" r="2.2" fill="#C4A070"/>
+                <!-- craft stitch rings -->
+                <circle class="dust-ring r1" cx="198" cy="200" r="16" fill="none" stroke="#C4A070" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.7"/>
+                <circle class="dust-ring r2" cx="198" cy="200" r="10" fill="none" stroke="#E8D4B0" stroke-width="2" stroke-dasharray="2 2" opacity="0.8"/>
+              </g>
+
+              <!-- ===== ACTOR — smaller craft Pip / skeleton under crossbeam ===== -->
               <g id="actor" class="actor">
+                <g id="actor-scale" transform="translate(198 206) scale(0.68) translate(-198 -206)">
                 <g id="char-pip" class="character" data-char="pip">
                   <!-- 1. Felt head + yarn bandana + button eye + stitch grin -->
                   <g class="part part-1 hidden">
@@ -319,6 +339,7 @@
                     <circle cx="240" cy="120" r="3" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>
                     <circle cx="168" cy="190" r="2.5" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>
                   </g>
+                </g>
                 </g>
               </g>
             </g>

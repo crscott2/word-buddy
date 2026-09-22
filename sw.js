@@ -1,5 +1,5 @@
 /* Spell Buddy service worker — cache shell for offline play */
-var CACHE = "spell-buddy-v1.4";
+var CACHE = "spell-buddy-v1.5";
 var ASSETS = [
   "./",
   "./index.html",

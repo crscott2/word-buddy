@@ -19,11 +19,17 @@
   ];
 
   var MAX_MISSES = 6;
-  /** Lose sequence: morph → trap open → fall → then popup */
+  /** Lose sequence: morph → trap open → fall+dust → wait 3s → popup */
   var LOSE_MORPH_MS = 400;
   var LOSE_TRAP_MS = 400;
   var LOSE_FALL_MS = 850;
-  var LOSE_TOTAL_MS = LOSE_MORPH_MS + LOSE_TRAP_MS + LOSE_FALL_MS;
+  var LOSE_DUST_MS = 700; /* overlaps fall; cartoon puff at trap */
+  var LOSE_POPUP_DELAY_MS = 3000; /* pause after fall/dust before outcome */
+  var LOSE_TOTAL_MS =
+    LOSE_MORPH_MS +
+    LOSE_TRAP_MS +
+    Math.max(LOSE_FALL_MS, LOSE_DUST_MS) +
+    LOSE_POPUP_DELAY_MS;
 
   var CHARACTERS = [
     {
@@ -269,6 +275,11 @@
       // reflow so next fall animation can restart
       void actor.getBoundingClientRect();
     }
+    var dust = $("dust-puff");
+    if (dust) {
+      dust.classList.remove("dust-burst");
+      void dust.getBoundingClientRect();
+    }
   }
 
   function showLivingCharacter() {
@@ -472,20 +483,29 @@
     state.loseTimer = setTimeout(function () {
       if (hm) hm.classList.add("trap-open");
 
-      // 3) Then skeleton falls through
+      // 3) Then skeleton falls through + dust puff at trap
       state.loseTimer = setTimeout(function () {
         if (actor) {
           actor.classList.remove("falling");
           void actor.getBoundingClientRect();
           actor.classList.add("falling");
         }
+        var dust = $("dust-puff");
+        if (dust) {
+          dust.classList.remove("dust-burst");
+          void dust.getBoundingClientRect();
+          dust.classList.add("dust-burst");
+        }
 
-        // 4) Only after fall finishes → outcome popup
+        // 4) After fall/dust complete, wait LOSE_POPUP_DELAY_MS, then popup
+        var afterAnimMs = Math.max(LOSE_FALL_MS, LOSE_DUST_MS);
         state.loseTimer = setTimeout(function () {
-          state.loseTimer = null;
-          fillOutcomeCard(false);
-          revealOutcomePopup();
-        }, LOSE_FALL_MS);
+          state.loseTimer = setTimeout(function () {
+            state.loseTimer = null;
+            fillOutcomeCard(false);
+            revealOutcomePopup();
+          }, LOSE_POPUP_DELAY_MS);
+        }, afterAnimMs);
       }, LOSE_TRAP_MS);
     }, LOSE_MORPH_MS);
   }
