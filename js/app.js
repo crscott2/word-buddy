@@ -223,7 +223,8 @@
   }
 
   function setJoke(text) {
-    els.jokeLine.textContent = text || "";
+    /* v1.11: play joke line removed */
+    if (els.jokeLine) els.jokeLine.textContent = text || "";
   }
 
   function pickCharacter() {
@@ -367,11 +368,6 @@
   function updateHangman() {
     if (state.skeleton) {
       showSkeleton();
-      var name = state.character ? state.character.name : "Your buddy";
-      els.buddyCaption.textContent = pick(LOSE_SKELETON_CAPTIONS).replace(
-        "{NAME}",
-        name
-      );
       return;
     }
 
@@ -407,25 +403,11 @@
       triggerImpactRipple();
     }
 
-    var caps = state.character.captions;
-    els.buddyCaption.textContent =
-      caps[Math.min(state.misses, caps.length - 1)];
   }
 
   function setCharacterHook() {
+    /* v1.11: character hook removed from play view */
     if (!els.characterHook) return;
-    if (state.emptyPool) {
-      els.characterHook.textContent = "A craft beach buddy is waiting for words…";
-      return;
-    }
-    if (state.skeleton && state.character) {
-      els.characterHook.textContent =
-        state.character.name + " went comedy skeleton — long drop!";
-      return;
-    }
-    if (state.character) {
-      els.characterHook.textContent = state.character.hook;
-    }
   }
 
   function charName() {
@@ -446,12 +428,13 @@
         cell.className = "blank";
         if (state.guessed[ch] || (state.over && !state.won)) {
           cell.textContent = ch.toUpperCase();
+          cell.classList.add("filled");
           if (state.guessed[ch]) cell.classList.add("pop");
         } else {
           cell.textContent = "";
         }
       } else {
-        cell.className = "blank";
+        cell.className = "blank filled";
         cell.textContent = ch;
         cell.style.borderBottomColor = "transparent";
       }
@@ -518,7 +501,6 @@
     if (els.outcomeWord) {
       els.outcomeWord.textContent = shown;
     }
-    setJoke("The word was \"" + displayWord(state.word) + "\".");
   }
 
   function revealLosePopup() {
@@ -527,14 +509,8 @@
   }
 
   function runLoseSequence() {
-    var name = charName();
     // 1) Morph living pirate → silly cartoon skeleton
     showSkeleton();
-    els.buddyCaption.textContent = pick(LOSE_SKELETON_CAPTIONS).replace(
-      "{NAME}",
-      name
-    );
-    setCharacterHook();
     renderBlanks();
     syncKeyboard();
 
@@ -594,11 +570,6 @@
 
     if (hm) hm.classList.add("win-escape");
 
-    els.buddyCaption.textContent =
-      charName() + " slips free and makes a break for the treasure!";
-    setCharacterHook();
-    setJoke(charName() + " is making off with the treasure!");
-
     // No popup on win
     els.outcome.classList.add("hidden");
 
@@ -624,9 +595,6 @@
         void actor.getBoundingClientRect();
         actor.classList.add("win-grab");
       }
-      els.buddyCaption.textContent =
-        charName() + " scoops up the treasure — yoink!";
-
       state.winTimer = setTimeout(function () {
         // 3) Silly run off-screen with the loot
         if (actor) {
@@ -634,9 +602,6 @@
           void actor.getBoundingClientRect();
           actor.classList.add("win-run");
         }
-        els.buddyCaption.textContent =
-          "Heave-ho! " + charName() + " runs away with the treasure!";
-
         state.winTimer = setTimeout(function () {
           // 4) Short beat, then auto-advance (no popup)
           state.winTimer = setTimeout(function () {
@@ -665,13 +630,11 @@
     state.guessed[letter] = true;
 
     if (state.word.indexOf(letter) !== -1) {
-      setJoke(pick(HIT_JOKES));
       renderBlanks();
       syncKeyboard();
       if (allLettersGuessed()) showOutcome(true);
     } else {
       state.misses += 1;
-      setJoke(pick(MISS_JOKES));
       updateHangman();
       syncKeyboard();
       if (state.misses >= MAX_MISSES) showOutcome(false);
@@ -687,17 +650,7 @@
     state.won = false;
     els.outcome.classList.add("hidden");
     els.progress.textContent = "No words turned on";
-    setJoke("Ask a parent to turn some words on!");
-    els.buddyCaption.textContent = "Craft beach buddies are waiting for words…";
-    if (els.characterHook) {
-      els.characterHook.textContent = "A craft beach buddy is waiting for words…";
-    }
     els.wordBlanks.innerHTML = "";
-    var msg = document.createElement("p");
-    msg.className = "empty-pool-msg";
-    msg.textContent =
-      "All library words are off. Parents: open the word list and turn some On to play.";
-    els.wordBlanks.appendChild(msg);
     state.skeleton = false;
     resetStageEffects();
     if (!state.character) pickCharacter();
@@ -711,6 +664,10 @@
 
   function hideEmptyBanner() {
     if (els.emptyBanner) els.emptyBanner.classList.add("hidden");
+  }
+
+  function setBuddyCaption() {
+    /* v1.11: buddy caption removed from play view */
   }
 
   function startRound() {
@@ -736,10 +693,6 @@
     pickCharacter();
     els.progress.textContent =
       "Word " + (state.index + 1) + " of " + state.playWords.length;
-    setJoke(
-      "Tap a letter. " + charName() + " believes in you!"
-    );
-    setCharacterHook();
     updateHangman();
     renderBlanks();
     syncKeyboard();

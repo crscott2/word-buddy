@@ -1,4 +1,4 @@
-/* Spell Buddy v1.10 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.11 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -200,14 +200,11 @@ body::before {
   border: 2px dashed rgba(180, 130, 80, 0.35);
 }
 
-.joke-line {
-  min-height: 1.4em;
-  text-align: center;
-  margin: 4px 0 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--accent-dark);
-  font-style: italic;
+/* v1.11: play chrome (joke / hook / buddy caption) removed from play view */
+.joke-line,
+.character-hook,
+.buddy-caption {
+  display: none !important;
 }
 
 /* ===== Stage frame — scrapbook / diorama ===== */
@@ -267,33 +264,12 @@ body::before {
   display: none;
 }
 
-.character-hook {
-  margin: 0 0 8px;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--accent-dark);
-  min-height: 1.35em;
-  background: var(--cream);
-  border: 2px solid var(--felt-orange);
-  border-radius: 16px;
-  padding: 6px 12px;
-  box-shadow: 0 3px 0 var(--cork);
-  width: 100%;
-}
 
-.buddy-caption {
-  margin: 8px 0 4px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--soft);
-  text-align: center;
-}
 
 /* ===== Word blanks — fabric patches ===== */
 .word-area {
   margin: 14px 0 10px;
-  min-height: 4.2rem;
+  min-height: 5.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -302,24 +278,29 @@ body::before {
 .word-blanks {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
   align-items: flex-end;
 }
 
+/* v1.11: bigger, high-contrast blank bubbles (esp. empty slots on iPad landscape) */
 .blank {
-  width: clamp(2rem, 9vw, 3.2rem);
-  height: clamp(2.6rem, 11vw, 3.8rem);
-  border: 3px solid var(--cork-dark);
-  border-bottom-width: 5px;
-  border-radius: 10px;
+  width: clamp(2.6rem, 11vw, 4rem);
+  height: clamp(3.2rem, 13vw, 4.8rem);
+  border: 4px solid #6B4428;
+  border-bottom-width: 7px;
+  border-radius: 14px;
   background:
-    linear-gradient(180deg, #FFF8EE 0%, #F4E4C8 100%);
-  box-shadow: 0 3px 0 rgba(120, 80, 40, 0.2);
+    linear-gradient(180deg, #FFFDF8 0%, #FFE9C4 55%, #F5D9A0 100%);
+  box-shadow:
+    0 0 0 3px rgba(255, 236, 180, 0.95),
+    0 0 14px 2px rgba(232, 160, 60, 0.55),
+    0 5px 0 rgba(90, 50, 20, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.5rem, 7vw, 2.4rem);
+  font-size: clamp(1.7rem, 8vw, 2.8rem);
   font-weight: 800;
   text-transform: uppercase;
   color: var(--accent-dark);
@@ -327,13 +308,39 @@ body::before {
   position: relative;
 }
 
+.blank:not(.filled):not(.space) {
+  background:
+    linear-gradient(180deg, #FFFCF4 0%, #FFE2A8 45%, #F0C878 100%);
+  box-shadow:
+    0 0 0 4px rgba(255, 220, 120, 0.9),
+    0 0 18px 3px rgba(230, 140, 40, 0.65),
+    0 6px 0 rgba(90, 50, 20, 0.32),
+    inset 0 3px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -4px 10px rgba(180, 100, 30, 0.12);
+}
+
+.blank.filled {
+  background:
+    linear-gradient(180deg, #FFF8EE 0%, #F4E4C8 100%);
+  box-shadow:
+    0 0 0 2px rgba(255, 236, 180, 0.7),
+    0 4px 0 rgba(120, 80, 40, 0.22),
+    inset 0 2px 0 rgba(255, 255, 255, 0.75);
+}
+
 .blank::after {
   content: "";
   position: absolute;
-  inset: 3px;
-  border: 1.5px dashed rgba(140, 90, 50, 0.3);
-  border-radius: 6px;
+  inset: 4px;
+  border: 2px dashed rgba(120, 70, 30, 0.45);
+  border-radius: 8px;
   pointer-events: none;
+}
+
+.blank.filled::after {
+  border-color: rgba(140, 90, 50, 0.22);
+  border-style: solid;
+  border-width: 1.5px;
 }
 
 .blank.space {
@@ -519,22 +526,27 @@ body::before {
   z-index: 1;
 }
 
-/* v1.10 lose popup: big bold secret word only */
+/* v1.11 lose popup: display-size bold missed word dominates (+ Next) */
 .lose-word-card {
-  padding: 32px 28px 24px;
+  padding: 36px 32px 28px;
+  text-align: center;
 }
 
-.outcome-word {
-  margin: 0 0 22px;
-  font-size: clamp(2.4rem, 8vw, 3.6rem);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 1.15;
-  color: var(--ink, #3A2818);
+.outcome-card .outcome-word,
+.lose-word-card .outcome-word {
+  margin: 0 0 28px;
+  font-size: clamp(3.6rem, 16vw, 7rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+  color: var(--ink, #2A1810);
   text-transform: uppercase;
   position: relative;
   z-index: 1;
   word-break: break-word;
+  text-shadow:
+    0 2px 0 rgba(255, 248, 230, 0.9),
+    0 4px 0 rgba(160, 100, 40, 0.25);
 }
 
 .outcome-card .btn {
@@ -767,12 +779,6 @@ body::before {
     flex-shrink: 0;
   }
 
-  .joke-line {
-    min-height: 1.1em;
-    margin: 0 0 4px;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-  }
 
   .empty-pool-banner {
     margin: 0 0 6px;
@@ -800,14 +806,6 @@ body::before {
     align-items: stretch;
   }
 
-  .character-hook {
-    margin: 0 0 4px;
-    font-size: 0.82rem;
-    padding: 4px 10px;
-    min-height: 0;
-    box-shadow: 0 2px 0 var(--cork);
-    flex-shrink: 0;
-  }
 
   .beach-frame {
     flex: 1;
@@ -828,11 +826,6 @@ body::before {
     object-fit: contain;
   }
 
-  .buddy-caption {
-    margin: 4px 0 0;
-    font-size: 0.75rem;
-    flex-shrink: 0;
-  }
 
   .play-side {
     min-height: 0;
@@ -850,9 +843,9 @@ body::before {
   }
 
   .blank {
-    width: clamp(2.2rem, 4.5vw, 3.4rem);
-    height: clamp(2.8rem, 5.5vw, 4rem);
-    font-size: clamp(1.4rem, 3.5vw, 2.3rem);
+    width: clamp(2.8rem, 5.5vw, 4.2rem);
+    height: clamp(3.4rem, 6.5vw, 5rem);
+    font-size: clamp(1.7rem, 4.2vw, 2.8rem);
   }
 
   .keyboard-wrap {
@@ -896,9 +889,14 @@ body::before {
   .outcome-emoji { font-size: 2.4rem; margin: 0; }
   .outcome-card h2 { font-size: 1.35rem; margin: 0 0 6px; }
   .outcome-card p { font-size: 0.95rem; margin: 0 0 12px; }
-  .outcome-word {
-    font-size: clamp(2rem, 6vw, 3rem);
-    margin: 0 0 16px;
+  .lose-word-card {
+    padding: 22px 24px 18px;
+    max-width: min(560px, 82vw);
+  }
+  .outcome-card .outcome-word,
+  .lose-word-card .outcome-word {
+    font-size: clamp(3.2rem, 12vw, 5.5rem);
+    margin: 0 0 18px;
   }
   .outcome-card .btn.big {
     padding: 12px 18px;
@@ -976,9 +974,7 @@ body::before {
 /* Extra-short landscape (phones / split view): keep big targets, tighten */
 @media (orientation: landscape) and (max-height: 520px) {
   .top-bar { padding: 2px 10px; margin-bottom: 4px; }
-  .progress, .joke-line { font-size: 0.78rem; }
-  .character-hook { display: none; }
-  .buddy-caption { display: none; }
+  .progress { font-size: 0.78rem; }
   .play-layout {
     grid-template-columns: minmax(220px, 0.95fr) minmax(280px, 1.2fr);
     gap: 8px 12px;
@@ -986,9 +982,9 @@ body::before {
   .keyboard { gap: 6px; }
   .key { min-height: 44px; font-size: 1.05rem; }
   .blank {
-    width: clamp(1.9rem, 4vw, 2.8rem);
-    height: clamp(2.4rem, 5vw, 3.2rem);
-    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    width: clamp(2.3rem, 4.8vw, 3.4rem);
+    height: clamp(2.9rem, 5.8vw, 4rem);
+    font-size: clamp(1.4rem, 3.6vw, 2.2rem);
   }
   .outcome-card { padding: 14px 16px; }
 }
