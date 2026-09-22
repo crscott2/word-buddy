@@ -1,8 +1,23 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "spellBuddy.words.v1";
-  var SAMPLE_WORDS = ["cat", "ship", "green", "beach"];
+  var STORAGE_KEY = "spellBuddy.words.v2";
+  var STORAGE_KEY_V1 = "spellBuddy.words.v1";
+
+  // Scholastic Fry 100 Word List (flashcards) — stored lowercase; "I" displays capital
+  var FRY_100 = [
+    "the", "of", "and", "a", "to", "in", "is", "you", "that", "it",
+    "he", "was", "for", "on", "are", "as", "with", "his", "they", "i",
+    "at", "be", "this", "have", "from", "or", "one", "had", "by", "words",
+    "but", "not", "what", "all", "were", "we", "when", "your", "can", "said",
+    "there", "use", "an", "each", "which", "she", "do", "how", "their", "if",
+    "will", "up", "other", "about", "out", "many", "then", "them", "these", "so",
+    "some", "her", "would", "make", "like", "him", "into", "time", "has", "look",
+    "two", "more", "write", "go", "see", "number", "no", "way", "could", "people",
+    "my", "than", "first", "water", "been", "called", "who", "am", "its", "now",
+    "find", "long", "down", "day", "did", "get", "come", "made", "may", "part"
+  ];
+
   var MAX_MISSES = 6;
   var PART_IDS = [
     "part-head",
@@ -68,13 +83,15 @@
   ];
 
   var state = {
-    words: [],
+    library: [], // [{ word, on }]
+    playWords: [], // strings currently ON
     index: 0,
     word: "",
     guessed: {},
     misses: 0,
     over: false,
-    won: false
+    won: false,
+    emptyPool: false
   };
 
   var els = {};
@@ -91,30 +108,108 @@
       .trim();
   }
 
+  function isValidWord(w) {
+    return !!w && w.length >= 1 && /[a-z]/.test(w);
+  }
+
+  function displayWord(w) {
+    if (w === "i") return "I";
+    return w;
+  }
+
+  function seedFry() {
+    return FRY_100.map(function (word) {
+      return { word: word, on: true };
+    });
+  }
+
   function parseWordList(text) {
     return String(text || "")
       .split(/[\n,;]+/)
       .map(normalizeWord)
-      .filter(function (w) {
-        return w.length >= 2 && /[a-z]/.test(w);
-      });
+      .filter(isValidWord);
   }
 
-  function loadWords() {
+  function migrateFromV1() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return SAMPLE_WORDS.slice();
+      var raw = localStorage.getItem(STORAGE_KEY_V1);
+      if (!raw) return null;
       var parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed) || !parsed.length) return SAMPLE_WORDS.slice();
-      return parsed.map(normalizeWord).filter(Boolean);
+      if (!Array.isArray(parsed) || !parsed.length) return null;
+      var out = [];
+      var seen = {};
+      parsed.forEach(function (item) {
+        var w = normalizeWord(typeof item === "string" ? item : item && item.word);
+        if (!isValidWord(w) || seen[w]) return;
+        seen[w] = true;
+        out.push({ word: w, on: true });
+      });
+      return out.length ? out : null;
     } catch (e) {
-      return SAMPLE_WORDS.slice();
+      return null;
     }
   }
 
-  function saveWords(words) {
-    state.words = words.slice();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.words));
+  function coerceLibrary(parsed) {
+    if (!Array.isArray(parsed) || !parsed.length) return null;
+    var out = [];
+    var seen = {};
+    parsed.forEach(function (item) {
+      var w;
+      var on = true;
+      if (typeof item === "string") {
+        w = normalizeWord(item);
+      } else if (item && typeof item === "object") {
+        w = normalizeWord(item.word);
+        on = item.on !== false;
+      } else {
+        return;
+      }
+      if (!isValidWord(w) || seen[w]) return;
+      seen[w] = true;
+      out.push({ word: w, on: !!on });
+    });
+    return out.length ? out : null;
+  }
+
+  function loadLibrary() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var coerced = coerceLibrary(JSON.parse(raw));
+        if (coerced) return coerced;
+      }
+    } catch (e) {
+      /* fall through */
+    }
+    var fromV1 = migrateFromV1();
+    if (fromV1) return fromV1;
+    return seedFry();
+  }
+
+  function saveLibrary(library) {
+    state.library = library.slice();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.library));
+    refreshPlayPool();
+  }
+
+  function refreshPlayPool() {
+    state.playWords = state.library
+      .filter(function (entry) {
+        return entry.on;
+      })
+      .map(function (entry) {
+        return entry.word;
+      });
+    if (state.index >= state.playWords.length) state.index = 0;
+  }
+
+  function onCount() {
+    var n = 0;
+    for (var i = 0; i < state.library.length; i++) {
+      if (state.library[i].on) n++;
+    }
+    return n;
   }
 
   function pick(arr) {
@@ -147,14 +242,12 @@
       else wave.classList.add("hidden");
     }
 
-    // Expressive / comedic faces by miss count
     if (state.misses === 0) setFace("ok");
     else if (state.misses <= 2) setFace("ok");
     else if (state.misses === 3) setFace("silly");
     else if (state.misses === 4) setFace("wow");
     else setFace("oops");
 
-    // Funny pose tweaks via transform on arms/legs (CSS-free: adjust SVG attrs lightly)
     tweakPose();
 
     els.buddyCaption.textContent =
@@ -168,7 +261,6 @@
     var legR = $("part-leg-r");
     if (!armL) return;
 
-    // Reset defaults
     armL.setAttribute("x2", "120");
     armL.setAttribute("y2", "145");
     armR.setAttribute("x2", "180");
@@ -179,7 +271,6 @@
     legR.setAttribute("y2", "210");
 
     if (state.misses >= 3) {
-      // waving left arm up
       armL.setAttribute("x2", "115");
       armL.setAttribute("y2", "105");
       if ($("wave-hand")) {
@@ -188,19 +279,16 @@
       }
     }
     if (state.misses >= 4) {
-      // right arm akimbo / shrug
       armR.setAttribute("x2", "185");
       armR.setAttribute("y2", "130");
     }
     if (state.misses >= 5) {
-      // legs a bit splayed silly
       legL.setAttribute("x2", "118");
       legL.setAttribute("y2", "215");
     }
     if (state.misses >= 6) {
       legR.setAttribute("x2", "182");
       legR.setAttribute("y2", "215");
-      // arms both up like "ta-da / oh well"
       armL.setAttribute("x2", "118");
       armL.setAttribute("y2", "100");
       armR.setAttribute("x2", "182");
@@ -231,7 +319,6 @@
           cell.textContent = "";
         }
       } else {
-        // hyphen / apostrophe always shown
         cell.className = "blank";
         cell.textContent = ch;
         cell.style.borderBottomColor = "transparent";
@@ -289,7 +376,7 @@
         if (state.word.indexOf(L) !== -1) btn.classList.add("correct");
         else btn.classList.add("wrong");
       }
-      if (state.over) btn.disabled = true;
+      if (state.over || state.emptyPool) btn.disabled = true;
     }
   }
 
@@ -301,16 +388,16 @@
       els.outcomeEmoji.textContent = pick(["🎉", "🌟", "🥳", "✨"]);
       els.outcomeTitle.textContent = pick(WIN_TITLES);
       els.outcomeMsg.textContent = pick(WIN_MSGS);
-      setJoke("You spelled \"" + state.word + "\"! Fancy pants!");
+      setJoke("You spelled \"" + displayWord(state.word) + "\"! Fancy pants!");
       setFace("silly");
     } else {
       els.outcomeEmoji.textContent = pick(["🤗", "🍌", "🌈", "🧸"]);
       els.outcomeTitle.textContent = pick(LOSE_TITLES);
       els.outcomeMsg.textContent = pick(LOSE_MSGS).replace(
         "{WORD}",
-        "“" + state.word + "”"
+        "“" + displayWord(state.word) + "”"
       );
-      setJoke("Nice try — the word was \"" + state.word + "\"!");
+      setJoke("Nice try — the word was \"" + displayWord(state.word) + "\"!");
       setFace("oops");
       renderBlanks();
     }
@@ -318,7 +405,7 @@
   }
 
   function onGuess(letter) {
-    if (state.over || state.guessed[letter]) return;
+    if (state.over || state.emptyPool || state.guessed[letter]) return;
     state.guessed[letter] = true;
 
     if (state.word.indexOf(letter) !== -1) {
@@ -335,20 +422,52 @@
     }
   }
 
+  function showEmptyPoolUI() {
+    state.emptyPool = true;
+    state.word = "";
+    state.guessed = {};
+    state.misses = 0;
+    state.over = true;
+    state.won = false;
+    els.outcome.classList.add("hidden");
+    els.progress.textContent = "No words turned on";
+    setJoke("Ask a parent to turn some words on!");
+    els.buddyCaption.textContent = "Your buddy is waiting for words…";
+    els.wordBlanks.innerHTML = "";
+    var msg = document.createElement("p");
+    msg.className = "empty-pool-msg";
+    msg.textContent =
+      "All library words are off. Parents: open the word list and turn some On to play.";
+    els.wordBlanks.appendChild(msg);
+    updateHangman();
+    syncKeyboard();
+    if (els.emptyBanner) els.emptyBanner.classList.remove("hidden");
+  }
+
+  function hideEmptyBanner() {
+    if (els.emptyBanner) els.emptyBanner.classList.add("hidden");
+  }
+
   function startRound() {
     els.outcome.classList.add("hidden");
-    if (!state.words.length) {
-      state.words = SAMPLE_WORDS.slice();
-      saveWords(state.words);
+    refreshPlayPool();
+
+    if (!state.playWords.length) {
+      showEmptyPoolUI();
+      return;
     }
-    if (state.index >= state.words.length) state.index = 0;
-    state.word = state.words[state.index];
+
+    state.emptyPool = false;
+    hideEmptyBanner();
+
+    if (state.index >= state.playWords.length) state.index = 0;
+    state.word = state.playWords[state.index];
     state.guessed = {};
     state.misses = 0;
     state.over = false;
     state.won = false;
     els.progress.textContent =
-      "Word " + (state.index + 1) + " of " + state.words.length;
+      "Word " + (state.index + 1) + " of " + state.playWords.length;
     setJoke("Tap a letter. Your buddy believes in you!");
     updateHangman();
     renderBlanks();
@@ -356,7 +475,12 @@
   }
 
   function nextWord() {
-    state.index = (state.index + 1) % Math.max(state.words.length, 1);
+    refreshPlayPool();
+    if (!state.playWords.length) {
+      startRound();
+      return;
+    }
+    state.index = (state.index + 1) % state.playWords.length;
     startRound();
   }
 
@@ -377,40 +501,76 @@
     els.parentGate.classList.remove("hidden");
   }
 
+  function updateCounts() {
+    var total = state.library.length;
+    var on = onCount();
+    if (els.wordCount) {
+      els.wordCount.textContent = on + " of " + total + " on";
+    }
+  }
+
   function renderWordList() {
-    els.wordCount.textContent = String(state.words.length);
+    updateCounts();
     els.wordList.innerHTML = "";
-    state.words.forEach(function (word, idx) {
+    state.library.forEach(function (entry, idx) {
       var li = document.createElement("li");
+      if (!entry.on) li.classList.add("off");
+
+      var toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "toggle-btn" + (entry.on ? " is-on" : " is-off");
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", entry.on ? "true" : "false");
+      toggle.setAttribute(
+        "aria-label",
+        (entry.on ? "Turn off " : "Turn on ") + displayWord(entry.word)
+      );
+      toggle.innerHTML =
+        '<span class="toggle-knob" aria-hidden="true"></span>' +
+        '<span class="toggle-label">' +
+        (entry.on ? "On" : "Off") +
+        "</span>";
+      toggle.addEventListener("click", function () {
+        var next = state.library.slice();
+        next[idx] = { word: entry.word, on: !entry.on };
+        saveLibrary(next);
+        renderWordList();
+      });
+
       var span = document.createElement("span");
       span.className = "word-text";
-      span.textContent = word;
+      span.textContent = displayWord(entry.word);
 
       var editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "icon-btn";
       editBtn.textContent = "Edit";
-      editBtn.setAttribute("aria-label", "Edit " + word);
+      editBtn.setAttribute("aria-label", "Edit " + displayWord(entry.word));
 
       var delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = "icon-btn danger";
       delBtn.textContent = "Delete";
-      delBtn.setAttribute("aria-label", "Delete " + word);
+      delBtn.setAttribute("aria-label", "Delete " + displayWord(entry.word));
 
       editBtn.addEventListener("click", function () {
-        beginEdit(li, idx, word);
+        beginEdit(li, idx, entry.word);
       });
       delBtn.addEventListener("click", function () {
-        if (!confirm("Delete “" + word + "” from the list?")) return;
-        var next = state.words.slice();
+        if (
+          !confirm(
+            "Delete “" + displayWord(entry.word) + "” from the library?"
+          )
+        )
+          return;
+        var next = state.library.slice();
         next.splice(idx, 1);
-        if (!next.length) next = SAMPLE_WORDS.slice();
-        saveWords(next);
-        if (state.index >= state.words.length) state.index = 0;
+        if (!next.length) next = seedFry();
+        saveLibrary(next);
         renderWordList();
       });
 
+      li.appendChild(toggle);
       li.appendChild(span);
       li.appendChild(editBtn);
       li.appendChild(delBtn);
@@ -420,6 +580,7 @@
 
   function beginEdit(li, idx, word) {
     li.innerHTML = "";
+    li.classList.remove("off");
     var input = document.createElement("input");
     input.className = "edit-input";
     input.value = word;
@@ -434,13 +595,24 @@
     cancel.textContent = "Cancel";
     save.addEventListener("click", function () {
       var n = normalizeWord(input.value);
-      if (!n || n.length < 2) {
-        alert("Please enter a real spelling word (at least 2 letters).");
+      if (!isValidWord(n)) {
+        alert("Please enter a real spelling word (letters only).");
         return;
       }
-      var next = state.words.slice();
-      next[idx] = n;
-      saveWords(next);
+      var next = state.library.slice();
+      var dup = false;
+      for (var i = 0; i < next.length; i++) {
+        if (i !== idx && next[i].word === n) {
+          dup = true;
+          break;
+        }
+      }
+      if (dup) {
+        alert("That word is already in the library.");
+        return;
+      }
+      next[idx] = { word: n, on: next[idx].on };
+      saveLibrary(next);
       renderWordList();
     });
     cancel.addEventListener("click", renderWordList);
@@ -453,24 +625,34 @@
   function addWordsFromText(text) {
     var added = parseWordList(text);
     if (!added.length) {
-      alert("No words found. Try letters only, separated by commas or new lines.");
+      alert(
+        "No words found. Try letters only (a–z), separated by commas or new lines. Single letters like a and I are OK."
+      );
       return 0;
     }
-    var next = state.words.slice();
+    var next = state.library.slice();
     var seen = {};
-    next.forEach(function (w) {
-      seen[w] = true;
+    next.forEach(function (entry) {
+      seen[entry.word] = true;
     });
     var count = 0;
     added.forEach(function (w) {
       if (!seen[w]) {
-        next.push(w);
+        next.push({ word: w, on: true });
         seen[w] = true;
         count++;
       }
     });
-    saveWords(next);
+    saveLibrary(next);
     return count;
+  }
+
+  function setAllOn(on) {
+    var next = state.library.map(function (entry) {
+      return { word: entry.word, on: !!on };
+    });
+    saveLibrary(next);
+    renderWordList();
   }
 
   function bind() {
@@ -499,18 +681,32 @@
       if (n) renderWordList();
     });
 
+    if (els.btnTurnAllOn) {
+      els.btnTurnAllOn.addEventListener("click", function () {
+        setAllOn(true);
+      });
+    }
+    if (els.btnTurnAllOff) {
+      els.btnTurnAllOff.addEventListener("click", function () {
+        setAllOn(false);
+      });
+    }
+
     els.btnResetSamples.addEventListener("click", function () {
-      if (!confirm("Replace the list with sample words (cat, ship, green, beach)?"))
+      if (
+        !confirm(
+          "Replace the library with the Fry 100 sight words (all On)?"
+        )
+      )
         return;
-      saveWords(SAMPLE_WORDS.slice());
+      saveLibrary(seedFry());
       state.index = 0;
       renderWordList();
     });
 
-    // Physical keyboard support (helpful for desktop preview)
     window.addEventListener("keydown", function (e) {
       if (els.screenPlay.classList.contains("hidden")) return;
-      if (state.over) return;
+      if (state.over || state.emptyPool) return;
       var k = e.key.toLowerCase();
       if (/^[a-z]$/.test(k)) onGuess(k);
     });
@@ -542,6 +738,9 @@
     els.wordList = $("word-list");
     els.wordCount = $("word-count");
     els.btnResetSamples = $("btn-reset-samples");
+    els.btnTurnAllOn = $("btn-turn-all-on");
+    els.btnTurnAllOff = $("btn-turn-all-off");
+    els.emptyBanner = $("empty-pool-banner");
   }
 
   function registerSW() {
@@ -553,7 +752,8 @@
 
   function init() {
     cacheEls();
-    state.words = loadWords();
+    state.library = loadLibrary();
+    saveLibrary(state.library); // persist v2 (and migration)
     buildKeyboard();
     bind();
     startRound();

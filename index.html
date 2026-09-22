@@ -22,13 +22,16 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1</span>
+        <span class="version" title="App version">v1.1</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
 
     <!-- PLAY SCREEN -->
     <main id="screen-play" class="screen" aria-live="polite">
+      <p id="empty-pool-banner" class="empty-pool-banner hidden" role="status">
+        No words are turned on. Ask a parent to open the word list and toggle some On.
+      </p>
       <p id="progress" class="progress">Word 1 of 4</p>
       <p id="joke-line" class="joke-line" aria-live="polite"></p>
 
@@ -109,7 +112,7 @@
         <h2>Parent word list</h2>
         <button type="button" id="btn-back-play" class="btn secondary">← Back to play</button>
       </div>
-      <p class="hint">Add school spelling words. Kids play offline — nothing leaves this device.</p>
+      <p class="hint">Library starts as the Fry 100 sight words. Toggle which ones he practices — play only uses words that are On. Add custom words anytime. Kids play offline — nothing leaves this device.</p>
 
       <form id="add-one-form" class="add-one">
         <label for="word-input">Add one word</label>
@@ -125,11 +128,17 @@
         <button type="submit" class="btn primary">Add list</button>
       </form>
 
-      <h3 class="list-heading">Words (<span id="word-count">0</span>)</h3>
+      <div class="list-toolbar">
+        <h3 class="list-heading">Words (<span id="word-count">0 of 0 on</span>)</h3>
+        <div class="bulk-toggles">
+          <button type="button" id="btn-turn-all-on" class="btn secondary small">Turn all on</button>
+          <button type="button" id="btn-turn-all-off" class="btn secondary small">Turn all off</button>
+        </div>
+      </div>
       <ul id="word-list" class="word-list"></ul>
 
       <div class="danger-zone">
-        <button type="button" id="btn-reset-samples" class="btn secondary">Restore sample words</button>
+        <button type="button" id="btn-reset-samples" class="btn secondary">Restore Fry 100 (all On)</button>
       </div>
     </main>
   </div>
