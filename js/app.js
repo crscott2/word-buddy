@@ -111,7 +111,10 @@
     character: null, // current CHARACTERS entry
     lastCharId: null,
     skeleton: false,
-    loseTimer: null
+    loseTimer: null,
+    snapClearTimer: null,
+    rippleTimer: null,
+    rippleClearTimer: null
   };
 
   var els = {};
@@ -267,11 +270,13 @@
       clearTimeout(state.loseTimer);
       state.loseTimer = null;
     }
+    clearMotionTimers();
+    clearSnapClasses(document);
     var hm = els.hangman || $("hangman");
     if (hm) hm.classList.remove("trap-open");
     var actor = $("actor");
     if (actor) {
-      actor.classList.remove("falling");
+      actor.classList.remove("falling", "impact-ripple");
       actor.classList.add("hanging");
       // reflow so next hang/fall animation can restart
       void actor.getBoundingClientRect();
@@ -303,6 +308,57 @@
     }
   }
 
+
+  function clearMotionTimers() {
+    if (state.snapClearTimer) {
+      clearTimeout(state.snapClearTimer);
+      state.snapClearTimer = null;
+    }
+    if (state.rippleTimer) {
+      clearTimeout(state.rippleTimer);
+      state.rippleTimer = null;
+    }
+    if (state.rippleClearTimer) {
+      clearTimeout(state.rippleClearTimer);
+      state.rippleClearTimer = null;
+    }
+  }
+
+  function clearSnapClasses(root) {
+    var scope = root || document;
+    var nodes = scope.querySelectorAll
+      ? scope.querySelectorAll(".part.snap-on")
+      : [];
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].classList.remove("snap-on");
+    }
+  }
+
+  /** Brief body + independent limb react after a part magnet-snaps on */
+  function triggerImpactRipple() {
+    var actor = $("actor");
+    if (!actor || actor.classList.contains("falling")) return;
+    if (state.rippleTimer) {
+      clearTimeout(state.rippleTimer);
+      state.rippleTimer = null;
+    }
+    if (state.rippleClearTimer) {
+      clearTimeout(state.rippleClearTimer);
+      state.rippleClearTimer = null;
+    }
+    // Let magnet snap start, then ripple existing limbs
+    state.rippleTimer = setTimeout(function () {
+      state.rippleTimer = null;
+      actor.classList.remove("impact-ripple");
+      void actor.getBoundingClientRect();
+      actor.classList.add("impact-ripple");
+      state.rippleClearTimer = setTimeout(function () {
+        state.rippleClearTimer = null;
+        actor.classList.remove("impact-ripple");
+      }, 950);
+    }, 160);
+  }
+
   function updateHangman() {
     if (state.skeleton) {
       showSkeleton();
@@ -319,11 +375,31 @@
     var g = $("char-" + state.character.id);
     if (!g) return;
 
+    var newlyShown = null;
     for (var i = 1; i <= MAX_MISSES; i++) {
       var part = g.querySelector(".part-" + i);
       if (!part) continue;
-      if (i <= state.misses) part.classList.remove("hidden");
-      else part.classList.add("hidden");
+      if (i <= state.misses) {
+        if (part.classList.contains("hidden")) {
+          newlyShown = part;
+          part.classList.remove("hidden");
+          part.classList.remove("snap-on");
+          void part.getBoundingClientRect();
+          part.classList.add("snap-on");
+        }
+      } else {
+        part.classList.add("hidden");
+        part.classList.remove("snap-on");
+      }
+    }
+
+    if (newlyShown) {
+      if (state.snapClearTimer) clearTimeout(state.snapClearTimer);
+      state.snapClearTimer = setTimeout(function () {
+        state.snapClearTimer = null;
+        clearSnapClasses(g);
+      }, 450);
+      triggerImpactRipple();
     }
 
     var caps = state.character.captions;

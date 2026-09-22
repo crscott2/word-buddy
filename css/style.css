@@ -1,4 +1,4 @@
-/* Spell Buddy v1.7 — LittleBigPlanet craft / handmade aesthetic */
+/* Spell Buddy v1.8 — LittleBigPlanet craft / handmade aesthetic */
 
 :root {
   --bg-top: #F7E8D4;
@@ -771,7 +771,7 @@ body::before {
   text-align: left;
 }
 
-/* --- v1.6/v1.7: hanging pose + full drop + trap dust + limb sway --- */
+/* --- v1.8: static hang + magnet snap + impact ripple; trap dust; win/lose motion --- */
 
 #trap-left,
 #trap-right {
@@ -874,106 +874,201 @@ body::before {
   100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* Suspended from noose — gentle HORIZONTAL pendulum (no vertical bounce) */
+/* Suspended from noose — STATIC by default (no idle sway/bounce) */
 #actor {
   transform-box: fill-box;
   transform-origin: 198px 90px; /* noose / neck pivot */
   transition: none;
 }
 
-#actor.hanging:not(.falling) {
-  animation: hangSway 3.2s ease-in-out infinite;
+/* Idle hang: still. Motion only on impact-ripple (miss) or falling/celebrate */
+#actor.hanging:not(.falling):not(.impact-ripple) {
+  transform: rotate(0deg);
 }
 
-@keyframes hangSway {
-  0%, 100% { transform: rotate(-3.2deg); }
-  50% { transform: rotate(3.2deg); }
+/* Brief whole-body impact after a part snaps on */
+#actor.impact-ripple:not(.falling) {
+  animation: hangImpact 0.58s ease-out;
 }
 
-/* Independent appendage sway (ragdoll-ish craft hang) — rotate only, different phase/timing */
-#actor.hanging:not(.falling) .sway-limb,
-#char-pip.celebrating .sway-limb {
+@keyframes hangImpact {
+  0% { transform: rotate(0deg); }
+  18% { transform: rotate(3.8deg); }
+  40% { transform: rotate(-2.6deg); }
+  62% { transform: rotate(1.4deg); }
+  82% { transform: rotate(-0.6deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Magnetic snap-on when a new hangman segment appears */
+#char-pip .part.snap-on {
   transform-box: fill-box;
+  animation: magnetSnap 0.38s cubic-bezier(0.15, 1.55, 0.35, 1) both;
+}
+
+#char-pip .part-1.snap-on { transform-origin: 198px 108px; }
+#char-pip .part-2.snap-on { transform-origin: 198px 148px; }
+#char-pip .part-3.snap-on { transform-origin: 176px 142px; }
+#char-pip .part-4.snap-on { transform-origin: 220px 142px; }
+#char-pip .part-5.snap-on { transform-origin: 186px 178px; }
+#char-pip .part-6.snap-on { transform-origin: 210px 178px; }
+
+@keyframes magnetSnap {
+  0% {
+    transform: scale(0.12) translate(0, -18px);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(1.22) translate(0, 2px);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.92) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+  }
+}
+
+/* Limb bases: static until reactive ripple or celebrate */
+.sway-limb {
+  transform-box: fill-box;
+}
+
+#actor .sway-arm-l { transform-origin: 176px 142px; }
+#actor .sway-arm-r { transform-origin: 220px 142px; }
+#actor .sway-leg-l { transform-origin: 186px 178px; }
+#actor .sway-leg-r { transform-origin: 210px 178px; }
+#actor .sway-coat-l { transform-origin: 174px 168px; }
+#actor .sway-coat-r { transform-origin: 222px 168px; }
+
+/* Reactive independent decaying sway (one-shot impact ripple) */
+#actor.impact-ripple:not(.falling) .sway-limb {
+  animation-timing-function: ease-out;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+#actor.impact-ripple:not(.falling) .sway-arm-l {
+  animation-name: limbReactA;
+  animation-duration: 0.72s;
+  animation-delay: 0.04s;
+}
+#actor.impact-ripple:not(.falling) .sway-arm-r {
+  animation-name: limbReactB;
+  animation-duration: 0.78s;
+  animation-delay: 0.1s;
+}
+#actor.impact-ripple:not(.falling) .sway-leg-l {
+  animation-name: limbReactC;
+  animation-duration: 0.85s;
+  animation-delay: 0.14s;
+}
+#actor.impact-ripple:not(.falling) .sway-leg-r {
+  animation-name: limbReactD;
+  animation-duration: 0.8s;
+  animation-delay: 0.08s;
+}
+#actor.impact-ripple:not(.falling) .sway-coat-l {
+  animation-name: limbReactE;
+  animation-duration: 0.9s;
+  animation-delay: 0.06s;
+}
+#actor.impact-ripple:not(.falling) .sway-coat-r {
+  animation-name: limbReactF;
+  animation-duration: 0.88s;
+  animation-delay: 0.12s;
+}
+
+/* Win celebrate: short intentional limb wiggle (finite), not idle loops */
+#char-pip.celebrating .sway-limb {
   animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
+  animation-iteration-count: 2;
   animation-direction: alternate;
 }
-
-#actor.hanging:not(.falling) .sway-arm-l,
 #char-pip.celebrating .sway-arm-l {
-  transform-origin: 176px 142px;
-  animation-name: limbSwayA;
-  animation-duration: 2.1s;
+  animation-name: limbReactA;
+  animation-duration: 0.45s;
 }
-
-#actor.hanging:not(.falling) .sway-arm-r,
 #char-pip.celebrating .sway-arm-r {
-  transform-origin: 220px 142px;
-  animation-name: limbSwayB;
-  animation-duration: 2.45s;
-  animation-delay: -0.7s;
+  animation-name: limbReactB;
+  animation-duration: 0.5s;
+  animation-delay: 0.05s;
 }
-
-#actor.hanging:not(.falling) .sway-leg-l,
 #char-pip.celebrating .sway-leg-l {
-  transform-origin: 186px 178px;
-  animation-name: limbSwayC;
-  animation-duration: 2.7s;
-  animation-delay: -1.1s;
+  animation-name: limbReactC;
+  animation-duration: 0.55s;
+  animation-delay: 0.08s;
 }
-
-#actor.hanging:not(.falling) .sway-leg-r,
 #char-pip.celebrating .sway-leg-r {
-  transform-origin: 210px 178px;
-  animation-name: limbSwayD;
-  animation-duration: 2.35s;
-  animation-delay: -0.35s;
+  animation-name: limbReactD;
+  animation-duration: 0.48s;
+  animation-delay: 0.03s;
 }
-
-#actor.hanging:not(.falling) .sway-coat-l,
 #char-pip.celebrating .sway-coat-l {
-  transform-origin: 174px 168px;
-  animation-name: limbSwayE;
-  animation-duration: 2.9s;
-  animation-delay: -0.5s;
+  animation-name: limbReactE;
+  animation-duration: 0.6s;
 }
-
-#actor.hanging:not(.falling) .sway-coat-r,
 #char-pip.celebrating .sway-coat-r {
-  transform-origin: 222px 168px;
-  animation-name: limbSwayF;
-  animation-duration: 3.1s;
-  animation-delay: -1.4s;
+  animation-name: limbReactF;
+  animation-duration: 0.58s;
+  animation-delay: 0.06s;
 }
 
-/* Stop limb sway cleanly when falling */
+/* Stop limb motion cleanly when falling */
 #actor.falling .sway-limb {
   animation: none !important;
 }
 
-@keyframes limbSwayA {
-  0% { transform: rotate(-7deg); }
-  100% { transform: rotate(6deg); }
+@keyframes limbReactA {
+  0% { transform: rotate(0deg); }
+  18% { transform: rotate(-11deg); }
+  40% { transform: rotate(7deg); }
+  62% { transform: rotate(-3.5deg); }
+  82% { transform: rotate(1.5deg); }
+  100% { transform: rotate(0deg); }
 }
-@keyframes limbSwayB {
-  0% { transform: rotate(-6deg); }
-  100% { transform: rotate(7.5deg); }
+@keyframes limbReactB {
+  0% { transform: rotate(0deg); }
+  16% { transform: rotate(10deg); }
+  38% { transform: rotate(-6.5deg); }
+  60% { transform: rotate(3.5deg); }
+  80% { transform: rotate(-1.2deg); }
+  100% { transform: rotate(0deg); }
 }
-@keyframes limbSwayC {
-  0% { transform: rotate(-5deg); }
-  100% { transform: rotate(4.5deg); }
+@keyframes limbReactC {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(-8deg); }
+  42% { transform: rotate(5.5deg); }
+  65% { transform: rotate(-2.5deg); }
+  85% { transform: rotate(1deg); }
+  100% { transform: rotate(0deg); }
 }
-@keyframes limbSwayD {
-  0% { transform: rotate(-4.5deg); }
-  100% { transform: rotate(5.5deg); }
+@keyframes limbReactD {
+  0% { transform: rotate(0deg); }
+  18% { transform: rotate(9deg); }
+  40% { transform: rotate(-5deg); }
+  62% { transform: rotate(2.8deg); }
+  82% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
 }
-@keyframes limbSwayE {
-  0% { transform: rotate(-8deg); }
-  100% { transform: rotate(5deg); }
+@keyframes limbReactE {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(-12deg); }
+  38% { transform: rotate(7deg); }
+  58% { transform: rotate(-3deg); }
+  80% { transform: rotate(1.2deg); }
+  100% { transform: rotate(0deg); }
 }
-@keyframes limbSwayF {
-  0% { transform: rotate(-5deg); }
-  100% { transform: rotate(8deg); }
+@keyframes limbReactF {
+  0% { transform: rotate(0deg); }
+  17% { transform: rotate(11deg); }
+  39% { transform: rotate(-6deg); }
+  60% { transform: rotate(3deg); }
+  82% { transform: rotate(-1.2deg); }
+  100% { transform: rotate(0deg); }
 }
 
 /* Detach + drop ALL THE WAY DOWN through trap (off-screen / deep below stage) */
