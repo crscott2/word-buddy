@@ -1,4 +1,4 @@
-/* Spell Buddy v1.6 — LittleBigPlanet craft / handmade aesthetic */
+/* Spell Buddy v1.7 — LittleBigPlanet craft / handmade aesthetic */
 
 :root {
   --bg-top: #F7E8D4;
@@ -771,7 +771,7 @@ body::before {
   text-align: left;
 }
 
-/* --- v1.6: hanging pose + full drop + trap dust --- */
+/* --- v1.6/v1.7: hanging pose + full drop + trap dust + limb sway --- */
 
 #trap-left,
 #trap-right {
@@ -874,20 +874,106 @@ body::before {
   100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* Suspended from noose — slight craft swing while playing */
+/* Suspended from noose — gentle HORIZONTAL pendulum (no vertical bounce) */
 #actor {
   transform-box: fill-box;
-  transform-origin: 198px 90px; /* noose / neck */
+  transform-origin: 198px 90px; /* noose / neck pivot */
   transition: none;
 }
 
 #actor.hanging:not(.falling) {
-  animation: hangSwing 2.8s ease-in-out infinite;
+  animation: hangSway 3.2s ease-in-out infinite;
 }
 
-@keyframes hangSwing {
-  0%, 100% { transform: rotate(-2.8deg); }
-  50% { transform: rotate(2.8deg); }
+@keyframes hangSway {
+  0%, 100% { transform: rotate(-3.2deg); }
+  50% { transform: rotate(3.2deg); }
+}
+
+/* Independent appendage sway (ragdoll-ish craft hang) — rotate only, different phase/timing */
+#actor.hanging:not(.falling) .sway-limb,
+#char-pip.celebrating .sway-limb {
+  transform-box: fill-box;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#actor.hanging:not(.falling) .sway-arm-l,
+#char-pip.celebrating .sway-arm-l {
+  transform-origin: 176px 142px;
+  animation-name: limbSwayA;
+  animation-duration: 2.1s;
+}
+
+#actor.hanging:not(.falling) .sway-arm-r,
+#char-pip.celebrating .sway-arm-r {
+  transform-origin: 220px 142px;
+  animation-name: limbSwayB;
+  animation-duration: 2.45s;
+  animation-delay: -0.7s;
+}
+
+#actor.hanging:not(.falling) .sway-leg-l,
+#char-pip.celebrating .sway-leg-l {
+  transform-origin: 186px 178px;
+  animation-name: limbSwayC;
+  animation-duration: 2.7s;
+  animation-delay: -1.1s;
+}
+
+#actor.hanging:not(.falling) .sway-leg-r,
+#char-pip.celebrating .sway-leg-r {
+  transform-origin: 210px 178px;
+  animation-name: limbSwayD;
+  animation-duration: 2.35s;
+  animation-delay: -0.35s;
+}
+
+#actor.hanging:not(.falling) .sway-coat-l,
+#char-pip.celebrating .sway-coat-l {
+  transform-origin: 174px 168px;
+  animation-name: limbSwayE;
+  animation-duration: 2.9s;
+  animation-delay: -0.5s;
+}
+
+#actor.hanging:not(.falling) .sway-coat-r,
+#char-pip.celebrating .sway-coat-r {
+  transform-origin: 222px 168px;
+  animation-name: limbSwayF;
+  animation-duration: 3.1s;
+  animation-delay: -1.4s;
+}
+
+/* Stop limb sway cleanly when falling */
+#actor.falling .sway-limb {
+  animation: none !important;
+}
+
+@keyframes limbSwayA {
+  0% { transform: rotate(-7deg); }
+  100% { transform: rotate(6deg); }
+}
+@keyframes limbSwayB {
+  0% { transform: rotate(-6deg); }
+  100% { transform: rotate(7.5deg); }
+}
+@keyframes limbSwayC {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(4.5deg); }
+}
+@keyframes limbSwayD {
+  0% { transform: rotate(-4.5deg); }
+  100% { transform: rotate(5.5deg); }
+}
+@keyframes limbSwayE {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(5deg); }
+}
+@keyframes limbSwayF {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(8deg); }
 }
 
 /* Detach + drop ALL THE WAY DOWN through trap (off-screen / deep below stage) */
@@ -925,17 +1011,17 @@ body::before {
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-/* Win: cheerful bounce while still on the rope (no trap fall) */
+/* Win: cheerful side-to-side sway on the rope (no vertical bounce, no trap fall) */
 #char-pip.celebrating {
-  animation: celebrate 0.75s ease;
-  transform-origin: 198px 132px;
+  animation: celebrateSway 0.9s ease-in-out;
+  transform-origin: 198px 132px; /* neck-ish within scaled local space */
 }
 
-@keyframes celebrate {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-10px) rotate(-5deg); }
-  50% { transform: translateY(0) rotate(4deg); }
-  75% { transform: translateY(-6px) rotate(-3deg); }
+@keyframes celebrateSway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  50% { transform: rotate(7deg); }
+  75% { transform: rotate(-5deg); }
 }
 
 #shark-fin {
