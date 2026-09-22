@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Spell Buddy" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <!-- Landscape is primary UX; orientation left free for Safari A2HS -->
   <meta name="description" content="Silly spelling Hangman for kids — LittleBigPlanet craft vibe: felt pirate on a cardboard beach stage, big letters, school word lists." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
@@ -22,7 +24,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.8</span>
+        <span class="version" title="App version">v1.9</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -35,6 +37,7 @@
       <p id="progress" class="progress">Word 1 of 4</p>
       <p id="joke-line" class="joke-line" aria-live="polite"></p>
 
+      <div class="play-layout">
       <section class="stage beach-stage" aria-label="Craft beach pirate buddy stage">
         <p id="character-hook" class="character-hook">Captain Pip hangs from the craft noose — spell carefully!</p>
         <div class="beach-frame">
@@ -447,6 +450,7 @@
         <p id="buddy-caption" class="buddy-caption">Ready for crafty beach spelling!</p>
       </section>
 
+      <div class="play-side">
       <section class="word-area" aria-label="Spelling word">
         <div id="word-blanks" class="word-blanks" role="text"></div>
       </section>
@@ -454,6 +458,8 @@
       <section class="keyboard-wrap" aria-label="Letter buttons">
         <div id="keyboard" class="keyboard"></div>
       </section>
+      </div>
+      </div>
 
       <div id="outcome" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="outcome-title">
         <div class="outcome-card">
@@ -473,6 +479,8 @@
       </div>
       <p class="hint">Library starts as the Fry 100 sight words. Toggle which ones he practices — play only uses words that are On. Add custom words anytime. Kids play offline — nothing leaves this device.</p>
 
+      <div class="parents-layout">
+      <div class="parents-forms">
       <form id="add-one-form" class="add-one">
         <label for="word-input">Add one word</label>
         <div class="row">
@@ -486,7 +494,9 @@
         <textarea id="paste-input" rows="4" placeholder="cat, ship, green&#10;beach&#10;happy"></textarea>
         <button type="submit" class="btn primary">Add list</button>
       </form>
+      </div>
 
+      <div class="parents-list-col">
       <div class="list-toolbar">
         <h3 class="list-heading">Words (<span id="word-count">0 of 0 on</span>)</h3>
         <div class="bulk-toggles">
@@ -498,6 +508,8 @@
 
       <div class="danger-zone">
         <button type="button" id="btn-reset-samples" class="btn secondary">Restore Fry 100 (all On)</button>
+      </div>
+      </div>
       </div>
     </main>
   </div>

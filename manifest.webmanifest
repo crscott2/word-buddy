@@ -1,7 +1,7 @@
 {
   "name": "Spell Buddy — Spelling Hangman",
   "short_name": "Spell Buddy",
-  "description": "Crafty LittleBigPlanet-style kid spelling Hangman. Offline PWA.",
+  "description": "Crafty LittleBigPlanet-style kid spelling Hangman. Landscape-first for iPad. Offline PWA.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

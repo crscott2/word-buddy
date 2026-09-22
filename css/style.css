@@ -1,4 +1,4 @@
-/* Spell Buddy v1.8 — LittleBigPlanet craft / handmade aesthetic */
+/* Spell Buddy v1.9 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -71,6 +71,37 @@ body::before {
   padding-bottom: max(28px, env(safe-area-inset-bottom));
   position: relative;
   z-index: 1;
+}
+
+/* Play layout: stacked in portrait; side-by-side in landscape */
+.play-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.play-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.keyboard-wrap {
+  width: 100%;
+}
+
+.parents-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.parents-forms,
+.parents-list-col {
+  min-width: 0;
 }
 
 /* ===== Header — fabric banner ===== */
@@ -656,17 +687,317 @@ body::before {
   border-top: 3px dashed var(--panel-edge);
 }
 
-@media (orientation: landscape) and (max-height: 700px) {
-  #hangman { max-height: 40vh; width: min(58vw, 340px); }
-  .word-area { margin: 8px 0; min-height: 3.2rem; }
-  .keyboard { gap: 6px; }
-  .key { min-height: 44px; font-size: 1.1rem; }
-  .buddy-caption { font-size: 0.8rem; margin: 4px 0 2px; }
-  .character-hook { font-size: 0.9rem; margin-bottom: 4px; }
-}
-
 @media (min-width: 600px) {
   .keyboard { grid-template-columns: repeat(9, 1fr); }
+}
+
+/* ===== v1.9 landscape-first (iPad landscape primary) ===== */
+@media (orientation: landscape) {
+  html, body {
+    height: 100%;
+    min-height: 100dvh;
+  }
+
+  #app {
+    max-width: none;
+    width: 100%;
+    min-height: 100dvh;
+    padding: 6px 12px 10px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Compact fabric banner */
+  .top-bar {
+    margin-bottom: 6px;
+    padding: 4px 12px;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+
+  .top-bar::after {
+    inset: 3px;
+    border-radius: 10px;
+  }
+
+  .brand-mark { font-size: 1.25rem; }
+  .brand h1 { font-size: 1.05rem; }
+  .version {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+  }
+  .linkish {
+    min-height: 40px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+
+  #screen-play {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .progress {
+    margin: 0 0 2px;
+    padding: 2px 8px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .joke-line {
+    min-height: 1.1em;
+    margin: 0 0 4px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .empty-pool-banner {
+    margin: 0 0 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  /* Wide: stage | blanks+keyboard */
+  .play-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(280px, 1.05fr) minmax(320px, 1.15fr);
+    grid-template-rows: 1fr;
+    gap: 12px 16px;
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  .stage.beach-stage {
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .character-hook {
+    margin: 0 0 4px;
+    font-size: 0.82rem;
+    padding: 4px 10px;
+    min-height: 0;
+    box-shadow: 0 2px 0 var(--cork);
+    flex-shrink: 0;
+  }
+
+  .beach-frame {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    border-width: 4px;
+    outline-offset: -8px;
+  }
+
+  #hangman {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .buddy-caption {
+    margin: 4px 0 0;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .play-side {
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .word-area {
+    margin: 0;
+    min-height: 0;
+    flex-shrink: 0;
+  }
+
+  .blank {
+    width: clamp(2.2rem, 4.5vw, 3.4rem);
+    height: clamp(2.8rem, 5.5vw, 4rem);
+    font-size: clamp(1.4rem, 3.5vw, 2.3rem);
+  }
+
+  .keyboard-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .keyboard {
+    flex: 1;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    align-content: stretch;
+  }
+
+  .key {
+    min-height: 48px;
+    height: 100%;
+    font-size: 1.2rem;
+    border-radius: 12px;
+  }
+
+  /* Outcome / gate readable in short landscape height */
+  .outcome {
+    padding: 12px;
+    align-items: center;
+  }
+
+  .outcome-card {
+    max-width: min(420px, 70vw);
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    padding: 18px 20px;
+    border-radius: 22px;
+  }
+
+  .outcome-emoji { font-size: 2.4rem; margin: 0; }
+  .outcome-card h2 { font-size: 1.35rem; margin: 0 0 6px; }
+  .outcome-card p { font-size: 0.95rem; margin: 0 0 12px; }
+  .outcome-card .btn.big {
+    padding: 12px 18px;
+    font-size: 1.05rem;
+    max-width: 260px;
+  }
+
+  /* Parents: two-column when wide enough */
+  #screen-words {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .parent-header {
+    margin-bottom: 6px;
+    padding: 8px 12px;
+    flex-shrink: 0;
+  }
+
+  .parent-header h2 { font-size: 1.1rem; }
+
+  .hint {
+    margin: 0 0 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .parents-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+    gap: 14px;
+    align-items: start;
+    min-height: 0;
+  }
+
+  .parents-forms {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+  }
+
+  .add-one,
+  .paste-block {
+    margin-bottom: 0;
+    padding: 10px 12px;
+  }
+
+  #paste-input { min-height: 4.5rem; }
+
+  .parents-list-col {
+    min-height: 0;
+    max-height: calc(100dvh - 120px);
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .word-list { gap: 6px; }
+
+  .word-list li {
+    padding: 8px 10px;
+  }
+
+  .danger-zone {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+}
+
+/* Extra-short landscape (phones / split view): keep big targets, tighten */
+@media (orientation: landscape) and (max-height: 520px) {
+  .top-bar { padding: 2px 10px; margin-bottom: 4px; }
+  .progress, .joke-line { font-size: 0.78rem; }
+  .character-hook { display: none; }
+  .buddy-caption { display: none; }
+  .play-layout {
+    grid-template-columns: minmax(220px, 0.95fr) minmax(280px, 1.2fr);
+    gap: 8px 12px;
+  }
+  .keyboard { gap: 6px; }
+  .key { min-height: 44px; font-size: 1.05rem; }
+  .blank {
+    width: clamp(1.9rem, 4vw, 2.8rem);
+    height: clamp(2.4rem, 5vw, 3.2rem);
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+  }
+  .outcome-card { padding: 14px 16px; }
+}
+
+/* Tall/wide tablets in landscape: roomier keyboard columns */
+@media (orientation: landscape) and (min-width: 900px) and (min-height: 600px) {
+  .keyboard { grid-template-columns: repeat(9, 1fr); gap: 10px; }
+  .key { min-height: 54px; font-size: 1.3rem; }
+  .play-layout {
+    grid-template-columns: minmax(340px, 1fr) minmax(400px, 1.2fr);
+  }
+}
+
+/* Narrow landscape (unlikely on iPad): fall back toward stack if too tight */
+@media (orientation: landscape) and (max-width: 700px) {
+  .play-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow: auto;
+  }
+  #hangman {
+    max-height: 38vh;
+    width: min(70vw, 360px);
+    height: auto;
+  }
+  .parents-layout {
+    grid-template-columns: 1fr;
+  }
+  .parents-list-col {
+    max-height: none;
+  }
 }
 
 /* --- empty pool + toggles --- */

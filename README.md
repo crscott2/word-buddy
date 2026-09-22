@@ -1,9 +1,12 @@
-# Spell Buddy (Spelling Hangman) — v1.8
+# Spell Buddy (Spelling Hangman) — v1.9
 
-Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on iPad.
+Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
-- Big letter blanks + large A–Z tap keys (fabric / cardboard tile look)
+- **Landscape-first layout (v1.9)**: hangman/beach stage beside word blanks + large letter keyboard (stacked fallback in portrait)
+- Compact header in landscape; outcome popup sized for short landscape height
+- Parents screen two-column in landscape (forms | word list)
+- Big letter blanks + large A–Z tap keys (fabric / cardboard tile look) — kids touch targets kept large
 - **LittleBigPlanet craft vibe**: felt, cardboard, cork, yarn stitches, buttons — soft cozy diorama (not flat Material Design)
 - **Craft beach stage**: felt sky, fabric ocean, sand-side cardboard palm, cork plank + bigger cardboard gallows, felt shark fin
 - **Environment props**: open cardboard treasure chest (treasure visible), pirate sword in foreground, felt/cardboard seagulls drifting in the sky
@@ -22,8 +25,8 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Parent library seeded with **Fry 100** sight words; toggle On/Off per word
 - Play pool = words that are On; gentle message if none are on
 - Add one / paste list (custom words default On); edit/delete
-- Offline PWA shell (manifest + service worker)
-- Version label **v1.8** in the UI
+- Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
+- Version label **v1.9** in the UI
 
 ## Preview locally
 ```bash
