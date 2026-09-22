@@ -4,6 +4,276 @@
   var STORAGE_KEY = "spellBuddy.words.v2";
   var STORAGE_KEY_V1 = "spellBuddy.words.v1";
 
+
+  var MUTE_KEY = "spellBuddy.audioMuted.v1";
+
+  /** v1.21: Web Audio synthesis — beach ambience + pirate miss cue (offline / PWA) */
+  var audio = {
+    ctx: null,
+    muted: false,
+    unlocked: false,
+    ambience: null, // { noise, hiss, lfo, master }
+    noiseBuf: null,
+    unlockArmed: false
+  };
+
+  function loadMutePref() {
+    try {
+      return localStorage.getItem(MUTE_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveMutePref(muted) {
+    try {
+      localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+    } catch (e) {}
+  }
+
+  function getAudioCtx() {
+    if (audio.ctx) return audio.ctx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      audio.ctx = new AC();
+    } catch (e) {
+      return null;
+    }
+    return audio.ctx;
+  }
+
+  function makeBrownNoiseBuffer(ctx, seconds) {
+    var len = Math.floor(ctx.sampleRate * seconds);
+    var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < len; i++) {
+      var white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = Math.max(-1, Math.min(1, last * 3.5));
+    }
+    return buf;
+  }
+
+  function ensureNoiseBuffer(ctx) {
+    if (!audio.noiseBuf) audio.noiseBuf = makeBrownNoiseBuffer(ctx, 4);
+    return audio.noiseBuf;
+  }
+
+  function stopAmbience() {
+    if (!audio.ambience) return;
+    var a = audio.ambience;
+    try {
+      a.noise.stop();
+    } catch (e) {}
+    try {
+      a.hiss.stop();
+    } catch (e) {}
+    try {
+      a.lfo.stop();
+    } catch (e) {}
+    try {
+      a.master.disconnect();
+    } catch (e) {}
+    audio.ambience = null;
+  }
+
+  function startAmbience() {
+    if (audio.muted || audio.ambience) return;
+    var ctx = getAudioCtx();
+    if (!ctx || ctx.state === "suspended") return;
+
+    var master = ctx.createGain();
+    /* Kid-friendly soft level — gentle surf, not loud */
+    master.gain.value = 0.04;
+    master.connect(ctx.destination);
+
+    var buf = ensureNoiseBuffer(ctx);
+
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+    var filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 380;
+    filter.Q.value = 0.6;
+    var waveGain = ctx.createGain();
+    waveGain.gain.value = 0.75;
+
+    /* Slow swell so it feels like waves, not static hiss */
+    var lfo = ctx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.07;
+    var lfoGain = ctx.createGain();
+    lfoGain.gain.value = 220;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    var hiss = ctx.createBufferSource();
+    hiss.buffer = buf;
+    hiss.loop = true;
+    hiss.playbackRate.value = 1.15;
+    var hissFilter = ctx.createBiquadFilter();
+    hissFilter.type = "bandpass";
+    hissFilter.frequency.value = 1100;
+    hissFilter.Q.value = 0.45;
+    var hissGain = ctx.createGain();
+    hissGain.gain.value = 0.12;
+
+    noise.connect(filter);
+    filter.connect(waveGain);
+    waveGain.connect(master);
+    hiss.connect(hissFilter);
+    hissFilter.connect(hissGain);
+    hissGain.connect(master);
+
+    try {
+      noise.start();
+      hiss.start();
+      lfo.start();
+    } catch (e) {
+      try {
+        master.disconnect();
+      } catch (e2) {}
+      return;
+    }
+
+    audio.ambience = {
+      noise: noise,
+      hiss: hiss,
+      lfo: lfo,
+      master: master
+    };
+  }
+
+  function unlockAudio() {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    audio.unlocked = true;
+    function afterResume() {
+      if (!audio.muted) startAmbience();
+    }
+    if (ctx.state === "suspended") {
+      ctx.resume().then(afterResume).catch(function () {});
+    } else {
+      afterResume();
+    }
+  }
+
+  function armAudioUnlock() {
+    if (audio.unlockArmed) return;
+    audio.unlockArmed = true;
+    function onGesture() {
+      unlockAudio();
+      document.removeEventListener("pointerdown", onGesture, true);
+      document.removeEventListener("keydown", onGesture, true);
+    }
+    document.addEventListener("pointerdown", onGesture, true);
+    document.addEventListener("keydown", onGesture, true);
+  }
+
+  /** Short comic pirate “arr!” — not scary; Web Audio only */
+  function playPirateMiss() {
+    if (audio.muted) return;
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+
+    function fire() {
+      var t0 = ctx.currentTime;
+      var master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, t0);
+      master.gain.exponentialRampToValueAtTime(0.28, t0 + 0.025);
+      master.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
+      master.connect(ctx.destination);
+
+      var nLen = Math.floor(ctx.sampleRate * 0.45);
+      var nBuf = ctx.createBuffer(1, nLen, ctx.sampleRate);
+      var nd = nBuf.getChannelData(0);
+      for (var i = 0; i < nLen; i++) nd[i] = Math.random() * 2 - 1;
+      var noise = ctx.createBufferSource();
+      noise.buffer = nBuf;
+      var nFilter = ctx.createBiquadFilter();
+      nFilter.type = "bandpass";
+      nFilter.frequency.value = 720;
+      nFilter.Q.value = 1.1;
+      var nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.35, t0);
+      nGain.gain.exponentialRampToValueAtTime(0.04, t0 + 0.32);
+      noise.connect(nFilter);
+      nFilter.connect(nGain);
+      nGain.connect(master);
+
+      var osc = ctx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(175, t0);
+      osc.frequency.exponentialRampToValueAtTime(115, t0 + 0.38);
+
+      var osc2 = ctx.createOscillator();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(350, t0);
+      osc2.frequency.exponentialRampToValueAtTime(230, t0 + 0.38);
+
+      var vFilter = ctx.createBiquadFilter();
+      vFilter.type = "bandpass";
+      vFilter.frequency.setValueAtTime(480, t0);
+      vFilter.frequency.linearRampToValueAtTime(620, t0 + 0.12);
+      vFilter.frequency.linearRampToValueAtTime(380, t0 + 0.38);
+      vFilter.Q.value = 2.2;
+
+      var vGain = ctx.createGain();
+      vGain.gain.value = 0.22;
+
+      osc.connect(vFilter);
+      osc2.connect(vFilter);
+      vFilter.connect(vGain);
+      vGain.connect(master);
+
+      try {
+        noise.start(t0);
+        noise.stop(t0 + 0.45);
+        osc.start(t0);
+        osc.stop(t0 + 0.45);
+        osc2.start(t0);
+        osc2.stop(t0 + 0.45);
+      } catch (e) {}
+    }
+
+    if (ctx.state === "suspended") {
+      ctx.resume().then(fire).catch(function () {});
+    } else {
+      fire();
+    }
+  }
+
+  function syncMuteButton() {
+    var btn = els.btnMute || $("btn-mute");
+    if (!btn) return;
+    btn.setAttribute("aria-pressed", audio.muted ? "true" : "false");
+    btn.setAttribute(
+      "aria-label",
+      audio.muted ? "Unmute sound" : "Mute sound"
+    );
+    btn.title = audio.muted ? "Unmute" : "Mute";
+    btn.textContent = audio.muted ? "🔇" : "🔊";
+  }
+
+  function setMuted(muted) {
+    audio.muted = !!muted;
+    saveMutePref(audio.muted);
+    syncMuteButton();
+    if (audio.muted) {
+      stopAmbience();
+    } else {
+      unlockAudio();
+    }
+  }
+
+  function toggleMute() {
+    setMuted(!audio.muted);
+  }
+
+
   // Scholastic Fry 100 Word List (flashcards) — stored lowercase; "I" displays capital
   var FRY_100 = [
     "the", "of", "and", "a", "to", "in", "is", "you", "that", "it",
@@ -864,6 +1134,7 @@
       if (allLettersGuessed()) showOutcome(true);
     } else {
       state.misses += 1;
+      playPirateMiss();
       updateHangman();
       syncKeyboard();
       if (state.misses >= MAX_MISSES) showOutcome(false);
@@ -1263,6 +1534,12 @@
 
   function bind() {
     els.btnParents.addEventListener("click", openParentGate);
+    if (els.btnMute) {
+      els.btnMute.addEventListener("click", function (e) {
+        e.preventDefault();
+        toggleMute();
+      });
+    }
     els.gateCancel.addEventListener("click", closeParentGate);
     if (els.gatePad) {
       els.gatePad.addEventListener("click", function (e) {
@@ -1369,6 +1646,7 @@
     els.outcomeWord = $("outcome-word");
     els.btnNext = $("btn-next");
     els.btnParents = $("btn-parents");
+    els.btnMute = $("btn-mute");
     els.gateCancel = $("gate-cancel");
     els.gateProblem = $("gate-problem");
     els.gateAnswer = $("gate-answer");
@@ -1397,6 +1675,9 @@
 
   function init() {
     cacheEls();
+    audio.muted = loadMutePref();
+    syncMuteButton();
+    armAudioUnlock();
     state.library = loadLibrary();
     saveLibrary(state.library); // persist v2 (and migration)
     buildKeyboard();

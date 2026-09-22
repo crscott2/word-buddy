@@ -1,8 +1,9 @@
-# Spell Buddy (Spelling Hangman) — v1.20
+# Spell Buddy (Spelling Hangman) — v1.21
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Gentle audio (v1.21)**: soft beach wave ambience (Web Audio synthesis, offline-friendly) starts after the first tap; comic pirate “arr!” on each wrong letter; header mute/unmute with preference saved in localStorage
 - **Shark fin swim (v1.20)**: felt fin glides slowly back and forth along the ocean waves (gentle continuous LBP craft motion); mirrors at each turn so the tip leans into the swim direction
 - **Parents scroll leak closed (v1.19)**: landscape CSS had used `#screen-words { display: flex }`, which overrode `.screen.hidden` and left the Parents dictionary in the document below play — kids could scroll past the game and bypass the math gate. Hidden screens now stay `display: none`, and landscape locks document overflow
 - **Parents math gate (v1.18)**: tapping Parents shows an easy single-digit × single-digit problem (hardest facts skipped) with a large craft number pad; correct → Parents dictionary, wrong → gentle retry with a new problem, cancel → back to play
@@ -40,7 +41,7 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.20** in the UI
+- Version label **v1.21** in the UI
 
 ## Preview locally
 ```bash
