@@ -22,7 +22,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.5</span>
+        <span class="version" title="App version">v1.6</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -36,10 +36,10 @@
       <p id="joke-line" class="joke-line" aria-live="polite"></p>
 
       <section class="stage beach-stage" aria-label="Craft beach pirate buddy stage">
-        <p id="character-hook" class="character-hook">Captain Pip (felt edition) is counting on you!</p>
+        <p id="character-hook" class="character-hook">Captain Pip hangs from the craft noose — spell carefully!</p>
         <div class="beach-frame">
           <svg id="hangman" viewBox="0 0 360 280" role="img" aria-labelledby="hangman-title">
-            <title id="hangman-title">Craft-world pirate buddy under a big cardboard gallows</title>
+            <title id="hangman-title">Craft-world pirate buddy hanging from a cartoon noose under a big cardboard gallows</title>
             <defs>
               <!-- Felt sky -->
               <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -142,6 +142,63 @@
                 <circle cx="72" cy="242" r="2.5" fill="#fff" opacity="0.5"/>
                 <circle cx="290" cy="252" r="6" fill="#FFF0D0" stroke="#E0C890" stroke-width="2"/>
                 <circle cx="290" cy="252" r="2" fill="#E0C890" opacity="0.6"/>
+
+                <!-- ===== CRAFT PROPS (v1.6) — felt/cardboard beach toys ===== -->
+                <!-- felt/cardboard seagulls in the sky -->
+                <g id="seagulls" aria-hidden="true">
+                  <g class="seagull sg1" transform="translate(48,42)">
+                    <path d="M0 8 Q8 0 16 8 Q24 0 32 8" fill="none" stroke="#F8F4EE" stroke-width="3.5" stroke-linecap="round"/>
+                    <path d="M0 8 Q8 0 16 8 Q24 0 32 8" fill="none" stroke="#C4B8A0" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.55"/>
+                    <circle cx="16" cy="9" r="2.2" fill="#FFF8F0" stroke="#C4B8A0" stroke-width="1"/>
+                  </g>
+                  <g class="seagull sg2" transform="translate(130,28)">
+                    <path d="M0 6 Q6 -1 12 6 Q18 -1 24 6" fill="none" stroke="#FFF8EE" stroke-width="2.8" stroke-linecap="round"/>
+                    <path d="M0 6 Q6 -1 12 6 Q18 -1 24 6" fill="none" stroke="#B8A888" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>
+                  </g>
+                  <g class="seagull sg3" transform="translate(220,48)">
+                    <path d="M0 7 Q7 0 14 7 Q21 0 28 7" fill="none" stroke="#F8F0E4" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M0 7 Q7 0 14 7 Q21 0 28 7" fill="none" stroke="#C4B8A0" stroke-width="1.1" stroke-dasharray="2 2" opacity="0.5"/>
+                    <circle cx="14" cy="8" r="1.8" fill="#FFF8F0" stroke="#C4B8A0" stroke-width="0.9"/>
+                  </g>
+                </g>
+
+                <!-- cardboard treasure chest on the sand (left of gallows) -->
+                <g id="treasure-chest" transform="translate(28,218)" aria-hidden="true">
+                  <!-- shadow -->
+                  <ellipse cx="28" cy="42" rx="26" ry="5" fill="#5C4030" opacity="0.22"/>
+                  <!-- chest body -->
+                  <rect x="4" y="18" width="48" height="24" rx="4" fill="#C49050" stroke="#6B4226" stroke-width="2.5"/>
+                  <rect x="4" y="18" width="48" height="24" rx="4" fill="url(#corkSpeck)" opacity="0.35"/>
+                  <!-- lid -->
+                  <path d="M4 20 Q28 2 52 20 L52 24 L4 24 Z" fill="#D4A060" stroke="#6B4226" stroke-width="2.5"/>
+                  <path d="M10 16 Q28 6 46 16" fill="none" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.55"/>
+                  <!-- metal bands -->
+                  <rect x="4" y="28" width="48" height="4" fill="#E8C060" stroke="#A88830" stroke-width="1"/>
+                  <rect x="4" y="38" width="48" height="3" fill="#E8C060" stroke="#A88830" stroke-width="1"/>
+                  <!-- lock button -->
+                  <rect x="22" y="26" width="12" height="10" rx="2" fill="#F0D060" stroke="#A88830" stroke-width="1.5"/>
+                  <circle cx="28" cy="31" r="2" fill="#8B5A2B"/>
+                  <!-- tiny felt gem peek -->
+                  <circle cx="14" cy="34" r="2.5" fill="#6AC8A0" stroke="#3A8870" stroke-width="1" opacity="0.85"/>
+                  <circle cx="42" cy="34" r="2.2" fill="#E07060" stroke="#A04038" stroke-width="1" opacity="0.85"/>
+                </g>
+
+                <!-- pirate sword stuck in sand near chest / gallows -->
+                <g id="pirate-sword" transform="translate(78,200)" aria-hidden="true">
+                  <!-- shadow -->
+                  <ellipse cx="8" cy="52" rx="14" ry="4" fill="#5C4030" opacity="0.2"/>
+                  <!-- blade (cardboard silver) angled into sand -->
+                  <path d="M18 8 L22 10 L10 48 L6 46 Z" fill="#E8E4F0" stroke="#8A8498" stroke-width="1.8"/>
+                  <path d="M19 12 L12 42" fill="none" stroke="#C8C4D4" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                  <!-- crossguard -->
+                  <rect x="2" y="6" width="28" height="5" rx="2" fill="#F0D060" stroke="#A88830" stroke-width="1.5"/>
+                  <!-- handle -->
+                  <rect x="12" y="-6" width="8" height="14" rx="2" fill="#8B3A2A" stroke="#5A2018" stroke-width="1.5"/>
+                  <path d="M13 -2 H19 M13 2 H19" stroke="#C46858" stroke-width="1" stroke-dasharray="2 1" opacity="0.7"/>
+                  <!-- pommel button -->
+                  <circle cx="16" cy="-8" r="4" fill="#F0D060" stroke="#A88830" stroke-width="1.5"/>
+                  <circle cx="16" cy="-8" r="1.5" fill="#A88830"/>
+                </g>
               </g>
 
               <!-- ===== CARDBOARD / CORK GALLOWS + PLANK (v1.5 bigger) ===== -->
@@ -178,10 +235,19 @@
                 <line x1="112" y1="29" x2="226" y2="29" stroke="#8B5A2B" stroke-width="1.4" stroke-dasharray="5 3" opacity="0.4"/>
                 <path d="M128 48 L178 34" fill="none" stroke="#A87848" stroke-width="9" stroke-linecap="round"/>
                 <path d="M128 48 L178 34" fill="none" stroke="#6B4226" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
-                <!-- yarn rope (decorative) — hangs at character center x=198 -->
-                <path d="M198 38 Q198 55 198 78" fill="none" stroke="#C4A070" stroke-width="5" stroke-linecap="round"/>
-                <path d="M198 38 Q198 55 198 78" fill="none" stroke="#A88850" stroke-width="1.8" stroke-dasharray="2 2" opacity="0.6"/>
-                <ellipse cx="198" cy="86" rx="13" ry="8" fill="none" stroke="#C4A070" stroke-width="3.5"/>
+                <!-- yarn rope + cartoon noose (stays on gallows; character hangs from this) -->
+                <g id="rope-noose" aria-hidden="true">
+                  <path id="hang-rope" d="M198 38 L198 78" fill="none" stroke="#C4A070" stroke-width="5" stroke-linecap="round"/>
+                  <path d="M198 38 L198 78" fill="none" stroke="#A88850" stroke-width="1.8" stroke-dasharray="2 2" opacity="0.6"/>
+                  <!-- knot above loop -->
+                  <ellipse cx="198" cy="76" rx="5" ry="4" fill="#C4A070" stroke="#8B6A40" stroke-width="1.5"/>
+                  <ellipse cx="198" cy="76" rx="2" ry="1.5" fill="#A88850" opacity="0.5"/>
+                  <!-- kid-safe classic hangman noose silhouette (around neck) -->
+                  <ellipse id="noose-loop" cx="198" cy="90" rx="15" ry="11" fill="none" stroke="#C4A070" stroke-width="4"/>
+                  <ellipse cx="198" cy="90" rx="15" ry="11" fill="none" stroke="#A88850" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.55"/>
+                  <!-- small coil hint -->
+                  <path d="M183 88 Q178 90 183 92" fill="none" stroke="#C4A070" stroke-width="2.5" stroke-linecap="round"/>
+                </g>
                 <ellipse cx="115" cy="206" rx="20" ry="6" fill="#5C4030" opacity="0.3"/>
               </g>
 
@@ -202,9 +268,10 @@
                 <circle class="dust-ring r2" cx="198" cy="200" r="10" fill="none" stroke="#E8D4B0" stroke-width="2" stroke-dasharray="2 2" opacity="0.8"/>
               </g>
 
-              <!-- ===== ACTOR — smaller craft Pip / skeleton under crossbeam ===== -->
-              <g id="actor" class="actor">
-                <g id="actor-scale" transform="translate(198 206) scale(0.68) translate(-198 -206)">
+              <!-- ===== ACTOR — smaller craft Pip / skeleton HANGING from noose (neck pivot) ===== -->
+              <g id="actor" class="actor hanging">
+                <!-- pivot at neck (local ~132) → visual ~90 under noose; feet float above plank -->
+                <g id="actor-scale" transform="translate(198 90) scale(0.68) translate(-198 -132)">
                 <g id="char-pip" class="character" data-char="pip">
                   <!-- 1. Felt head + yarn bandana + button eye + stitch grin -->
                   <g class="part part-1 hidden">
@@ -269,33 +336,33 @@
                     <circle cx="204" cy="160" r="4" fill="#F0D060" stroke="#C4A020" stroke-width="1.5"/>
                     <circle cx="204" cy="160" r="1.5" fill="#C4A020"/>
                   </g>
-                  <!-- 3. Left arm — felt tube -->
+                  <!-- 3. Left arm — felt tube dangling (hanging pose) -->
                   <g class="part part-3 hidden">
-                    <path d="M176 142 Q158 152 148 172" fill="none" stroke="#F0C898" stroke-width="9" stroke-linecap="round"/>
-                    <path d="M176 142 Q158 152 148 172" fill="none" stroke="#C48858" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
-                    <circle cx="146" cy="176" r="7" fill="#F0C898" stroke="#C48858" stroke-width="2"/>
-                    <circle cx="146" cy="176" r="2.5" fill="#C48858" opacity="0.35"/>
+                    <path d="M176 142 Q166 162 158 186" fill="none" stroke="#F0C898" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M176 142 Q166 162 158 186" fill="none" stroke="#C48858" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
+                    <circle cx="156" cy="190" r="7" fill="#F0C898" stroke="#C48858" stroke-width="2"/>
+                    <circle cx="156" cy="190" r="2.5" fill="#C48858" opacity="0.35"/>
                   </g>
-                  <!-- 4. Right arm -->
+                  <!-- 4. Right arm — dangling (hanging pose) -->
                   <g class="part part-4 hidden">
-                    <path d="M220 142 Q238 150 248 170" fill="none" stroke="#F0C898" stroke-width="9" stroke-linecap="round"/>
-                    <path d="M220 142 Q238 150 248 170" fill="none" stroke="#C48858" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
-                    <circle cx="250" cy="174" r="7" fill="#F0C898" stroke="#C48858" stroke-width="2"/>
-                    <circle cx="250" cy="174" r="2.5" fill="#C48858" opacity="0.35"/>
+                    <path d="M220 142 Q230 162 238 186" fill="none" stroke="#F0C898" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M220 142 Q230 162 238 186" fill="none" stroke="#C48858" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
+                    <circle cx="240" cy="190" r="7" fill="#F0C898" stroke="#C48858" stroke-width="2"/>
+                    <circle cx="240" cy="190" r="2.5" fill="#C48858" opacity="0.35"/>
                   </g>
-                  <!-- 5. Left leg + fabric boot -->
+                  <!-- 5. Left leg + fabric boot (dangling above plank) -->
                   <g class="part part-5 hidden">
-                    <path d="M186 178 L180 198" fill="none" stroke="#5A8AD0" stroke-width="10" stroke-linecap="round"/>
-                    <path d="M170 197 L190 197 L192 208 L166 208 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="1.5"/>
-                    <path d="M172 200 L188 200" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
-                    <ellipse cx="172" cy="205" rx="5" ry="3" fill="#2A2A38"/>
+                    <path d="M186 178 L184 202" fill="none" stroke="#5A8AD0" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M172 200 L196 200 L197 212 L171 212 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="1.5"/>
+                    <path d="M174 204 L194 204" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                    <ellipse cx="175" cy="209" rx="5" ry="3" fill="#2A2A38"/>
                   </g>
-                  <!-- 6. Right leg + fabric boot -->
+                  <!-- 6. Right leg + fabric boot (dangling above plank) -->
                   <g class="part part-6 hidden">
-                    <path d="M210 178 L216 198" fill="none" stroke="#5A8AD0" stroke-width="10" stroke-linecap="round"/>
-                    <path d="M206 197 L226 197 L228 208 L202 208 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="1.5"/>
-                    <path d="M208 200 L224 200" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
-                    <ellipse cx="224" cy="205" rx="5" ry="3" fill="#2A2A38"/>
+                    <path d="M210 178 L212 202" fill="none" stroke="#5A8AD0" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M200 200 L224 200 L225 212 L199 212 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="1.5"/>
+                    <path d="M202 204 L222 204" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                    <ellipse cx="221" cy="209" rx="5" ry="3" fill="#2A2A38"/>
                   </g>
                 </g>
 
@@ -320,20 +387,20 @@
                     <path d="M177 152 Q198 161 219 152" fill="none" stroke="#B89870" stroke-width="2.2"/>
                     <path d="M179 164 Q198 173 217 164" fill="none" stroke="#B89870" stroke-width="2.2"/>
                     <line x1="198" y1="128" x2="198" y2="176" stroke="#B89870" stroke-width="3.5"/>
-                    <!-- cardboard bone arms -->
-                    <path d="M176 140 Q156 150 146 172" fill="none" stroke="#FFF4E0" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M176 140 Q156 150 146 172" fill="none" stroke="#B89870" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 2"/>
-                    <circle cx="144" cy="176" r="7" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
-                    <path d="M220 140 Q240 150 250 172" fill="none" stroke="#FFF4E0" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M220 140 Q240 150 250 172" fill="none" stroke="#B89870" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 2"/>
-                    <circle cx="252" cy="176" r="7" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
-                    <!-- legs -->
-                    <path d="M188 178 L182 200" fill="none" stroke="#FFF4E0" stroke-width="9" stroke-linecap="round"/>
-                    <path d="M188 178 L182 200" fill="none" stroke="#B89870" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
-                    <ellipse cx="180" cy="204" rx="11" ry="5.5" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
-                    <path d="M208 178 L214 200" fill="none" stroke="#FFF4E0" stroke-width="9" stroke-linecap="round"/>
-                    <path d="M208 178 L214 200" fill="none" stroke="#B89870" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
-                    <ellipse cx="216" cy="204" rx="11" ry="5.5" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <!-- cardboard bone arms (dangling hang pose) -->
+                    <path d="M176 140 Q166 160 158 184" fill="none" stroke="#FFF4E0" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M176 140 Q166 160 158 184" fill="none" stroke="#B89870" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <circle cx="156" cy="188" r="7" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <path d="M220 140 Q230 160 238 184" fill="none" stroke="#FFF4E0" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M220 140 Q230 160 238 184" fill="none" stroke="#B89870" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <circle cx="240" cy="188" r="7" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <!-- legs dangling -->
+                    <path d="M188 178 L186 204" fill="none" stroke="#FFF4E0" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M188 178 L186 204" fill="none" stroke="#B89870" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <ellipse cx="185" cy="208" rx="11" ry="5.5" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <path d="M208 178 L210 204" fill="none" stroke="#FFF4E0" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M208 178 L210 204" fill="none" stroke="#B89870" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <ellipse cx="211" cy="208" rx="11" ry="5.5" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
                     <!-- silly yarn sparkles -->
                     <circle cx="160" cy="95" r="3.5" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>
                     <circle cx="240" cy="120" r="3" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>

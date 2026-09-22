@@ -1,4 +1,4 @@
-/* Spell Buddy v1.5 — LittleBigPlanet craft / handmade aesthetic */
+/* Spell Buddy v1.6 — LittleBigPlanet craft / handmade aesthetic */
 
 :root {
   --bg-top: #F7E8D4;
@@ -771,7 +771,7 @@ body::before {
   text-align: left;
 }
 
-/* --- v1.5: trap-door lose + dust puff --- */
+/* --- v1.6: hanging pose + full drop + trap dust --- */
 
 #trap-left,
 #trap-right {
@@ -874,14 +874,25 @@ body::before {
   100% { transform: scale(2.2); opacity: 0; }
 }
 
+/* Suspended from noose — slight craft swing while playing */
 #actor {
   transform-box: fill-box;
-  transform-origin: center bottom;
+  transform-origin: 198px 90px; /* noose / neck */
   transition: none;
 }
 
+#actor.hanging:not(.falling) {
+  animation: hangSwing 2.8s ease-in-out infinite;
+}
+
+@keyframes hangSwing {
+  0%, 100% { transform: rotate(-2.8deg); }
+  50% { transform: rotate(2.8deg); }
+}
+
+/* Detach + drop ALL THE WAY DOWN through trap (off-screen / deep below stage) */
 #actor.falling {
-  animation: pirateFall 0.85s cubic-bezier(0.45, 0.05, 0.85, 0.4) forwards;
+  animation: pirateFall 1.25s cubic-bezier(0.4, 0.02, 0.85, 0.35) forwards;
 }
 
 @keyframes pirateFall {
@@ -889,19 +900,23 @@ body::before {
     transform: translateY(0) rotate(0deg);
     opacity: 1;
   }
-  35% {
-    transform: translateY(18px) rotate(-6deg);
+  12% {
+    transform: translateY(8px) rotate(-4deg);
+    opacity: 1;
+  }
+  45% {
+    transform: translateY(120px) rotate(8deg);
     opacity: 1;
   }
   100% {
-    transform: translateY(130px) rotate(12deg);
+    transform: translateY(360px) rotate(18deg);
     opacity: 0;
   }
 }
 
 #char-skeleton.skel-pop {
   animation: skelPop 0.4s ease;
-  transform-origin: 198px 160px;
+  transform-origin: 198px 150px;
 }
 
 @keyframes skelPop {
@@ -910,16 +925,17 @@ body::before {
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
+/* Win: cheerful bounce while still on the rope (no trap fall) */
 #char-pip.celebrating {
-  animation: celebrate 0.7s ease;
-  transform-origin: 198px 200px;
+  animation: celebrate 0.75s ease;
+  transform-origin: 198px 132px;
 }
 
 @keyframes celebrate {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-8px) rotate(-4deg); }
-  50% { transform: translateY(0) rotate(3deg); }
-  75% { transform: translateY(-5px) rotate(-2deg); }
+  25% { transform: translateY(-10px) rotate(-5deg); }
+  50% { transform: translateY(0) rotate(4deg); }
+  75% { transform: translateY(-6px) rotate(-3deg); }
 }
 
 #shark-fin {
@@ -929,4 +945,22 @@ body::before {
 @keyframes sharkBob {
   0%, 100% { transform: translate(255px, 148px); }
   50% { transform: translate(262px, 146px); }
+}
+
+/* Felt seagulls drift gently */
+#seagulls .seagull.sg1 { animation: gullDrift1 7s ease-in-out infinite; }
+#seagulls .seagull.sg2 { animation: gullDrift2 9s ease-in-out infinite; }
+#seagulls .seagull.sg3 { animation: gullDrift3 8s ease-in-out infinite; }
+
+@keyframes gullDrift1 {
+  0%, 100% { transform: translate(48px, 42px); }
+  50% { transform: translate(58px, 38px); }
+}
+@keyframes gullDrift2 {
+  0%, 100% { transform: translate(130px, 28px); }
+  50% { transform: translate(118px, 32px); }
+}
+@keyframes gullDrift3 {
+  0%, 100% { transform: translate(220px, 48px); }
+  50% { transform: translate(232px, 44px); }
 }

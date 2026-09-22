@@ -19,10 +19,10 @@
   ];
 
   var MAX_MISSES = 6;
-  /** Lose sequence: morph → trap open → fall+dust → wait 3s → popup */
+  /** Lose sequence: morph (still hanging) → trap open → detach+full fall+dust → wait 3s → popup */
   var LOSE_MORPH_MS = 400;
   var LOSE_TRAP_MS = 400;
-  var LOSE_FALL_MS = 850;
+  var LOSE_FALL_MS = 1250;
   var LOSE_DUST_MS = 700; /* overlaps fall; cartoon puff at trap */
   var LOSE_POPUP_DELAY_MS = 3000; /* pause after fall/dust before outcome */
   var LOSE_TOTAL_MS =
@@ -35,15 +35,15 @@
     {
       id: "pip",
       name: "Captain Pip",
-      hook: "Captain Pip (felt edition) is counting on you!",
+      hook: "Captain Pip hangs from the craft noose — spell carefully!",
       captions: [
-        "Pip waits on the craft beach stage — spell carefully!",
-        "Felt head, yarn bandana, button eye — hello!",
-        "Cloth stripes + felt red coat with button gold!",
-        "One felt arm ready for a high-five!",
-        "Two arms — jazz hands on the cork plank!",
-        "Left fabric boot on the trap door (uh-oh)!",
-        "Full craft pirate on stage! Spell fast — tides wait for no letter!"
+        "Empty craft noose on the gallows — spell to build Pip!",
+        "Felt head in the yarn noose — hello from above the plank!",
+        "Cloth stripes + felt red coat, dangling from the rope!",
+        "One felt arm dangling — still hanging in there!",
+        "Two arms dangling from the craft noose!",
+        "Left fabric boot floating above the trap (uh-oh)!",
+        "Full craft pirate hanging on! Spell fast — tides wait for no letter!"
       ]
     }
   ];
@@ -87,14 +87,14 @@
   ];
 
   var LOSE_MSGS = [
-    "The word was {WORD}. {NAME} turned into crafty felt bones and whoosh — through the trap door!",
-    "It was {WORD}! Felt bones + cardboard trap = silly splash. Practice makes giggles!",
-    "Secret word: {WORD}. {NAME} rattled (softly!), the cork plank opened, and down they went. Try the next one!"
+    "The word was {WORD}. {NAME} turned into crafty felt bones, slipped the noose, and whoosh — all the way down!",
+    "It was {WORD}! Felt bones dropped all the way through the cardboard trap. Practice makes giggles!",
+    "Secret word: {WORD}. {NAME} rattled (softly!), slipped the rope, and dropped way down. Try the next one!"
   ];
 
   var LOSE_SKELETON_CAPTIONS = [
-    "Rattle rattle — felt bones, trap door time!",
-    "Boop! {NAME} is crafty bones… whoosh through the plank!",
+    "Rattle rattle — felt bones still hanging… trap door time!",
+    "Boop! {NAME} is crafty bones… whoosh — long drop through the plank!",
     "Halloween-cute felt bones say: try again!"
   ];
 
@@ -272,7 +272,8 @@
     var actor = $("actor");
     if (actor) {
       actor.classList.remove("falling");
-      // reflow so next fall animation can restart
+      actor.classList.add("hanging");
+      // reflow so next hang/fall animation can restart
       void actor.getBoundingClientRect();
     }
     var dust = $("dust-puff");
@@ -338,7 +339,7 @@
     }
     if (state.skeleton && state.character) {
       els.characterHook.textContent =
-        state.character.name + " went comedy skeleton — trap door!";
+        state.character.name + " went comedy skeleton — long drop!";
       return;
     }
     if (state.character) {
@@ -483,10 +484,10 @@
     state.loseTimer = setTimeout(function () {
       if (hm) hm.classList.add("trap-open");
 
-      // 3) Then skeleton falls through + dust puff at trap
+      // 3) Detach from noose → skeleton drops ALL THE WAY DOWN + dust puff
       state.loseTimer = setTimeout(function () {
         if (actor) {
-          actor.classList.remove("falling");
+          actor.classList.remove("falling", "hanging");
           void actor.getBoundingClientRect();
           actor.classList.add("falling");
         }
@@ -531,7 +532,7 @@
         pip.classList.add("celebrating");
       }
       els.buddyCaption.textContent =
-        "Full craft pirate party! " + charName() + " did a happy jig!";
+        "Full craft pirate party! " + charName() + " cheers from the rope!";
       setCharacterHook();
       fillOutcomeCard(true);
       revealOutcomePopup();
