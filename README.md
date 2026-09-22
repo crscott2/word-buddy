@@ -1,8 +1,9 @@
-# Spell Buddy (Spelling Hangman) — v1.23
+# Word Buddy (Spelling Hangman) — v1.24
 
-Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
+Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Rename + public Pages (v1.24)**: product renamed Spell Buddy → **Word Buddy**; public GitHub Pages PWA
 - **Audio redesign (v1.23)**: no looping beach ambience; event SFX only — pirate miss on wrong letter, positive chime on each correct letter, win fanfare on word won (with/before run-away), lose tone with skeleton/trap; unmute blip kept
 - **iOS-safe audio (v1.22–v1.23)**: HTML5 `Audio` (playsInline) primary path for bundled WAVs (works when Web Audio is silenced by the iPhone ringer switch); Web Audio unlocked in parallel (resume + silent buffer); gesture unlock stays armed until primed; mute / letter / Parents / “Tap 🔊 for sound” unlock; unmute plays an audible blip in the same tap; mute preference in localStorage
 - **Shark fin swim (v1.20)**: felt fin glides slowly back and forth along the ocean waves (gentle continuous LBP craft motion); mirrors at each turn so the tip leans into the swim direction
@@ -42,7 +43,10 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.23** in the UI
+- Version label **v1.24** in the UI
+
+## Live
+https://crscott2.github.io/word-buddy/
 
 ## Preview locally
 ```bash

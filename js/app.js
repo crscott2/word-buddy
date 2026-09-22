@@ -8,6 +8,7 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
+   * v1.24: Word Buddy rename + public Pages
    * v1.23: Event SFX only (no looping beach ambience)
    * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
    * - Web Audio one-shots = secondary companion
