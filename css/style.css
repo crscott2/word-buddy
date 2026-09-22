@@ -418,6 +418,7 @@ html, body {
 }
 
 /* --- v1.1: parent toggles + empty pool --- */
+/* (v1.2 beach styles appended below) */
 
 .empty-pool-banner {
   background: #FFF3CD;
@@ -523,4 +524,71 @@ html, body {
 
 .word-list .word-text {
   text-transform: none;
+}
+
+/* --- v1.2: beach pirate stage --- */
+
+.beach-stage {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.beach-frame {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  background: #7EC8FF;
+  line-height: 0;
+}
+
+#hangman {
+  width: 100%;
+  max-width: 420px;
+  max-height: none;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.character.hidden,
+.part.hidden {
+  display: none;
+}
+
+.character-hook {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+  min-height: 1.35em;
+}
+
+.buddy-caption {
+  margin: 8px 0 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--soft);
+  text-align: center;
+}
+
+@media (orientation: landscape) and (max-height: 700px) {
+  #hangman { max-height: 38vh; width: min(55vw, 320px); }
+  .character-hook { font-size: 0.9rem; margin-bottom: 4px; }
+  .buddy-caption { font-size: 0.8rem; margin: 4px 0 2px; }
+}
+
+/* Comedy skeleton pop on lose */
+#char-skeleton.skel-pop {
+  animation: skelPop 0.55s ease;
+  transform-origin: 170px 200px;
+}
+
+@keyframes skelPop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-8deg); }
+  55% { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }

@@ -19,38 +19,107 @@
   ];
 
   var MAX_MISSES = 6;
-  var PART_IDS = [
-    "part-head",
-    "part-body",
-    "part-arm-l",
-    "part-arm-r",
-    "part-leg-l",
-    "part-leg-r"
-  ];
 
-  var BUDDY_CAPTIONS = [
-    "Your buddy is cheering you on!",
-    "Hello head! Still smiling!",
-    "Body on deck — wiggle time!",
-    "One arm for high-fives!",
-    "Two arms… jazz hands!",
-    "Left foot ready for a silly dance!",
-    "Full buddy! Almost out of giggles — you got this!"
+  var CHARACTERS = [
+    {
+      id: "pip",
+      name: "Captain Pip",
+      hook: "Captain Pip is counting on you!",
+      captions: [
+        "Pip is ready for beach spelling!",
+        "Bandana on — hello head!",
+        "Vest ahoy! Pip’s ready to sail.",
+        "One arm for high-fives!",
+        "Hook hand for comedy points!",
+        "Left boot in the sand!",
+        "Full pirate kid! Spell fast — tides wait for no letter!"
+      ]
+    },
+    {
+      id: "blink",
+      name: "Matey Blink",
+      hook: "Matey Blink is counting on you!",
+      captions: [
+        "Blink winks hello from the beach!",
+        "Hat + patch — still friendly!",
+        "Fancy coat on deck!",
+        "Wavey arm says ahoy!",
+        "Two arms… jazz hands!",
+        "Left boot ready to dance!",
+        "Full matey! Almost out of giggles — you got this!"
+      ]
+    },
+    {
+      id: "squawk",
+      name: "Captain Squawk",
+      hook: "Captain Squawk is counting on you!",
+      captions: [
+        "Squawk wants crackers… and correct letters!",
+        "Beaky head says squawk!",
+        "Feathery body fluffed up!",
+        "Left wing flap!",
+        "Right wing flap — flying letters!",
+        "One bird foot in the sand!",
+        "Full parrot pirate! Spell before the coconuts tip!"
+      ]
+    },
+    {
+      id: "crabby",
+      name: "Crabby Peg",
+      hook: "Crabby Peg is counting on you!",
+      captions: [
+        "Crabby sidesteps into spelling!",
+        "Googly eyes on duty!",
+        "Shell armor — beach ready!",
+        "Left claw for high-fives!",
+        "Right claw for… more high-fives!",
+        "Left legs scuttling!",
+        "Full crab pirate! Pinch those letters (gently)!"
+      ]
+    },
+    {
+      id: "marina",
+      name: "Marina Splash",
+      hook: "Marina Splash is counting on you!",
+      captions: [
+        "Marina swirls in from the waves!",
+        "Sparkly hair and a big smile!",
+        "Seashell top — beach chic!",
+        "Left arm splash!",
+        "Right arm splash!",
+        "Mermaid tail starting…",
+        "Full mermaid buddy! Swim those letters home!"
+      ]
+    },
+    {
+      id: "chesty",
+      name: "Chesty Gold",
+      hook: "Chesty Gold is counting on you!",
+      captions: [
+        "Chesty rattles with excitement!",
+        "Lid face grinning!",
+        "Treasure body unlocked!",
+        "Left latch arm!",
+        "Right latch arm!",
+        "Left coin foot!",
+        "Full treasure buddy! Dig up that word!"
+      ]
+    }
   ];
 
   var MISS_JOKES = [
-    "Whoops! That letter went on vacation.",
+    "Whoops! That letter went snorkeling.",
     "Nope — try a different letter, letter-explorer!",
-    "Silly miss! Your buddy grew a goofy part.",
-    "That letter is playing hide-and-seek.",
+    "Silly miss! Your beach buddy grew another piece.",
+    "That letter is playing hide-and-seek in the sand.",
     "Boop! Wrong letter, right attitude.",
-    "Almost… but not that one!"
+    "Almost… but not that one, matey!"
   ];
 
   var HIT_JOKES = [
     "Yes! Letter power!",
     "Boing! That letter fits!",
-    "You found it — high five!",
+    "You found it — beach high five!",
     "Smart cookies eat letters like that!",
     "Whee! More of the word!",
     "Letter detective strikes again!"
@@ -64,10 +133,10 @@
   ];
 
   var WIN_MSGS = [
-    "Your buddy is doing a happy dance! 💃",
-    "That word never stood a chance against you!",
-    "Confetti in your brain! (Invisible, but sparkly.)",
-    "You and the alphabet are best friends today!"
+    "{NAME} is doing a happy beach dance! 💃",
+    "{NAME} says that word never stood a chance!",
+    "Confetti in your brain! {NAME} is proud. (Invisible, but sparkly.)",
+    "You, {NAME}, and the alphabet are best friends today!"
   ];
 
   var LOSE_TITLES = [
@@ -77,9 +146,15 @@
   ];
 
   var LOSE_MSGS = [
-    "The word was {WORD}. Your buddy needs a snack and another round!",
-    "It was {WORD}! No worries — spelling takes practice (and giggles).",
-    "Secret word: {WORD}. Want to tickle the next one?"
+    "The word was {WORD}. {NAME} turned into a goofy skeleton for laughs — next round!",
+    "It was {WORD}! {NAME} is all bones now (Halloween-cute). Practice makes giggles!",
+    "Secret word: {WORD}. {NAME} rattles a silly skeleton dance. Try the next one!"
+  ];
+
+  var LOSE_SKELETON_CAPTIONS = [
+    "Rattle rattle — comedy skeleton time!",
+    "Boop! {NAME} is bones… still smiling!",
+    "Halloween-cute bones say: try again!"
   ];
 
   var state = {
@@ -91,7 +166,10 @@
     misses: 0,
     over: false,
     won: false,
-    emptyPool: false
+    emptyPool: false,
+    character: null, // current CHARACTERS entry
+    lastCharId: null,
+    skeleton: false
   };
 
   var els = {};
@@ -220,84 +298,94 @@
     els.jokeLine.textContent = text || "";
   }
 
-  function setFace(name) {
-    var faces = els.buddy.querySelectorAll(".face");
-    for (var i = 0; i < faces.length; i++) {
-      faces[i].classList.add("hidden");
+  function pickCharacter() {
+    var pool = CHARACTERS.slice();
+    if (state.lastCharId && pool.length > 1) {
+      pool = pool.filter(function (c) {
+        return c.id !== state.lastCharId;
+      });
     }
-    var face = els.buddy.querySelector(".face-" + name);
-    if (face) face.classList.remove("hidden");
+    var chosen = pick(pool);
+    state.character = chosen;
+    state.lastCharId = chosen.id;
+    state.skeleton = false;
+    return chosen;
+  }
+
+  function hideAllCharacters() {
+    var nodes = document.querySelectorAll("#hangman .character");
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].classList.add("hidden");
+    }
+  }
+
+  function showLivingCharacter() {
+    hideAllCharacters();
+    state.skeleton = false;
+    if (!state.character) return;
+    var g = $("char-" + state.character.id);
+    if (g) g.classList.remove("hidden");
+  }
+
+  function showSkeleton() {
+    hideAllCharacters();
+    state.skeleton = true;
+    var sk = $("char-skeleton");
+    if (sk) {
+      sk.classList.remove("hidden");
+      sk.classList.remove("skel-pop");
+      // force reflow for pop animation
+      void sk.getBoundingClientRect();
+      sk.classList.add("skel-pop");
+    }
   }
 
   function updateHangman() {
-    for (var i = 0; i < PART_IDS.length; i++) {
-      var el = $(PART_IDS[i]);
-      if (!el) continue;
-      if (i < state.misses) el.classList.remove("hidden");
-      else el.classList.add("hidden");
-    }
-    var wave = $("wave-hand");
-    if (wave) {
-      if (state.misses >= 3) wave.classList.remove("hidden");
-      else wave.classList.add("hidden");
+    if (state.skeleton) {
+      showSkeleton();
+      var name = state.character ? state.character.name : "Your buddy";
+      els.buddyCaption.textContent = pick(LOSE_SKELETON_CAPTIONS).replace(
+        "{NAME}",
+        name
+      );
+      return;
     }
 
-    if (state.misses === 0) setFace("ok");
-    else if (state.misses <= 2) setFace("ok");
-    else if (state.misses === 3) setFace("silly");
-    else if (state.misses === 4) setFace("wow");
-    else setFace("oops");
+    showLivingCharacter();
+    if (!state.character) return;
+    var g = $("char-" + state.character.id);
+    if (!g) return;
 
-    tweakPose();
+    for (var i = 1; i <= MAX_MISSES; i++) {
+      var part = g.querySelector(".part-" + i);
+      if (!part) continue;
+      if (i <= state.misses) part.classList.remove("hidden");
+      else part.classList.add("hidden");
+    }
 
+    var caps = state.character.captions;
     els.buddyCaption.textContent =
-      BUDDY_CAPTIONS[Math.min(state.misses, BUDDY_CAPTIONS.length - 1)];
+      caps[Math.min(state.misses, caps.length - 1)];
   }
 
-  function tweakPose() {
-    var armL = $("part-arm-l");
-    var armR = $("part-arm-r");
-    var legL = $("part-leg-l");
-    var legR = $("part-leg-r");
-    if (!armL) return;
+  function setCharacterHook() {
+    if (!els.characterHook) return;
+    if (state.emptyPool) {
+      els.characterHook.textContent = "A beach buddy is waiting for words…";
+      return;
+    }
+    if (state.skeleton && state.character) {
+      els.characterHook.textContent =
+        state.character.name + " went full comedy skeleton!";
+      return;
+    }
+    if (state.character) {
+      els.characterHook.textContent = state.character.hook;
+    }
+  }
 
-    armL.setAttribute("x2", "120");
-    armL.setAttribute("y2", "145");
-    armR.setAttribute("x2", "180");
-    armR.setAttribute("y2", "145");
-    legL.setAttribute("x2", "128");
-    legL.setAttribute("y2", "210");
-    legR.setAttribute("x2", "172");
-    legR.setAttribute("y2", "210");
-
-    if (state.misses >= 3) {
-      armL.setAttribute("x2", "115");
-      armL.setAttribute("y2", "105");
-      if ($("wave-hand")) {
-        $("wave-hand").setAttribute("cx", "112");
-        $("wave-hand").setAttribute("cy", "100");
-      }
-    }
-    if (state.misses >= 4) {
-      armR.setAttribute("x2", "185");
-      armR.setAttribute("y2", "130");
-    }
-    if (state.misses >= 5) {
-      legL.setAttribute("x2", "118");
-      legL.setAttribute("y2", "215");
-    }
-    if (state.misses >= 6) {
-      legR.setAttribute("x2", "182");
-      legR.setAttribute("y2", "215");
-      armL.setAttribute("x2", "118");
-      armL.setAttribute("y2", "100");
-      armR.setAttribute("x2", "182");
-      armR.setAttribute("y2", "100");
-      if ($("wave-hand")) {
-        $("wave-hand").setAttribute("cx", "115");
-        $("wave-hand").setAttribute("cy", "96");
-      }
-    }
+  function charName() {
+    return state.character ? state.character.name : "Your buddy";
   }
 
   function renderBlanks() {
@@ -384,21 +472,41 @@
     state.over = true;
     state.won = won;
     els.outcome.classList.remove("hidden");
+    var name = charName();
     if (won) {
-      els.outcomeEmoji.textContent = pick(["🎉", "🌟", "🥳", "✨"]);
+      els.outcomeEmoji.textContent = pick(["🎉", "🌟", "🥳", "✨", "🏴‍☠️"]);
       els.outcomeTitle.textContent = pick(WIN_TITLES);
-      els.outcomeMsg.textContent = pick(WIN_MSGS);
-      setJoke("You spelled \"" + displayWord(state.word) + "\"! Fancy pants!");
-      setFace("silly");
-    } else {
-      els.outcomeEmoji.textContent = pick(["🤗", "🍌", "🌈", "🧸"]);
-      els.outcomeTitle.textContent = pick(LOSE_TITLES);
-      els.outcomeMsg.textContent = pick(LOSE_MSGS).replace(
-        "{WORD}",
-        "“" + displayWord(state.word) + "”"
+      els.outcomeMsg.textContent = pick(WIN_MSGS).replace(/\{NAME\}/g, name);
+      setJoke(
+        "You spelled \"" +
+          displayWord(state.word) +
+          "\"! " +
+          name +
+          " cheers from the beach!"
       );
-      setJoke("Nice try — the word was \"" + displayWord(state.word) + "\"!");
-      setFace("oops");
+      // keep living character celebrating
+      state.skeleton = false;
+      updateHangman();
+      setCharacterHook();
+    } else {
+      els.outcomeEmoji.textContent = pick(["🦴", "🌙", "🤗", "🍌", "✨"]);
+      els.outcomeTitle.textContent = pick(LOSE_TITLES);
+      els.outcomeMsg.textContent = pick(LOSE_MSGS)
+        .replace("{WORD}", "“" + displayWord(state.word) + "”")
+        .replace(/\{NAME\}/g, name);
+      setJoke(
+        "Nice try — the word was \"" +
+          displayWord(state.word) +
+          "\"! " +
+          name +
+          " went skeleton!"
+      );
+      showSkeleton();
+      els.buddyCaption.textContent = pick(LOSE_SKELETON_CAPTIONS).replace(
+        "{NAME}",
+        name
+      );
+      setCharacterHook();
       renderBlanks();
     }
     syncKeyboard();
@@ -432,13 +540,21 @@
     els.outcome.classList.add("hidden");
     els.progress.textContent = "No words turned on";
     setJoke("Ask a parent to turn some words on!");
-    els.buddyCaption.textContent = "Your buddy is waiting for words…";
+    els.buddyCaption.textContent = "Beach buddies are waiting for words…";
+    if (els.characterHook) {
+      els.characterHook.textContent = "A beach buddy is waiting for words…";
+    }
     els.wordBlanks.innerHTML = "";
     var msg = document.createElement("p");
     msg.className = "empty-pool-msg";
     msg.textContent =
       "All library words are off. Parents: open the word list and turn some On to play.";
     els.wordBlanks.appendChild(msg);
+    state.skeleton = false;
+    if (!state.character) pickCharacter();
+    updateHangman();
+    // hide body parts when empty
+    state.misses = 0;
     updateHangman();
     syncKeyboard();
     if (els.emptyBanner) els.emptyBanner.classList.remove("hidden");
@@ -466,9 +582,14 @@
     state.misses = 0;
     state.over = false;
     state.won = false;
+    state.skeleton = false;
+    pickCharacter();
     els.progress.textContent =
       "Word " + (state.index + 1) + " of " + state.playWords.length;
-    setJoke("Tap a letter. Your buddy believes in you!");
+    setJoke(
+      "Tap a letter. " + charName() + " believes in you!"
+    );
+    setCharacterHook();
     updateHangman();
     renderBlanks();
     syncKeyboard();
@@ -718,8 +839,10 @@
     els.parentGate = $("parent-gate");
     els.progress = $("progress");
     els.jokeLine = $("joke-line");
-    els.buddy = $("buddy");
+    els.buddy = $("buddy"); // legacy id unused; characters live under #hangman
     els.buddyCaption = $("buddy-caption");
+    els.characterHook = $("character-hook");
+    els.hangman = $("hangman");
     els.wordBlanks = $("word-blanks");
     els.keyboard = $("keyboard");
     els.outcome = $("outcome");
