@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#4FA3FF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Spell Buddy" />
+  <meta name="description" content="Silly spelling Hangman for kids — big letters, goofy stick buddy, school word lists." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>Spell Buddy — Spelling Hangman</title>
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">😊</span>
+        <h1>Spell Buddy</h1>
+      </div>
+      <div class="top-meta">
+        <span class="version" title="App version">v1</span>
+        <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
+      </div>
+    </header>
+
+    <!-- PLAY SCREEN -->
+    <main id="screen-play" class="screen" aria-live="polite">
+      <p id="progress" class="progress">Word 1 of 4</p>
+      <p id="joke-line" class="joke-line" aria-live="polite"></p>
+
+      <section class="stage" aria-label="Hangman buddy">
+        <svg id="hangman" viewBox="0 0 220 260" role="img" aria-labelledby="hangman-title">
+          <title id="hangman-title">Friendly stick buddy</title>
+          <!-- Soft cartoon post -->
+          <g id="gallows" stroke="#8B6B4A" stroke-width="6" stroke-linecap="round" fill="none">
+            <line x1="40" y1="240" x2="120" y2="240" />
+            <line x1="70" y1="240" x2="70" y2="30" />
+            <line x1="70" y1="30" x2="150" y2="30" />
+            <line x1="150" y1="30" x2="150" y2="55" stroke="#C4A484" stroke-width="4" />
+          </g>
+          <!-- Parts appear with wrong guesses -->
+          <g id="buddy" stroke="#2C3E50" stroke-width="5" stroke-linecap="round" fill="none">
+            <!-- head -->
+            <g id="part-head" class="part hidden">
+              <circle cx="150" cy="80" r="24" fill="#FFE8A3" stroke="#2C3E50" />
+              <!-- face swaps via JS classes on #buddy -->
+              <g class="face face-ok">
+                <circle cx="142" cy="76" r="3.5" fill="#2C3E50" stroke="none" />
+                <circle cx="158" cy="76" r="3.5" fill="#2C3E50" stroke="none" />
+                <path d="M140 90 Q150 98 160 90" fill="none" stroke-width="3" />
+              </g>
+              <g class="face face-oops hidden">
+                <circle cx="142" cy="76" r="3.5" fill="#2C3E50" stroke="none" />
+                <circle cx="158" cy="76" r="3.5" fill="#2C3E50" stroke="none" />
+                <path d="M140 94 Q150 88 160 94" fill="none" stroke-width="3" />
+                <circle cx="168" cy="88" r="3" fill="#7EC8FF" stroke="none" opacity="0.9" />
+              </g>
+              <g class="face face-silly hidden">
+                <circle cx="141" cy="74" r="3.5" fill="#2C3E50" stroke="none" />
+                <circle cx="159" cy="74" r="3.5" fill="#2C3E50" stroke="none" />
+                <ellipse cx="150" cy="92" rx="8" ry="6" fill="#FF8FAB" stroke="none" />
+                <path d="M142 88 Q150 100 158 88" fill="none" stroke-width="3" />
+              </g>
+              <g class="face face-wow hidden">
+                <circle cx="142" cy="74" r="5" fill="none" stroke-width="3" />
+                <circle cx="158" cy="74" r="5" fill="none" stroke-width="3" />
+                <circle cx="142" cy="74" r="2" fill="#2C3E50" stroke="none" />
+                <circle cx="158" cy="74" r="2" fill="#2C3E50" stroke="none" />
+                <ellipse cx="150" cy="92" rx="5" ry="7" fill="none" stroke-width="3" />
+              </g>
+            </g>
+            <line id="part-body" class="part hidden" x1="150" y1="104" x2="150" y2="165" />
+            <line id="part-arm-l" class="part hidden" x1="150" y1="120" x2="120" y2="145" />
+            <line id="part-arm-r" class="part hidden" x1="150" y1="120" x2="180" y2="145" />
+            <line id="part-leg-l" class="part hidden" x1="150" y1="165" x2="128" y2="210" />
+            <line id="part-leg-r" class="part hidden" x1="150" y1="165" x2="172" y2="210" />
+            <!-- silly wave hand when arm appears -->
+            <circle id="wave-hand" class="part hidden" cx="118" cy="148" r="5" fill="#FFE8A3" stroke="#2C3E50" stroke-width="3" />
+          </g>
+        </svg>
+        <p id="buddy-caption" class="buddy-caption">Your buddy is cheering you on!</p>
+      </section>
+
+      <section class="word-area" aria-label="Spelling word">
+        <div id="word-blanks" class="word-blanks" role="text"></div>
+      </section>
+
+      <section class="keyboard-wrap" aria-label="Letter buttons">
+        <div id="keyboard" class="keyboard"></div>
+      </section>
+
+      <div id="outcome" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="outcome-title">
+        <div class="outcome-card">
+          <p id="outcome-emoji" class="outcome-emoji" aria-hidden="true">🎉</p>
+          <h2 id="outcome-title"></h2>
+          <p id="outcome-msg"></p>
+          <button type="button" id="btn-next" class="btn primary big">Next word! ▶</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- PARENT / WORDS SCREEN -->
+    <main id="screen-words" class="screen hidden">
+      <div class="parent-header">
+        <h2>Parent word list</h2>
+        <button type="button" id="btn-back-play" class="btn secondary">← Back to play</button>
+      </div>
+      <p class="hint">Add school spelling words. Kids play offline — nothing leaves this device.</p>
+
+      <form id="add-one-form" class="add-one">
+        <label for="word-input">Add one word</label>
+        <div class="row">
+          <input id="word-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="e.g. friend" maxlength="24" />
+          <button type="submit" class="btn primary">Add</button>
+        </div>
+      </form>
+
+      <form id="paste-form" class="paste-block">
+        <label for="paste-input">Or paste a list</label>
+        <textarea id="paste-input" rows="4" placeholder="cat, ship, green&#10;beach&#10;happy"></textarea>
+        <button type="submit" class="btn primary">Add list</button>
+      </form>
+
+      <h3 class="list-heading">Words (<span id="word-count">0</span>)</h3>
+      <ul id="word-list" class="word-list"></ul>
+
+      <div class="danger-zone">
+        <button type="button" id="btn-reset-samples" class="btn secondary">Restore sample words</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Parent gate -->
+  <div id="parent-gate" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="outcome-card gate-card">
+      <h2 id="gate-title">Grown-ups only</h2>
+      <p>This opens the word list. Little fingers, please ask a parent!</p>
+      <div class="gate-actions">
+        <button type="button" id="gate-cancel" class="btn secondary">Oops, go back</button>
+        <button type="button" id="gate-ok" class="btn primary">I’m a parent</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
