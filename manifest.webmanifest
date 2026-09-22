@@ -1,13 +1,13 @@
 {
   "name": "Spell Buddy — Spelling Hangman",
   "short_name": "Spell Buddy",
-  "description": "Silly kid-friendly spelling Hangman for school word lists. Offline PWA.",
+  "description": "Crafty LittleBigPlanet-style kid spelling Hangman. Offline PWA.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#E8F4FF",
-  "theme_color": "#4FA3FF",
+  "background_color": "#F7E8D4",
+  "theme_color": "#E8886A",
   "icons": [
     {
       "src": "icons/icon-192.png",

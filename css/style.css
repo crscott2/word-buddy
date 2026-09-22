@@ -1,19 +1,38 @@
+/* Spell Buddy v1.4 — LittleBigPlanet craft / handmade aesthetic */
+
 :root {
-  --bg: #E8F4FF;
-  --card: #FFFFFF;
-  --ink: #1E2A3A;
-  --soft: #5A6B7D;
-  --accent: #4FA3FF;
-  --accent-dark: #2E7AD1;
-  --good: #3CB371;
-  --warn: #FFB347;
-  --miss: #FF8FAB;
-  --key: #FFF8E7;
-  --key-border: #F0D9A8;
-  --dim: #C5CCD6;
-  --radius: 18px;
+  --bg-top: #F7E8D4;
+  --bg-bot: #E8D4F0;
+  --cream: #FFF8EE;
+  --felt-pink: #F4B8C8;
+  --felt-blue: #8EC5E8;
+  --felt-orange: #F4B07A;
+  --felt-green: #8FBF7A;
+  --felt-red: #E07060;
+  --felt-sky: #B8DCF0;
+  --cork: #D4A574;
+  --cork-dark: #A87848;
+  --cardboard: #E8C999;
+  --cardboard-edge: #C49A5C;
+  --yarn: #C45C6A;
+  --ink: #4A3A2A;
+  --soft: #7A6A5A;
+  --accent: #E8886A;
+  --accent-dark: #C45C4A;
+  --good: #6AAB6A;
+  --good-dark: #4A8A4A;
+  --warn: #F4B07A;
+  --miss: #F4B8C8;
+  --key: #FFF0D8;
+  --key-border: #D4A574;
+  --key-stitch: #C49A5C;
+  --dim: #D8CBB8;
+  --panel: #FFF6E8;
+  --panel-edge: #D4B08A;
+  --radius: 22px;
   --tap: 52px;
-  --shadow: 0 6px 18px rgba(46, 90, 140, 0.12);
+  --shadow: 0 8px 0 rgba(120, 80, 50, 0.12), 0 4px 16px rgba(80, 50, 30, 0.1);
+  --stitch: 2px dashed rgba(120, 70, 50, 0.35);
   font-size: 18px;
 }
 
@@ -23,11 +42,26 @@ html, body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background: linear-gradient(180deg, #E8F4FF 0%, #FFF6E8 100%);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 248, 230, 0.9) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(244, 184, 200, 0.35) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 70%, rgba(142, 197, 232, 0.3) 0%, transparent 42%),
+    linear-gradient(165deg, var(--bg-top) 0%, #F0E0C8 45%, var(--bg-bot) 100%);
   color: var(--ink);
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  position: relative;
+}
+
+/* Soft craft vignette */
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(90, 55, 35, 0.18) 100%);
 }
 
 #app {
@@ -35,23 +69,43 @@ html, body {
   margin: 0 auto;
   padding: 12px 14px 28px;
   padding-bottom: max(28px, env(safe-area-inset-bottom));
+  position: relative;
+  z-index: 1;
 }
 
+/* ===== Header — fabric banner ===== */
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  background: var(--cream);
+  border: 3px solid var(--panel-edge);
+  border-radius: 20px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.top-bar::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: var(--stitch);
+  border-radius: 14px;
+  pointer-events: none;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 
-.brand-mark { font-size: 1.6rem; line-height: 1; }
+.brand-mark { font-size: 1.6rem; line-height: 1; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.08)); }
 
 .brand h1 {
   margin: 0;
@@ -59,81 +113,153 @@ html, body {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--accent-dark);
+  text-shadow: 0 1px 0 #fff;
 }
 
 .top-meta {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .version {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--soft);
-  background: rgba(255,255,255,0.7);
+  background: #F4E0C8;
+  border: 2px dashed var(--cork-dark);
   border-radius: 999px;
   padding: 4px 10px;
 }
 
 .linkish {
-  border: none;
-  background: none;
+  border: 2px solid var(--felt-pink);
+  background: #FFE8F0;
   color: var(--accent-dark);
   font-size: 0.85rem;
-  font-weight: 700;
-  text-decoration: underline;
-  padding: 8px 4px;
+  font-weight: 800;
+  text-decoration: none;
+  padding: 8px 12px;
   cursor: pointer;
   min-height: 44px;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 #D4889A;
+}
+
+.linkish:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #D4889A;
 }
 
 .screen.hidden { display: none; }
 
 .progress {
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--soft);
-  margin: 4px 0 2px;
+  margin: 6px 0 2px;
   font-size: 0.95rem;
+  background: rgba(255, 248, 238, 0.75);
+  display: inline-block;
+  width: 100%;
+  border-radius: 12px;
+  padding: 4px 8px;
+  border: 2px dashed rgba(180, 130, 80, 0.35);
 }
 
 .joke-line {
   min-height: 1.4em;
   text-align: center;
-  margin: 0 0 6px;
+  margin: 4px 0 8px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-dark);
+  font-style: italic;
 }
 
+/* ===== Stage frame — scrapbook / diorama ===== */
 .stage {
-  background: var(--card);
+  background: transparent;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 8px 12px 4px;
+  box-shadow: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
+}
+
+.beach-stage {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.beach-frame {
+  width: 100%;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  background: var(--felt-sky);
+  line-height: 0;
+  border: 5px solid var(--cardboard);
+  outline: 3px dashed rgba(120, 70, 40, 0.35);
+  outline-offset: -10px;
+  position: relative;
+}
+
+.beach-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset 0 0 40px rgba(80, 50, 30, 0.15);
+  border-radius: 18px;
 }
 
 #hangman {
-  width: min(42vw, 200px);
-  max-height: 28vh;
+  width: 100%;
+  max-width: 440px;
+  max-height: none;
   height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .part.hidden,
-.face.hidden { display: none; }
+.face.hidden,
+.character.hidden {
+  display: none;
+}
+
+.character-hook {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+  min-height: 1.35em;
+  background: var(--cream);
+  border: 2px solid var(--felt-orange);
+  border-radius: 16px;
+  padding: 6px 12px;
+  box-shadow: 0 3px 0 var(--cork);
+  width: 100%;
+}
 
 .buddy-caption {
-  margin: 0 0 8px;
+  margin: 8px 0 4px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--soft);
   text-align: center;
 }
 
+/* ===== Word blanks — fabric patches ===== */
 .word-area {
   margin: 14px 0 10px;
   min-height: 4.2rem;
@@ -153,7 +279,12 @@ html, body {
 .blank {
   width: clamp(2rem, 9vw, 3.2rem);
   height: clamp(2.6rem, 11vw, 3.8rem);
-  border-bottom: 5px solid var(--ink);
+  border: 3px solid var(--cork-dark);
+  border-bottom-width: 5px;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, #FFF8EE 0%, #F4E4C8 100%);
+  box-shadow: 0 3px 0 rgba(120, 80, 40, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,12 +293,26 @@ html, body {
   text-transform: uppercase;
   color: var(--accent-dark);
   letter-spacing: 0.02em;
+  position: relative;
+}
+
+.blank::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1.5px dashed rgba(140, 90, 50, 0.3);
+  border-radius: 6px;
+  pointer-events: none;
 }
 
 .blank.space {
   width: 1.2rem;
-  border-bottom: none;
+  border: none;
+  background: none;
+  box-shadow: none;
 }
+
+.blank.space::after { display: none; }
 
 .blank.pop {
   animation: pop 0.35s ease;
@@ -179,6 +324,7 @@ html, body {
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* ===== Keyboard — fabric / cardboard tiles ===== */
 .keyboard {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -191,30 +337,42 @@ html, body {
   min-height: var(--tap);
   border-radius: 14px;
   border: 3px solid var(--key-border);
-  background: var(--key);
+  background:
+    linear-gradient(180deg, #FFF6E0 0%, #F0D8A8 100%);
   color: var(--ink);
   font-size: 1.25rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 3px 0 var(--key-border);
+  box-shadow: 0 4px 0 var(--key-stitch);
   transition: transform 0.08s ease, background 0.15s, opacity 0.2s;
+  position: relative;
+}
+
+.key::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1.5px dashed rgba(140, 90, 50, 0.28);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .key:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--key-border);
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--key-stitch);
 }
 
 .key.correct {
-  background: #C8F5D8;
-  border-color: var(--good);
-  color: #1B6B3A;
+  background: linear-gradient(180deg, #D8F5D0 0%, #A8D898 100%);
+  border-color: var(--good-dark);
+  color: #2A5A2A;
+  box-shadow: 0 4px 0 var(--good-dark);
 }
 
 .key.wrong {
-  background: var(--dim);
-  border-color: #A8B0BA;
-  color: #7A8490;
+  background: linear-gradient(180deg, #E8DED0 0%, #D0C4B0 100%);
+  border-color: #A89880;
+  color: #8A7A68;
   opacity: 0.55;
   box-shadow: none;
 }
@@ -223,28 +381,42 @@ html, body {
   cursor: default;
 }
 
+/* ===== Buttons — felt patches ===== */
 .btn {
-  border: none;
-  border-radius: 14px;
+  border: 3px solid transparent;
+  border-radius: 16px;
   font-weight: 800;
   font-size: 1rem;
   padding: 12px 18px;
   cursor: pointer;
   min-height: 48px;
+  position: relative;
+  font-family: inherit;
 }
 
 .btn.primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, #F4A888 0%, var(--accent) 100%);
   color: #fff;
-  box-shadow: 0 4px 0 var(--accent-dark);
+  border-color: var(--accent-dark);
+  box-shadow: 0 5px 0 var(--accent-dark);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.15);
 }
 
-.btn.primary:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--accent-dark); }
+.btn.primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--accent-dark);
+}
 
 .btn.secondary {
-  background: #EEF2F7;
+  background: linear-gradient(180deg, #FFF8EE 0%, #F0E0C8 100%);
   color: var(--ink);
-  border: 2px solid #D0D8E2;
+  border-color: var(--panel-edge);
+  box-shadow: 0 4px 0 var(--cork);
+}
+
+.btn.secondary:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--cork);
 }
 
 .btn.big {
@@ -254,10 +426,17 @@ html, body {
   max-width: 280px;
 }
 
+.btn.small {
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  min-height: 40px;
+}
+
+/* ===== Outcome / gate — scrapbook fabric panels ===== */
 .outcome {
   position: fixed;
   inset: 0;
-  background: rgba(30, 42, 58, 0.45);
+  background: rgba(70, 45, 30, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,22 +447,36 @@ html, body {
 .outcome.hidden { display: none; }
 
 .outcome-card {
-  background: var(--card);
-  border-radius: 24px;
+  background:
+    linear-gradient(160deg, #FFF8EE 0%, #FFE8D0 55%, #F8D8E0 100%);
+  border: 5px solid var(--cardboard-edge);
+  border-radius: 28px;
   padding: 28px 22px;
   text-align: center;
   max-width: 360px;
   width: 100%;
-  box-shadow: var(--shadow);
+  box-shadow: 0 12px 0 rgba(100, 60, 30, 0.15), 0 8px 28px rgba(60, 30, 10, 0.2);
   animation: pop 0.4s ease;
+  position: relative;
 }
 
-.outcome-emoji { font-size: 3rem; margin: 0 0 4px; }
+.outcome-card::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 2px dashed rgba(140, 80, 50, 0.35);
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.outcome-emoji { font-size: 3rem; margin: 0 0 4px; position: relative; z-index: 1; }
 
 .outcome-card h2 {
   margin: 0 0 8px;
   font-size: 1.6rem;
   color: var(--accent-dark);
+  position: relative;
+  z-index: 1;
 }
 
 .outcome-card p {
@@ -291,6 +484,13 @@ html, body {
   color: var(--soft);
   font-size: 1.05rem;
   line-height: 1.4;
+  position: relative;
+  z-index: 1;
+}
+
+.outcome-card .btn {
+  position: relative;
+  z-index: 1;
 }
 
 .gate-actions {
@@ -298,8 +498,11 @@ html, body {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
+/* ===== Parents screen — same craft language ===== */
 .parent-header {
   display: flex;
   flex-wrap: wrap;
@@ -307,21 +510,31 @@ html, body {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  background: var(--cream);
+  border: 3px solid var(--panel-edge);
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
 }
 
-.parent-header h2 { margin: 0; font-size: 1.3rem; }
+.parent-header h2 { margin: 0; font-size: 1.3rem; color: var(--accent-dark); }
 
 .hint {
   color: var(--soft);
-  margin: 0 0 16px;
+  margin: 12px 0 16px;
   font-size: 0.95rem;
+  background: rgba(255, 248, 238, 0.8);
+  border: 2px dashed rgba(180, 130, 80, 0.4);
+  border-radius: 14px;
+  padding: 10px 14px;
 }
 
 .add-one label,
 .paste-block label {
   display: block;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 6px;
+  color: var(--ink);
 }
 
 .row {
@@ -334,18 +547,37 @@ html, body {
   width: 100%;
   font-size: 1.05rem;
   padding: 12px 14px;
-  border-radius: 12px;
-  border: 2px solid #C5D4E8;
+  border-radius: 14px;
+  border: 3px solid var(--panel-edge);
+  background: var(--cream);
   font-family: inherit;
+  color: var(--ink);
+  box-shadow: inset 0 2px 4px rgba(120, 80, 40, 0.08);
 }
 
 #word-input { flex: 1; }
 
-.add-one { margin-bottom: 18px; }
-.paste-block { margin-bottom: 20px; }
+.add-one {
+  margin-bottom: 18px;
+  background: #FFF0E0;
+  border: 3px solid var(--felt-orange);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 4px 0 rgba(180, 100, 50, 0.15);
+}
+
+.paste-block {
+  margin-bottom: 20px;
+  background: #E8F0F8;
+  border: 3px solid var(--felt-blue);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 4px 0 rgba(80, 120, 160, 0.15);
+}
+
 .paste-block .btn { margin-top: 8px; }
 
-.list-heading { margin: 0 0 8px; font-size: 1.05rem; }
+.list-heading { margin: 0 0 8px; font-size: 1.05rem; color: var(--accent-dark); }
 
 .word-list {
   list-style: none;
@@ -357,20 +589,33 @@ html, body {
 }
 
 .word-list li {
-  background: var(--card);
-  border-radius: 14px;
+  background: linear-gradient(180deg, #FFF8EE 0%, #F4E8D0 100%);
+  border: 3px solid var(--panel-edge);
+  border-radius: 16px;
   padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 0 rgba(120, 80, 40, 0.12);
+  position: relative;
+}
+
+.word-list li::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1.5px dashed rgba(140, 90, 50, 0.2);
+  border-radius: 10px;
+  pointer-events: none;
 }
 
 .word-list .word-text {
   flex: 1;
   font-weight: 800;
   font-size: 1.15rem;
-  text-transform: lowercase;
+  text-transform: none;
+  position: relative;
+  z-index: 1;
 }
 
 .word-list input.edit-input {
@@ -380,21 +625,27 @@ html, body {
   padding: 8px 10px;
   border-radius: 10px;
   border: 2px solid var(--accent);
+  background: #fff;
+  position: relative;
+  z-index: 1;
 }
 
 .word-list .icon-btn {
   min-width: 44px;
   min-height: 44px;
   border-radius: 12px;
-  border: 2px solid #D0D8E2;
-  background: #F5F7FA;
+  border: 2px solid var(--panel-edge);
+  background: #FFF0D8;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
+  color: var(--ink);
 }
 
 .word-list .icon-btn.danger {
-  border-color: #F5B8C4;
+  border-color: #E8A0B0;
   background: #FFE8EE;
   color: #B04060;
 }
@@ -402,34 +653,35 @@ html, body {
 .danger-zone {
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 2px dashed #D0D8E2;
+  border-top: 3px dashed var(--panel-edge);
 }
 
 @media (orientation: landscape) and (max-height: 700px) {
-  #hangman { max-height: 34vh; width: min(28vw, 160px); }
+  #hangman { max-height: 40vh; width: min(58vw, 340px); }
   .word-area { margin: 8px 0; min-height: 3.2rem; }
   .keyboard { gap: 6px; }
   .key { min-height: 44px; font-size: 1.1rem; }
-  .buddy-caption { font-size: 0.8rem; margin-bottom: 4px; }
+  .buddy-caption { font-size: 0.8rem; margin: 4px 0 2px; }
+  .character-hook { font-size: 0.9rem; margin-bottom: 4px; }
 }
 
 @media (min-width: 600px) {
   .keyboard { grid-template-columns: repeat(9, 1fr); }
 }
 
-/* --- v1.1: parent toggles + empty pool --- */
-/* (v1.2 beach styles appended below) */
+/* --- empty pool + toggles --- */
 
 .empty-pool-banner {
-  background: #FFF3CD;
+  background: linear-gradient(180deg, #FFF6D0 0%, #FFE8A8 100%);
   color: #7A5B00;
-  border: 2px solid #F0D78C;
-  border-radius: 14px;
+  border: 3px solid #E0C060;
+  border-radius: 16px;
   padding: 10px 14px;
   margin: 0 0 10px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.95rem;
   text-align: center;
+  box-shadow: 0 3px 0 rgba(160, 120, 40, 0.2);
 }
 
 .empty-pool-banner.hidden { display: none; }
@@ -462,15 +714,9 @@ html, body {
   gap: 8px;
 }
 
-.btn.small {
-  font-size: 0.85rem;
-  padding: 8px 12px;
-  min-height: 40px;
-}
-
 .word-list li.off {
   opacity: 0.72;
-  background: #F3F5F8;
+  background: linear-gradient(180deg, #F0E8DC 0%, #E0D4C4 100%);
 }
 
 .word-list li.off .word-text {
@@ -487,24 +733,27 @@ html, body {
   min-height: 48px;
   padding: 6px 10px 6px 6px;
   border-radius: 999px;
-  border: 3px solid #C5D4E8;
-  background: #EEF2F7;
+  border: 3px solid var(--panel-edge);
+  background: #F0E4D0;
   cursor: pointer;
   font-weight: 800;
   font-size: 0.85rem;
   color: var(--soft);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 3px 0 rgba(120, 80, 40, 0.15);
 }
 
 .toggle-btn.is-on {
-  background: #C8F5D8;
-  border-color: var(--good);
-  color: #1B6B3A;
+  background: linear-gradient(180deg, #D0F0C8 0%, #A8D898 100%);
+  border-color: var(--good-dark);
+  color: #2A5A2A;
 }
 
 .toggle-btn.is-off {
-  background: #FFE8EE;
-  border-color: #F5B8C4;
+  background: linear-gradient(180deg, #FFE0E8 0%, #F4C0C8 100%);
+  border-color: #E090A0;
   color: #B04060;
 }
 
@@ -512,7 +761,7 @@ html, body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #fff;
+  background: #FFF8EE;
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
   border: 2px solid currentColor;
 }
@@ -522,79 +771,8 @@ html, body {
   text-align: left;
 }
 
-.word-list .word-text {
-  text-transform: none;
-}
+/* --- v1.3/v1.4: trap-door lose sequence (timing unchanged) --- */
 
-/* --- v1.2: beach pirate stage --- */
-
-.beach-stage {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  overflow: hidden;
-}
-
-.beach-frame {
-  width: 100%;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  background: #7EC8FF;
-  line-height: 0;
-}
-
-#hangman {
-  width: 100%;
-  max-width: 420px;
-  max-height: none;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-}
-
-.character.hidden,
-.part.hidden {
-  display: none;
-}
-
-.character-hook {
-  margin: 0 0 8px;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--accent-dark);
-  min-height: 1.35em;
-}
-
-.buddy-caption {
-  margin: 8px 0 4px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--soft);
-  text-align: center;
-}
-
-@media (orientation: landscape) and (max-height: 700px) {
-  #hangman { max-height: 38vh; width: min(55vw, 320px); }
-  .character-hook { font-size: 0.9rem; margin-bottom: 4px; }
-  .buddy-caption { font-size: 0.8rem; margin: 4px 0 2px; }
-}
-
-/* skel-pop keyframes moved to v1.3 block below */
-
-/* --- v1.3: storybook gallows + trap-door lose --- */
-
-#hangman {
-  width: 100%;
-  max-width: 440px;
-  max-height: none;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-}
-
-/* Trap door flaps hinge open on lose */
 #trap-left,
 #trap-right {
   transform-box: fill-box;
@@ -617,7 +795,6 @@ html, body {
   transform: rotate(102deg);
 }
 
-/* Actor group (pirate / skeleton) falls through trap */
 #actor {
   transform-box: fill-box;
   transform-origin: center bottom;
@@ -643,7 +820,6 @@ html, body {
   }
 }
 
-/* Skeleton morph pop before fall */
 #char-skeleton.skel-pop {
   animation: skelPop 0.4s ease;
   transform-origin: 198px 160px;
@@ -655,7 +831,6 @@ html, body {
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-/* Win celebration wiggle */
 #char-pip.celebrating {
   animation: celebrate 0.7s ease;
   transform-origin: 198px 200px;
@@ -668,7 +843,6 @@ html, body {
   75% { transform: translateY(-5px) rotate(-2deg); }
 }
 
-/* Subtle shark bob */
 #shark-fin {
   animation: sharkBob 3.2s ease-in-out infinite;
 }
@@ -676,8 +850,4 @@ html, body {
 @keyframes sharkBob {
   0%, 100% { transform: translate(255px, 148px); }
   50% { transform: translate(262px, 146px); }
-}
-
-@media (orientation: landscape) and (max-height: 700px) {
-  #hangman { max-height: 40vh; width: min(58vw, 340px); }
 }

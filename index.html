@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#4FA3FF" />
+  <meta name="theme-color" content="#E8886A" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Spell Buddy" />
-  <meta name="description" content="Silly spelling Hangman for kids — storybook pirate on a beach gallows stage, big letters, school word lists." />
+  <meta name="description" content="Silly spelling Hangman for kids — LittleBigPlanet craft vibe: felt pirate on a cardboard beach stage, big letters, school word lists." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -22,7 +22,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.3</span>
+        <span class="version" title="App version">v1.4</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -35,255 +35,296 @@
       <p id="progress" class="progress">Word 1 of 4</p>
       <p id="joke-line" class="joke-line" aria-live="polite"></p>
 
-      <section class="stage beach-stage" aria-label="Beach pirate buddy stage">
-        <p id="character-hook" class="character-hook">Captain Pip is counting on you!</p>
+      <section class="stage beach-stage" aria-label="Craft beach pirate buddy stage">
+        <p id="character-hook" class="character-hook">Captain Pip (felt edition) is counting on you!</p>
         <div class="beach-frame">
           <svg id="hangman" viewBox="0 0 360 280" role="img" aria-labelledby="hangman-title">
-            <title id="hangman-title">Storybook pirate buddy on a beach gallows stage</title>
+            <title id="hangman-title">Craft-world pirate buddy on a felt beach diorama</title>
             <defs>
+              <!-- Felt sky -->
               <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#5BB8FF"/>
-                <stop offset="50%" stop-color="#9AD6FF"/>
-                <stop offset="100%" stop-color="#D6F0FF"/>
+                <stop offset="0%" stop-color="#C8E4F5"/>
+                <stop offset="55%" stop-color="#D8ECF8"/>
+                <stop offset="100%" stop-color="#E8F4FA"/>
               </linearGradient>
+              <!-- Fabric water -->
               <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#2EC4D6"/>
-                <stop offset="100%" stop-color="#1A9BB0"/>
+                <stop offset="0%" stop-color="#6EC4D8"/>
+                <stop offset="100%" stop-color="#4AA8C0"/>
               </linearGradient>
+              <!-- Cork / felt sand -->
               <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#F8E4A8"/>
-                <stop offset="100%" stop-color="#E8C878"/>
+                <stop offset="0%" stop-color="#F0D8A8"/>
+                <stop offset="100%" stop-color="#D8B878"/>
               </linearGradient>
-              <linearGradient id="woodGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#C48A4A"/>
-                <stop offset="100%" stop-color="#8B5A2B"/>
+              <!-- Cardboard wood -->
+              <linearGradient id="woodGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#E0B878"/>
+                <stop offset="50%" stop-color="#C49050"/>
+                <stop offset="100%" stop-color="#A87038"/>
               </linearGradient>
               <linearGradient id="plankGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#D4A574"/>
-                <stop offset="100%" stop-color="#A66B3A"/>
+                <stop offset="0%" stop-color="#E8C090"/>
+                <stop offset="100%" stop-color="#C08848"/>
               </linearGradient>
+              <pattern id="feltDots" width="12" height="12" patternUnits="userSpaceOnUse">
+                <circle cx="3" cy="3" r="1.2" fill="#fff" opacity="0.25"/>
+                <circle cx="9" cy="8" r="0.9" fill="#A8C8E0" opacity="0.2"/>
+              </pattern>
+              <pattern id="fabricWeave" width="8" height="8" patternUnits="userSpaceOnUse">
+                <path d="M0 4 H8 M4 0 V8" stroke="#3A90A8" stroke-width="0.6" opacity="0.25"/>
+              </pattern>
+              <pattern id="corkSpeck" width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="3" r="1" fill="#B88850" opacity="0.35"/>
+                <circle cx="7" cy="7" r="0.8" fill="#A07040" opacity="0.25"/>
+              </pattern>
               <clipPath id="stageClip">
                 <rect x="0" y="0" width="360" height="280" rx="16"/>
               </clipPath>
             </defs>
 
             <g clip-path="url(#stageClip)">
-              <!-- ===== BEACH BACKGROUND ===== -->
+              <!-- ===== CRAFT BEACH DIORAMA ===== -->
               <g id="beach-bg" aria-hidden="true">
                 <rect x="0" y="0" width="360" height="280" fill="url(#skyGrad)"/>
-                <!-- sun -->
-                <circle cx="300" cy="38" r="24" fill="#FFE566"/>
-                <circle cx="300" cy="38" r="32" fill="#FFE566" opacity="0.28"/>
-                <!-- distant palms -->
-                <g transform="translate(268,95)" opacity="0.7">
-                  <path d="M18 70 Q16 40 22 8" fill="none" stroke="#6B8F3C" stroke-width="5" stroke-linecap="round"/>
-                  <path d="M22 10 Q6 0 -4 16" fill="none" stroke="#5A9E3A" stroke-width="4" stroke-linecap="round"/>
-                  <path d="M22 12 Q38 2 46 18" fill="none" stroke="#5A9E3A" stroke-width="4" stroke-linecap="round"/>
-                  <path d="M20 16 Q8 24 4 40" fill="none" stroke="#4C8A32" stroke-width="3" stroke-linecap="round"/>
+                <rect x="0" y="0" width="360" height="150" fill="url(#feltDots)"/>
+                <!-- felt sun (button-ish) -->
+                <circle cx="300" cy="38" r="26" fill="#FFE08A" stroke="#E8C060" stroke-width="3"/>
+                <circle cx="300" cy="38" r="18" fill="none" stroke="#F0D070" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
+                <circle cx="292" cy="32" r="3" fill="#FFF8D0" opacity="0.7"/>
+                <!-- cardboard distant palms -->
+                <g transform="translate(268,95)" opacity="0.75">
+                  <path d="M18 70 Q16 40 22 8" fill="none" stroke="#C49A5C" stroke-width="6" stroke-linecap="round"/>
+                  <path d="M22 10 Q4 -2 -8 18" fill="#7AB060" stroke="#5A9040" stroke-width="1.5"/>
+                  <path d="M22 12 Q42 0 50 20" fill="#7AB060" stroke="#5A9040" stroke-width="1.5"/>
+                  <path d="M20 16 Q6 28 0 44" fill="#6AA050" stroke="#4A8038" stroke-width="1.2"/>
                 </g>
-                <g transform="translate(310,108)" opacity="0.55">
-                  <path d="M10 55 Q9 30 14 4" fill="none" stroke="#6B8F3C" stroke-width="4" stroke-linecap="round"/>
-                  <path d="M14 6 Q2 -2 -6 12" fill="none" stroke="#5A9E3A" stroke-width="3" stroke-linecap="round"/>
-                  <path d="M14 8 Q28 0 34 14" fill="none" stroke="#5A9E3A" stroke-width="3" stroke-linecap="round"/>
+                <g transform="translate(310,108)" opacity="0.6">
+                  <path d="M10 55 Q9 30 14 4" fill="none" stroke="#C49A5C" stroke-width="5" stroke-linecap="round"/>
+                  <path d="M14 6 Q0 -4 -10 14" fill="#7AB060" stroke="#5A9040" stroke-width="1.2"/>
+                  <path d="M14 8 Q30 -2 36 16" fill="#7AB060" stroke="#5A9040" stroke-width="1.2"/>
                 </g>
-                <!-- turquoise ocean -->
+                <!-- fabric ocean -->
                 <path d="M0 138 Q90 122 180 138 T360 136 L360 188 L0 188 Z" fill="url(#waterGrad)"/>
-                <path d="M0 148 Q70 140 140 152 T280 146 T360 154" fill="none" stroke="#A8F0FF" stroke-width="3" opacity="0.55"/>
-                <!-- shark fin -->
+                <path d="M0 138 Q90 122 180 138 T360 136 L360 188 L0 188 Z" fill="url(#fabricWeave)"/>
+                <!-- yarn wave stitches -->
+                <path d="M0 148 Q70 140 140 152 T280 146 T360 154" fill="none" stroke="#E8F8FF" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.7"/>
+                <path d="M0 160 Q90 154 180 164 T360 158" fill="none" stroke="#A8E0F0" stroke-width="2" stroke-dasharray="4 5" opacity="0.5"/>
+                <!-- felt shark fin cutout -->
                 <g id="shark-fin" transform="translate(255,148)">
-                  <path d="M0 18 L14 0 L22 18 Z" fill="#2C3E50"/>
-                  <path d="M4 18 L14 4 L18 18" fill="#3D5166"/>
+                  <path d="M0 20 L15 -2 L24 20 Z" fill="#5A7088" stroke="#3A4858" stroke-width="2"/>
+                  <path d="M0 20 L15 -2 L24 20 Z" fill="none" stroke="#8AA0B0" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                  <circle cx="12" cy="14" r="1.8" fill="#3A4858"/>
                 </g>
-                <!-- sand -->
+                <!-- cork sand -->
                 <path d="M0 178 Q100 168 180 182 T360 176 L360 280 L0 280 Z" fill="url(#sandGrad)"/>
-                <ellipse cx="48" cy="230" rx="20" ry="5" fill="#D4B468" opacity="0.35"/>
-                <ellipse cx="210" cy="248" rx="28" ry="6" fill="#D4B468" opacity="0.28"/>
-                <ellipse cx="320" cy="220" rx="16" ry="4" fill="#D4B468" opacity="0.35"/>
-                <!-- near palm left -->
+                <path d="M0 178 Q100 168 180 182 T360 176 L360 280 L0 280 Z" fill="url(#corkSpeck)"/>
+                <ellipse cx="48" cy="230" rx="20" ry="5" fill="#C4A060" opacity="0.3"/>
+                <ellipse cx="210" cy="248" rx="28" ry="6" fill="#C4A060" opacity="0.25"/>
+                <ellipse cx="320" cy="220" rx="16" ry="4" fill="#C4A060" opacity="0.3"/>
+                <!-- near cardboard palm + felt fronds -->
                 <g transform="translate(8,118)">
-                  <path d="M26 100 Q20 55 32 6" fill="none" stroke="#7A9E42" stroke-width="8" stroke-linecap="round"/>
-                  <path d="M32 10 Q8 -4 -10 20" fill="none" stroke="#5A9E3A" stroke-width="6" stroke-linecap="round"/>
-                  <path d="M32 12 Q56 -2 68 24" fill="none" stroke="#5A9E3A" stroke-width="6" stroke-linecap="round"/>
-                  <path d="M30 18 Q10 30 2 52" fill="none" stroke="#4C8A32" stroke-width="5" stroke-linecap="round"/>
-                  <path d="M34 18 Q54 32 60 52" fill="none" stroke="#4C8A32" stroke-width="5" stroke-linecap="round"/>
-                  <ellipse cx="18" cy="108" rx="12" ry="5" fill="#3D2A1A" opacity="0.22"/>
-                  <!-- coconuts -->
-                  <circle cx="28" cy="22" r="4" fill="#8B5A2B"/>
-                  <circle cx="36" cy="20" r="3.5" fill="#A66B3A"/>
+                  <path d="M26 100 Q20 55 32 6" fill="none" stroke="#C49A5C" stroke-width="9" stroke-linecap="round"/>
+                  <path d="M26 100 Q20 55 32 6" fill="none" stroke="#A87840" stroke-width="2" stroke-dasharray="4 3" opacity="0.5"/>
+                  <path d="M32 10 Q6 -6 -14 22" fill="#7AB860" stroke="#4A8838" stroke-width="2"/>
+                  <path d="M32 12 Q60 -4 74 26" fill="#7AB860" stroke="#4A8838" stroke-width="2"/>
+                  <path d="M30 18 Q8 32 -2 54" fill="#6AA850" stroke="#3A7828" stroke-width="1.5"/>
+                  <path d="M34 18 Q58 34 66 54" fill="#6AA850" stroke="#3A7828" stroke-width="1.5"/>
+                  <!-- stitch on leaves -->
+                  <path d="M32 10 Q18 4 4 16" fill="none" stroke="#5A9840" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+                  <ellipse cx="18" cy="108" rx="12" ry="5" fill="#5C4030" opacity="0.2"/>
+                  <!-- cork coconuts -->
+                  <circle cx="28" cy="22" r="5" fill="#C49050" stroke="#8B5A2B" stroke-width="1.5"/>
+                  <circle cx="36" cy="20" r="4" fill="#D4A060" stroke="#8B5A2B" stroke-width="1.5"/>
                 </g>
-                <!-- shells -->
-                <ellipse cx="72" cy="242" rx="7" ry="4.5" fill="#FFB8C8" opacity="0.75"/>
-                <ellipse cx="290" cy="252" rx="6" ry="4" fill="#FFF0D0" opacity="0.85"/>
+                <!-- button shells -->
+                <circle cx="72" cy="242" r="7" fill="#F4B8C8" stroke="#D4889A" stroke-width="2"/>
+                <circle cx="72" cy="242" r="2.5" fill="#fff" opacity="0.5"/>
+                <circle cx="290" cy="252" r="6" fill="#FFF0D0" stroke="#E0C890" stroke-width="2"/>
+                <circle cx="290" cy="252" r="2" fill="#E0C890" opacity="0.6"/>
               </g>
 
-              <!-- ===== WOODEN GALLOWS + RAISED PLANK STAGE ===== -->
+              <!-- ===== CARDBOARD / CORK GALLOWS + PLANK ===== -->
               <g id="gallows" aria-hidden="true">
-                <!-- raised platform supports -->
-                <rect x="108" y="198" width="10" height="36" rx="2" fill="#6B4226"/>
-                <rect x="242" y="198" width="10" height="36" rx="2" fill="#6B4226"/>
-                <!-- plank stage floor (sides around trap) -->
-                <rect x="100" y="188" width="160" height="16" rx="3" fill="url(#plankGrad)" stroke="#6B4226" stroke-width="2"/>
-                <!-- plank wood lines -->
-                <line x1="132" y1="188" x2="132" y2="204" stroke="#8B5A2B" stroke-width="1.2" opacity="0.5"/>
-                <line x1="228" y1="188" x2="228" y2="204" stroke="#8B5A2B" stroke-width="1.2" opacity="0.5"/>
-                <!-- trap door hole (dark under) -->
+                <rect x="108" y="198" width="10" height="36" rx="3" fill="#A87848" stroke="#6B4226" stroke-width="2"/>
+                <rect x="242" y="198" width="10" height="36" rx="3" fill="#A87848" stroke="#6B4226" stroke-width="2"/>
+                <!-- cork plank stage -->
+                <rect x="100" y="188" width="160" height="16" rx="4" fill="url(#plankGrad)" stroke="#6B4226" stroke-width="2.5"/>
+                <rect x="100" y="188" width="160" height="16" rx="4" fill="url(#corkSpeck)" opacity="0.5"/>
+                <line x1="132" y1="190" x2="132" y2="202" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.55"/>
+                <line x1="228" y1="190" x2="228" y2="202" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.55"/>
+                <!-- stitch edge on plank -->
+                <rect x="104" y="191" width="152" height="10" rx="2" fill="none" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="3 2" opacity="0.4"/>
                 <rect id="trap-hole" x="150" y="190" width="60" height="12" rx="1" fill="#3D2A1A"/>
-                <!-- trap door flaps (closed by default, open on lose) -->
                 <g id="trap-door">
                   <g id="trap-left" class="trap-flap">
-                    <rect x="150" y="190" width="30" height="12" rx="1" fill="#C48A4A" stroke="#6B4226" stroke-width="1.5"/>
-                    <line x1="157" y1="192" x2="157" y2="200" stroke="#8B5A2B" stroke-width="1" opacity="0.6"/>
-                    <circle cx="176" cy="196" r="1.8" fill="#5C4030"/>
+                    <rect x="150" y="190" width="30" height="12" rx="2" fill="#D4A060" stroke="#6B4226" stroke-width="1.5"/>
+                    <line x1="157" y1="192" x2="157" y2="200" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="2 1" opacity="0.6"/>
+                    <circle cx="176" cy="196" r="2.2" fill="#5C4030" stroke="#3A2818" stroke-width="0.8"/>
                   </g>
                   <g id="trap-right" class="trap-flap">
-                    <rect x="180" y="190" width="30" height="12" rx="1" fill="#B87840" stroke="#6B4226" stroke-width="1.5"/>
-                    <line x1="203" y1="192" x2="203" y2="200" stroke="#8B5A2B" stroke-width="1" opacity="0.6"/>
-                    <circle cx="184" cy="196" r="1.8" fill="#5C4030"/>
+                    <rect x="180" y="190" width="30" height="12" rx="2" fill="#C49050" stroke="#6B4226" stroke-width="1.5"/>
+                    <line x1="203" y1="192" x2="203" y2="200" stroke="#8B5A2B" stroke-width="1" stroke-dasharray="2 1" opacity="0.6"/>
+                    <circle cx="184" cy="196" r="2.2" fill="#5C4030" stroke="#3A2818" stroke-width="0.8"/>
                   </g>
                 </g>
-                <!-- upright post -->
-                <rect x="118" y="48" width="14" height="142" rx="3" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="2"/>
-                <!-- wood grain on post -->
-                <line x1="125" y1="56" x2="125" y2="180" stroke="#A66B3A" stroke-width="1.5" opacity="0.4"/>
-                <!-- crossbeam -->
-                <rect x="118" y="48" width="95" height="12" rx="3" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="2"/>
-                <!-- brace -->
-                <path d="M132 70 L168 58" fill="none" stroke="#8B5A2B" stroke-width="5" stroke-linecap="round"/>
-                <!-- rope (decorative — buddy stands on stage, not hanging) -->
-                <path d="M198 60 Q198 72 198 88" fill="none" stroke="#C4A574" stroke-width="3" stroke-linecap="round"/>
-                <ellipse cx="198" cy="94" rx="10" ry="6" fill="none" stroke="#C4A574" stroke-width="2.5"/>
-                <!-- base plate under post -->
-                <ellipse cx="125" cy="198" rx="16" ry="5" fill="#5C4030" opacity="0.35"/>
+                <!-- cardboard upright -->
+                <rect x="118" y="48" width="14" height="142" rx="4" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="2.5"/>
+                <line x1="125" y1="56" x2="125" y2="180" stroke="#8B5A2B" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.45"/>
+                <!-- crossbeam cardboard -->
+                <rect x="118" y="48" width="95" height="12" rx="4" fill="url(#woodGrad)" stroke="#6B4226" stroke-width="2.5"/>
+                <line x1="125" y1="54" x2="205" y2="54" stroke="#8B5A2B" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.4"/>
+                <path d="M132 70 L168 58" fill="none" stroke="#A87848" stroke-width="6" stroke-linecap="round"/>
+                <path d="M132 70 L168 58" fill="none" stroke="#6B4226" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
+                <!-- yarn rope (decorative) -->
+                <path d="M198 60 Q198 72 198 88" fill="none" stroke="#C4A070" stroke-width="4" stroke-linecap="round"/>
+                <path d="M198 60 Q198 72 198 88" fill="none" stroke="#A88850" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+                <ellipse cx="198" cy="94" rx="11" ry="7" fill="none" stroke="#C4A070" stroke-width="3"/>
+                <ellipse cx="125" cy="198" rx="16" ry="5" fill="#5C4030" opacity="0.3"/>
               </g>
 
-              <!-- ===== ACTOR (pirate / skeleton) — falls on lose ===== -->
+              <!-- ===== ACTOR — craft Captain Pip / felt skeleton ===== -->
               <g id="actor" class="actor">
-                <!-- Living pirate: Captain Pip (hero design v1.3) -->
                 <g id="char-pip" class="character" data-char="pip">
-                  <!-- 1. Head + hat + bandana + patch + grin -->
+                  <!-- 1. Felt head + yarn bandana + button eye + stitch grin -->
                   <g class="part part-1 hidden">
-                    <!-- round wooden head -->
-                    <circle cx="198" cy="108" r="26" fill="#E8B878" stroke="#6B4226" stroke-width="2.5"/>
-                    <ellipse cx="198" cy="112" rx="20" ry="18" fill="#F0C890" opacity="0.45"/>
-                    <!-- red polka-dot bandana -->
-                    <path d="M174 98 Q198 78 222 98 L222 108 Q198 92 174 108 Z" fill="#E85D4C"/>
-                    <circle cx="184" cy="96" r="3" fill="#fff" opacity="0.9"/>
-                    <circle cx="198" cy="90" r="2.8" fill="#fff" opacity="0.9"/>
-                    <circle cx="212" cy="96" r="3" fill="#fff" opacity="0.9"/>
-                    <circle cx="190" cy="102" r="2.2" fill="#fff" opacity="0.75"/>
-                    <circle cx="206" cy="100" r="2.2" fill="#fff" opacity="0.75"/>
-                    <!-- bandana knot -->
-                    <circle cx="222" cy="102" r="5" fill="#C44536"/>
-                    <path d="M224 100 L234 92 M224 104 L236 108" stroke="#C44536" stroke-width="3.5" stroke-linecap="round"/>
-                    <!-- black skull-and-crossbones hat -->
-                    <ellipse cx="198" cy="86" rx="30" ry="9" fill="#1A1A1A"/>
-                    <path d="M176 86 Q178 62 198 58 Q218 62 220 86 Z" fill="#1A1A1A"/>
-                    <!-- skull emblem -->
-                    <circle cx="198" cy="72" r="7" fill="#F5F0E0"/>
-                    <circle cx="195" cy="71" r="1.6" fill="#1A1A1A"/>
-                    <circle cx="201" cy="71" r="1.6" fill="#1A1A1A"/>
-                    <path d="M196 76 L200 76" stroke="#1A1A1A" stroke-width="1.2"/>
-                    <!-- crossbones under skull -->
-                    <path d="M190 78 L206 82 M206 78 L190 82" stroke="#F5F0E0" stroke-width="2" stroke-linecap="round"/>
-                    <!-- eye (left) -->
-                    <circle cx="188" cy="110" r="4" fill="#2C3E50"/>
-                    <circle cx="189.5" cy="108.5" r="1.3" fill="#fff" opacity="0.7"/>
-                    <!-- eye patch (right) -->
-                    <ellipse cx="208" cy="110" rx="7" ry="6" fill="#1A1A1A"/>
-                    <path d="M178 102 Q198 96 218 102" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
-                    <!-- big grin -->
-                    <path d="M186 120 Q198 132 210 120" fill="none" stroke="#6B4226" stroke-width="2.8" stroke-linecap="round"/>
-                    <path d="M190 122 Q198 128 206 122" fill="#fff" opacity="0.85"/>
-                    <!-- rosy cheeks -->
-                    <circle cx="178" cy="116" r="4" fill="#FF9A8A" opacity="0.45"/>
-                    <circle cx="218" cy="116" r="4" fill="#FF9A8A" opacity="0.45"/>
+                    <!-- felt head -->
+                    <circle cx="198" cy="108" r="27" fill="#F0C898" stroke="#C48858" stroke-width="3"/>
+                    <circle cx="198" cy="108" r="27" fill="none" stroke="#D4A070" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.55"/>
+                    <ellipse cx="198" cy="112" rx="20" ry="18" fill="#F8D8B0" opacity="0.4"/>
+                    <!-- yarn / felt bandana -->
+                    <path d="M173 98 Q198 76 223 98 L223 110 Q198 92 173 110 Z" fill="#E07060" stroke="#B04840" stroke-width="2"/>
+                    <circle cx="184" cy="96" r="3.2" fill="#FFF0F0" opacity="0.85"/>
+                    <circle cx="198" cy="89" r="3" fill="#FFF0F0" opacity="0.85"/>
+                    <circle cx="212" cy="96" r="3.2" fill="#FFF0F0" opacity="0.85"/>
+                    <!-- yarn knot tassels -->
+                    <circle cx="223" cy="102" r="6" fill="#C45048" stroke="#903830" stroke-width="1.5"/>
+                    <path d="M226 100 L238 90 M226 105 L240 110" stroke="#C45048" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M226 100 L238 90 M226 105 L240 110" stroke="#E88880" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.7"/>
+                    <!-- felt pirate hat -->
+                    <ellipse cx="198" cy="85" rx="31" ry="10" fill="#3A3A48" stroke="#1A1A28" stroke-width="2"/>
+                    <path d="M175 85 Q178 60 198 56 Q218 60 221 85 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="2"/>
+                    <!-- button skull emblem -->
+                    <circle cx="198" cy="70" r="8" fill="#FFF8E8" stroke="#C4B898" stroke-width="1.5"/>
+                    <circle cx="195" cy="69" r="1.8" fill="#3A3A48"/>
+                    <circle cx="201" cy="69" r="1.8" fill="#3A3A48"/>
+                    <path d="M195 74 Q198 76 201 74" fill="none" stroke="#3A3A48" stroke-width="1.2"/>
+                    <path d="M189 77 L207 81 M207 77 L189 81" stroke="#FFF8E8" stroke-width="2.2" stroke-linecap="round"/>
+                    <!-- button eye (left) -->
+                    <circle cx="188" cy="110" r="5.5" fill="#FFF8E8" stroke="#5A4A3A" stroke-width="2"/>
+                    <circle cx="188" cy="110" r="2.8" fill="#3A4A5A"/>
+                    <circle cx="189.5" cy="108.5" r="1.2" fill="#fff" opacity="0.8"/>
+                    <!-- felt eye patch -->
+                    <ellipse cx="208" cy="110" rx="7.5" ry="6.5" fill="#2A2A38" stroke="#1A1A28" stroke-width="1.5"/>
+                    <path d="M176 101 Q198 94 220 101" fill="none" stroke="#2A2A38" stroke-width="3" stroke-linecap="round"/>
+                    <!-- stitch smile -->
+                    <path d="M185 121 Q198 134 211 121" fill="none" stroke="#8B5A3A" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <path d="M189 123 Q198 130 207 123" fill="#fff" opacity="0.75"/>
+                    <!-- rosy felt cheeks -->
+                    <circle cx="177" cy="116" r="4.5" fill="#F4A090" opacity="0.5"/>
+                    <circle cx="219" cy="116" r="4.5" fill="#F4A090" opacity="0.5"/>
                   </g>
-                  <!-- 2. Torso: striped shirt + short red coat -->
+                  <!-- 2. Cloth striped shirt + felt red coat + button gold -->
                   <g class="part part-2 hidden">
-                    <!-- stick / shirt body -->
-                    <path d="M180 134 L216 134 L220 178 L176 178 Z" fill="#F5F8FF" stroke="#2E7AD1" stroke-width="2"/>
-                    <!-- blue-and-white stripes -->
-                    <line x1="178" y1="142" x2="218" y2="142" stroke="#2E7AD1" stroke-width="4"/>
-                    <line x1="177" y1="152" x2="219" y2="152" stroke="#2E7AD1" stroke-width="4"/>
-                    <line x1="176" y1="162" x2="220" y2="162" stroke="#2E7AD1" stroke-width="4"/>
-                    <line x1="176" y1="172" x2="220" y2="172" stroke="#2E7AD1" stroke-width="4"/>
-                    <!-- short red coat -->
-                    <path d="M174 134 L198 138 L222 134 L228 168 L216 178 L180 178 L168 168 Z" fill="#C44536" fill-opacity="0.92" stroke="#8B2E22" stroke-width="2"/>
-                    <path d="M198 138 L198 178" stroke="#8B2E22" stroke-width="1.5" opacity="0.6"/>
-                    <!-- gold buttons -->
-                    <circle cx="192" cy="148" r="3.2" fill="#FFD700" stroke="#C9A000" stroke-width="1.2"/>
-                    <circle cx="192" cy="160" r="3.2" fill="#FFD700" stroke="#C9A000" stroke-width="1.2"/>
-                    <circle cx="204" cy="148" r="3.2" fill="#FFD700" stroke="#C9A000" stroke-width="1.2"/>
-                    <circle cx="204" cy="160" r="3.2" fill="#FFD700" stroke="#C9A000" stroke-width="1.2"/>
+                    <path d="M180 134 L216 134 L220 178 L176 178 Z" fill="#F8F4FF" stroke="#5A8AD0" stroke-width="2.5"/>
+                    <!-- cloth stripes -->
+                    <line x1="178" y1="142" x2="218" y2="142" stroke="#5A8AD0" stroke-width="4.5"/>
+                    <line x1="177" y1="152" x2="219" y2="152" stroke="#5A8AD0" stroke-width="4.5"/>
+                    <line x1="176" y1="162" x2="220" y2="162" stroke="#5A8AD0" stroke-width="4.5"/>
+                    <line x1="176" y1="172" x2="220" y2="172" stroke="#5A8AD0" stroke-width="4.5"/>
+                    <!-- stitch seams on shirt -->
+                    <path d="M180 136 L176 176" fill="none" stroke="#8AB0E0" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>
+                    <path d="M216 136 L220 176" fill="none" stroke="#8AB0E0" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>
+                    <!-- felt red coat -->
+                    <path d="M174 134 L198 138 L222 134 L228 168 L216 178 L180 178 L168 168 Z" fill="#D05048" fill-opacity="0.95" stroke="#8B2E28" stroke-width="2.5"/>
+                    <path d="M174 134 L198 138 L222 134 L228 168 L216 178 L180 178 L168 168 Z" fill="none" stroke="#F08078" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.55"/>
+                    <path d="M198 138 L198 178" stroke="#8B2E28" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.55"/>
+                    <!-- button gold fasteners -->
+                    <circle cx="192" cy="148" r="4" fill="#F0D060" stroke="#C4A020" stroke-width="1.5"/>
+                    <circle cx="192" cy="148" r="1.5" fill="#C4A020"/>
+                    <circle cx="192" cy="160" r="4" fill="#F0D060" stroke="#C4A020" stroke-width="1.5"/>
+                    <circle cx="192" cy="160" r="1.5" fill="#C4A020"/>
+                    <circle cx="204" cy="148" r="4" fill="#F0D060" stroke="#C4A020" stroke-width="1.5"/>
+                    <circle cx="204" cy="148" r="1.5" fill="#C4A020"/>
+                    <circle cx="204" cy="160" r="4" fill="#F0D060" stroke="#C4A020" stroke-width="1.5"/>
+                    <circle cx="204" cy="160" r="1.5" fill="#C4A020"/>
                   </g>
-                  <!-- 3. Left arm -->
+                  <!-- 3. Left arm — felt tube -->
                   <g class="part part-3 hidden">
-                    <path d="M176 142 Q158 152 148 172" fill="none" stroke="#E8B878" stroke-width="8" stroke-linecap="round"/>
-                    <circle cx="146" cy="176" r="6" fill="#E8B878" stroke="#6B4226" stroke-width="1.5"/>
+                    <path d="M176 142 Q158 152 148 172" fill="none" stroke="#F0C898" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M176 142 Q158 152 148 172" fill="none" stroke="#C48858" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
+                    <circle cx="146" cy="176" r="7" fill="#F0C898" stroke="#C48858" stroke-width="2"/>
+                    <circle cx="146" cy="176" r="2.5" fill="#C48858" opacity="0.35"/>
                   </g>
                   <!-- 4. Right arm -->
                   <g class="part part-4 hidden">
-                    <path d="M220 142 Q238 150 248 170" fill="none" stroke="#E8B878" stroke-width="8" stroke-linecap="round"/>
-                    <circle cx="250" cy="174" r="6" fill="#E8B878" stroke="#6B4226" stroke-width="1.5"/>
+                    <path d="M220 142 Q238 150 248 170" fill="none" stroke="#F0C898" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M220 142 Q238 150 248 170" fill="none" stroke="#C48858" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2" opacity="0.5"/>
+                    <circle cx="250" cy="174" r="7" fill="#F0C898" stroke="#C48858" stroke-width="2"/>
+                    <circle cx="250" cy="174" r="2.5" fill="#C48858" opacity="0.35"/>
                   </g>
-                  <!-- 5. Left leg + black pirate boot -->
+                  <!-- 5. Left leg + fabric boot -->
                   <g class="part part-5 hidden">
-                    <path d="M186 178 L180 198" fill="none" stroke="#2E7AD1" stroke-width="9" stroke-linecap="round"/>
-                    <path d="M172 198 L188 198 L190 206 L168 206 Z" fill="#1A1A1A"/>
-                    <ellipse cx="174" cy="204" rx="5" ry="3" fill="#333"/>
+                    <path d="M186 178 L180 198" fill="none" stroke="#5A8AD0" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M170 197 L190 197 L192 208 L166 208 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="1.5"/>
+                    <path d="M172 200 L188 200" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                    <ellipse cx="172" cy="205" rx="5" ry="3" fill="#2A2A38"/>
                   </g>
-                  <!-- 6. Right leg + black pirate boot -->
+                  <!-- 6. Right leg + fabric boot -->
                   <g class="part part-6 hidden">
-                    <path d="M210 178 L216 198" fill="none" stroke="#2E7AD1" stroke-width="9" stroke-linecap="round"/>
-                    <path d="M208 198 L224 198 L226 206 L204 206 Z" fill="#1A1A1A"/>
-                    <ellipse cx="222" cy="204" rx="5" ry="3" fill="#333"/>
+                    <path d="M210 178 L216 198" fill="none" stroke="#5A8AD0" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M206 197 L226 197 L228 208 L202 208 Z" fill="#3A3A48" stroke="#1A1A28" stroke-width="1.5"/>
+                    <path d="M208 200 L224 200" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
+                    <ellipse cx="224" cy="205" rx="5" ry="3" fill="#2A2A38"/>
                   </g>
                 </g>
 
-                <!-- Comedy skeleton (lose morph) -->
+                <!-- Felt / cardboard comedy skeleton -->
                 <g id="char-skeleton" class="character hidden" data-char="skeleton">
                   <g class="skel-full">
-                    <!-- skull -->
-                    <circle cx="198" cy="108" r="24" fill="#F5F0E0" stroke="#5C4030" stroke-width="2.5"/>
-                    <ellipse cx="188" cy="106" rx="5" ry="7" fill="#2C3E50"/>
-                    <ellipse cx="208" cy="106" rx="5" ry="7" fill="#2C3E50"/>
-                    <!-- goofy teeth grin -->
-                    <rect x="186" y="118" width="24" height="11" rx="2" fill="#fff" stroke="#5C4030" stroke-width="1.5"/>
-                    <path d="M192 118 V129 M198 118 V129 M204 118 V129" stroke="#5C4030" stroke-width="1.2"/>
-                    <!-- tiny bandana remnant -->
-                    <path d="M176 94 Q198 80 220 94 L220 102 Q198 90 176 102 Z" fill="#E85D4C" opacity="0.9"/>
-                    <circle cx="220" cy="98" r="4" fill="#E85D4C"/>
-                    <!-- ribcage -->
-                    <ellipse cx="198" cy="152" rx="26" ry="28" fill="#F5F0E0" stroke="#5C4030" stroke-width="2.5"/>
-                    <path d="M180 140 Q198 148 216 140" fill="none" stroke="#5C4030" stroke-width="2"/>
-                    <path d="M178 152 Q198 160 218 152" fill="none" stroke="#5C4030" stroke-width="2"/>
-                    <path d="M180 164 Q198 172 216 164" fill="none" stroke="#5C4030" stroke-width="2"/>
-                    <line x1="198" y1="128" x2="198" y2="176" stroke="#5C4030" stroke-width="3"/>
-                    <!-- arms -->
-                    <path d="M176 140 Q156 150 146 172" fill="none" stroke="#F5F0E0" stroke-width="7" stroke-linecap="round"/>
-                    <path d="M176 140 Q156 150 146 172" fill="none" stroke="#5C4030" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="144" cy="176" r="6" fill="#F5F0E0" stroke="#5C4030" stroke-width="2"/>
-                    <path d="M220 140 Q240 150 250 172" fill="none" stroke="#F5F0E0" stroke-width="7" stroke-linecap="round"/>
-                    <path d="M220 140 Q240 150 250 172" fill="none" stroke="#5C4030" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="252" cy="176" r="6" fill="#F5F0E0" stroke="#5C4030" stroke-width="2"/>
+                    <!-- felt skull -->
+                    <circle cx="198" cy="108" r="25" fill="#FFF4E0" stroke="#B89870" stroke-width="3"/>
+                    <circle cx="198" cy="108" r="25" fill="none" stroke="#D4B890" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.55"/>
+                    <ellipse cx="188" cy="106" rx="5.5" ry="7.5" fill="#4A3A2A"/>
+                    <ellipse cx="208" cy="106" rx="5.5" ry="7.5" fill="#4A3A2A"/>
+                    <!-- goofy cardboard teeth -->
+                    <rect x="185" y="118" width="26" height="12" rx="3" fill="#FFF8EE" stroke="#B89870" stroke-width="2"/>
+                    <path d="M191 118 V130 M198 118 V130 M205 118 V130" stroke="#B89870" stroke-width="1.3"/>
+                    <!-- tiny felt bandana remnant -->
+                    <path d="M175 94 Q198 78 221 94 L221 103 Q198 88 175 103 Z" fill="#E07060" opacity="0.92" stroke="#B04840" stroke-width="1.5"/>
+                    <circle cx="221" cy="98" r="5" fill="#C45048"/>
+                    <!-- felt ribcage -->
+                    <ellipse cx="198" cy="152" rx="27" ry="29" fill="#FFF4E0" stroke="#B89870" stroke-width="3"/>
+                    <ellipse cx="198" cy="152" rx="27" ry="29" fill="none" stroke="#D4B890" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.5"/>
+                    <path d="M179 140 Q198 149 217 140" fill="none" stroke="#B89870" stroke-width="2.2"/>
+                    <path d="M177 152 Q198 161 219 152" fill="none" stroke="#B89870" stroke-width="2.2"/>
+                    <path d="M179 164 Q198 173 217 164" fill="none" stroke="#B89870" stroke-width="2.2"/>
+                    <line x1="198" y1="128" x2="198" y2="176" stroke="#B89870" stroke-width="3.5"/>
+                    <!-- cardboard bone arms -->
+                    <path d="M176 140 Q156 150 146 172" fill="none" stroke="#FFF4E0" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M176 140 Q156 150 146 172" fill="none" stroke="#B89870" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <circle cx="144" cy="176" r="7" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <path d="M220 140 Q240 150 250 172" fill="none" stroke="#FFF4E0" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M220 140 Q240 150 250 172" fill="none" stroke="#B89870" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <circle cx="252" cy="176" r="7" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
                     <!-- legs -->
-                    <path d="M188 178 L182 200" fill="none" stroke="#F5F0E0" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M188 178 L182 200" fill="none" stroke="#5C4030" stroke-width="2" stroke-linecap="round"/>
-                    <ellipse cx="180" cy="204" rx="10" ry="5" fill="#F5F0E0" stroke="#5C4030" stroke-width="2"/>
-                    <path d="M208 178 L214 200" fill="none" stroke="#F5F0E0" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M208 178 L214 200" fill="none" stroke="#5C4030" stroke-width="2" stroke-linecap="round"/>
-                    <ellipse cx="216" cy="204" rx="10" ry="5" fill="#F5F0E0" stroke="#5C4030" stroke-width="2"/>
-                    <!-- silly sparkles -->
-                    <circle cx="160" cy="95" r="3" fill="#FFE566"/>
-                    <circle cx="240" cy="120" r="2.5" fill="#FFE566"/>
-                    <circle cx="168" cy="190" r="2" fill="#FFE566"/>
+                    <path d="M188 178 L182 200" fill="none" stroke="#FFF4E0" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M188 178 L182 200" fill="none" stroke="#B89870" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <ellipse cx="180" cy="204" rx="11" ry="5.5" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <path d="M208 178 L214 200" fill="none" stroke="#FFF4E0" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M208 178 L214 200" fill="none" stroke="#B89870" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <ellipse cx="216" cy="204" rx="11" ry="5.5" fill="#FFF4E0" stroke="#B89870" stroke-width="2"/>
+                    <!-- silly yarn sparkles -->
+                    <circle cx="160" cy="95" r="3.5" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>
+                    <circle cx="240" cy="120" r="3" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>
+                    <circle cx="168" cy="190" r="2.5" fill="#FFE08A" stroke="#E0C060" stroke-width="1"/>
                   </g>
                 </g>
               </g>
             </g>
           </svg>
         </div>
-        <p id="buddy-caption" class="buddy-caption">Ready for beach spelling!</p>
+        <p id="buddy-caption" class="buddy-caption">Ready for crafty beach spelling!</p>
       </section>
 
       <section class="word-area" aria-label="Spelling word">

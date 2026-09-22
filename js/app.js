@@ -29,15 +29,15 @@
     {
       id: "pip",
       name: "Captain Pip",
-      hook: "Captain Pip is counting on you!",
+      hook: "Captain Pip (felt edition) is counting on you!",
       captions: [
-        "Pip waits on the beach stage — spell carefully!",
-        "Hat, bandana, patch, and a big grin — hello head!",
-        "Striped shirt + short red coat with gold buttons!",
-        "One arm ready for a high-five!",
-        "Two arms — jazz hands on the plank!",
-        "Left pirate boot on the trap door (uh-oh)!",
-        "Full pirate on stage! Spell fast — tides wait for no letter!"
+        "Pip waits on the craft beach stage — spell carefully!",
+        "Felt head, yarn bandana, button eye — hello!",
+        "Cloth stripes + felt red coat with button gold!",
+        "One felt arm ready for a high-five!",
+        "Two arms — jazz hands on the cork plank!",
+        "Left fabric boot on the trap door (uh-oh)!",
+        "Full craft pirate on stage! Spell fast — tides wait for no letter!"
       ]
     }
   ];
@@ -68,7 +68,7 @@
   ];
 
   var WIN_MSGS = [
-    "{NAME} is doing a happy beach dance! 💃",
+    "{NAME} is doing a happy craft-beach dance! 💃",
     "{NAME} says that word never stood a chance!",
     "Confetti in your brain! {NAME} is proud. (Invisible, but sparkly.)",
     "You, {NAME}, and the alphabet are best friends today!"
@@ -81,15 +81,15 @@
   ];
 
   var LOSE_MSGS = [
-    "The word was {WORD}. {NAME} went comedy-skeleton and whoosh — through the trap door!",
-    "It was {WORD}! Bones + trap door = silly splash. Practice makes giggles!",
-    "Secret word: {WORD}. {NAME} rattled, the plank opened, and down they went. Try the next one!"
+    "The word was {WORD}. {NAME} turned into crafty felt bones and whoosh — through the trap door!",
+    "It was {WORD}! Felt bones + cardboard trap = silly splash. Practice makes giggles!",
+    "Secret word: {WORD}. {NAME} rattled (softly!), the cork plank opened, and down they went. Try the next one!"
   ];
 
   var LOSE_SKELETON_CAPTIONS = [
-    "Rattle rattle — trap door time!",
-    "Boop! {NAME} is bones… whoosh through the plank!",
-    "Halloween-cute bones say: try again!"
+    "Rattle rattle — felt bones, trap door time!",
+    "Boop! {NAME} is crafty bones… whoosh through the plank!",
+    "Halloween-cute felt bones say: try again!"
   ];
 
   var state = {
@@ -322,7 +322,7 @@
   function setCharacterHook() {
     if (!els.characterHook) return;
     if (state.emptyPool) {
-      els.characterHook.textContent = "A beach buddy is waiting for words…";
+      els.characterHook.textContent = "A craft beach buddy is waiting for words…";
       return;
     }
     if (state.skeleton && state.character) {
@@ -511,7 +511,7 @@
         pip.classList.add("celebrating");
       }
       els.buddyCaption.textContent =
-        "Full pirate party! " + charName() + " did a happy jig!";
+        "Full craft pirate party! " + charName() + " did a happy jig!";
       setCharacterHook();
       fillOutcomeCard(true);
       revealOutcomePopup();
@@ -548,9 +548,9 @@
     els.outcome.classList.add("hidden");
     els.progress.textContent = "No words turned on";
     setJoke("Ask a parent to turn some words on!");
-    els.buddyCaption.textContent = "Beach buddies are waiting for words…";
+    els.buddyCaption.textContent = "Craft beach buddies are waiting for words…";
     if (els.characterHook) {
-      els.characterHook.textContent = "A beach buddy is waiting for words…";
+      els.characterHook.textContent = "A craft beach buddy is waiting for words…";
     }
     els.wordBlanks.innerHTML = "";
     var msg = document.createElement("p");
