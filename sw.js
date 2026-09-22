@@ -1,5 +1,5 @@
 /* Spell Buddy service worker — cache shell for offline play */
-var CACHE = "spell-buddy-v1.22";
+var CACHE = "spell-buddy-v1.23";
 var ASSETS = [
   "./",
   "./index.html",
@@ -8,8 +8,10 @@ var ASSETS = [
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./audio/ambience.wav",
   "./audio/miss.wav",
+  "./audio/correct.wav",
+  "./audio/win.wav",
+  "./audio/lose.wav",
   "./audio/blip.wav"
 ];
 

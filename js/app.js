@@ -8,23 +8,24 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
-   * v1.22: Dual audio for iPhone Safari
-   * - HTMLAudioElement (playsInline) = primary audible path (media category; survives ringer switch)
-   * - Web Audio synth = secondary / unlock companion
-   * Bundled WAVs: audio/ambience.wav, audio/miss.wav, audio/blip.wav
+   * v1.23: Event SFX only (no looping beach ambience)
+   * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
+   * - Web Audio one-shots = secondary companion
+   * Bundled WAVs: miss / correct / win / lose / blip (unmute)
+   * Unlock on tap: prime HTML players + AudioContext resume + silent buffer
    */
   var audio = {
     ctx: null,
     muted: false,
     unlocked: false,
-    ambience: null, // Web Audio nodes { noise, hiss, lfo, master }
-    noiseBuf: null,
     unlockArmed: false,
     unlockHandler: null,
     visibilityBound: false,
     html: {
-      ambience: null,
       miss: null,
+      correct: null,
+      win: null,
+      lose: null,
       blip: null,
       primed: false
     },
@@ -32,8 +33,10 @@
   };
 
   var AUDIO_URLS = {
-    ambience: "audio/ambience.wav",
     miss: "audio/miss.wav",
+    correct: "audio/correct.wav",
+    win: "audio/win.wav",
+    lose: "audio/lose.wav",
     blip: "audio/blip.wav"
   };
 
@@ -83,13 +86,21 @@
   }
 
   function ensureHtmlPlayers() {
-    if (!audio.html.ambience) {
-      audio.html.ambience = makeHtmlAudio(AUDIO_URLS.ambience, true);
-      audio.html.ambience.volume = 0.7;
-    }
     if (!audio.html.miss) {
       audio.html.miss = makeHtmlAudio(AUDIO_URLS.miss, false);
       audio.html.miss.volume = 0.9;
+    }
+    if (!audio.html.correct) {
+      audio.html.correct = makeHtmlAudio(AUDIO_URLS.correct, false);
+      audio.html.correct.volume = 0.85;
+    }
+    if (!audio.html.win) {
+      audio.html.win = makeHtmlAudio(AUDIO_URLS.win, false);
+      audio.html.win.volume = 0.95;
+    }
+    if (!audio.html.lose) {
+      audio.html.lose = makeHtmlAudio(AUDIO_URLS.lose, false);
+      audio.html.lose.volume = 0.9;
     }
     if (!audio.html.blip) {
       audio.html.blip = makeHtmlAudio(AUDIO_URLS.blip, false);
@@ -120,6 +131,17 @@
     } catch (e) {}
   }
 
+  function htmlRestart(el, volume) {
+    if (!el) return false;
+    try {
+      el.pause();
+      el.currentTime = 0;
+    } catch (e) {}
+    el.muted = false;
+    if (typeof volume === "number") el.volume = volume;
+    return htmlPlay(el);
+  }
+
   /** Classic iOS Web Audio unlock: tiny near-silent buffer in the gesture */
   function playSilentUnlockBuffer(ctx) {
     if (!ctx) return;
@@ -139,177 +161,56 @@
     } catch (e) {}
   }
 
-  function makeBrownNoiseBuffer(ctx, seconds) {
-    var len = Math.floor(ctx.sampleRate * seconds);
-    var buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    var data = buf.getChannelData(0);
-    var last = 0;
-    for (var i = 0; i < len; i++) {
-      var white = Math.random() * 2 - 1;
-      last = (last + 0.02 * white) / 1.02;
-      data[i] = Math.max(-1, Math.min(1, last * 3.5));
-    }
-    return buf;
-  }
-
-  function ensureNoiseBuffer(ctx) {
-    if (!audio.noiseBuf) audio.noiseBuf = makeBrownNoiseBuffer(ctx, 4);
-    return audio.noiseBuf;
-  }
-
-  function stopWebAmbience() {
-    if (!audio.ambience) return;
-    var a = audio.ambience;
-    try {
-      a.noise.stop();
-    } catch (e) {}
-    try {
-      a.hiss.stop();
-    } catch (e) {}
-    try {
-      a.lfo.stop();
-    } catch (e) {}
-    try {
-      a.master.disconnect();
-    } catch (e) {}
-    audio.ambience = null;
-  }
-
-  function stopHtmlAmbience() {
-    var el = audio.html.ambience;
-    if (!el) return;
-    htmlPause(el);
-    try {
-      el.currentTime = 0;
-    } catch (e) {}
-  }
-
-  function stopAmbience() {
-    stopWebAmbience();
-    stopHtmlAmbience();
+  function stopAllHtmlSfx() {
     htmlPause(audio.html.miss);
+    htmlPause(audio.html.correct);
+    htmlPause(audio.html.win);
+    htmlPause(audio.html.lose);
     htmlPause(audio.html.blip);
   }
 
-  function startWebAmbience() {
-    if (audio.muted || audio.ambience) return;
-    var ctx = getAudioCtx();
-    if (!ctx || ctx.state === "suspended") return;
-
-    var master = ctx.createGain();
-    master.gain.value = 0.075;
-    master.connect(ctx.destination);
-
-    var buf = ensureNoiseBuffer(ctx);
-
-    var noise = ctx.createBufferSource();
-    noise.buffer = buf;
-    noise.loop = true;
-    var filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 380;
-    filter.Q.value = 0.6;
-    var waveGain = ctx.createGain();
-    waveGain.gain.value = 0.8;
-
-    var lfo = ctx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.07;
-    var lfoGain = ctx.createGain();
-    lfoGain.gain.value = 220;
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-
-    var hiss = ctx.createBufferSource();
-    hiss.buffer = buf;
-    hiss.loop = true;
-    hiss.playbackRate.value = 1.15;
-    var hissFilter = ctx.createBiquadFilter();
-    hissFilter.type = "bandpass";
-    hissFilter.frequency.value = 1100;
-    hissFilter.Q.value = 0.45;
-    var hissGain = ctx.createGain();
-    hissGain.gain.value = 0.16;
-
-    noise.connect(filter);
-    filter.connect(waveGain);
-    waveGain.connect(master);
-    hiss.connect(hissFilter);
-    hissFilter.connect(hissGain);
-    hissGain.connect(master);
-
-    try {
-      noise.start();
-      hiss.start();
-      lfo.start();
-    } catch (e) {
-      try {
-        master.disconnect();
-      } catch (e2) {}
-      return;
-    }
-
-    audio.ambience = {
-      noise: noise,
-      hiss: hiss,
-      lfo: lfo,
-      master: master
-    };
-  }
-
-  function htmlAmbiencePlaying() {
-    var el = audio.html.ambience;
-    return !!(el && !el.paused && !el.ended);
-  }
-
-  function startHtmlAmbience() {
-    if (audio.muted) return;
+  /** Quiet play+pause kick so later one-shots work after unmute / cold start */
+  function primeHtmlPlayersQuiet() {
     ensureHtmlPlayers();
-    var el = audio.html.ambience;
-    el.loop = true;
-    el.muted = false;
-    el.volume = 0.7;
+    var kick = audio.html.blip;
+    if (!kick) return;
     try {
-      if (el.currentTime > 0.05 && el.paused) {
-        /* resume */
-      } else if (el.paused) {
+      var prevVol = kick.volume;
+      kick.volume = 0.01;
+      var p = kick.play();
+      function restore() {
         try {
-          el.currentTime = 0;
+          kick.pause();
+          kick.currentTime = 0;
+          kick.volume = prevVol;
         } catch (e) {}
+        audio.html.primed = true;
       }
-    } catch (e2) {}
-    htmlPlay(el);
-    audio.html.primed = true;
-  }
-
-  function startAmbience() {
-    if (audio.muted) return;
-    startHtmlAmbience();
-    startWebAmbience();
+      if (p && typeof p.then === "function") {
+        p.then(restore).catch(function () {
+          try {
+            kick.volume = prevVol;
+          } catch (e2) {}
+        });
+      } else {
+        restore();
+      }
+    } catch (e3) {}
   }
 
   /** Audible unmute confirmation — MUST be called inside the unmute tap */
   function playUnmuteBlip() {
     if (audio.muted) return;
     ensureHtmlPlayers();
-    var el = audio.html.blip;
-    try {
-      el.pause();
-      el.currentTime = 0;
-    } catch (e) {}
-    el.muted = false;
-    el.volume = 1;
-    htmlPlay(el);
+    htmlRestart(audio.html.blip, 1);
+    audio.html.primed = true;
   }
 
   function audioIsReady() {
     if (audio.muted) return true;
-    if (htmlAmbiencePlaying()) return true;
-    return !!(
-      audio.ctx &&
-      audio.ctx.state === "running" &&
-      audio.ambience
-    );
+    if (audio.unlocked) return true;
+    if (audio.html.primed) return true;
+    return !!(audio.ctx && audio.ctx.state === "running");
   }
 
   function syncSoundHint() {
@@ -324,53 +225,24 @@
     var ready = audioIsReady();
     if (ready) audio.unlocked = true;
     syncSoundHint();
-    /* Disarm only when truly ready, or muted (no need to keep hunting) */
     if (audio.unlocked || audio.muted) disarmAudioUnlock();
   }
 
   /**
    * iOS-safe unlock — MUST run synchronously inside a user gesture.
-   * 1) HTMLAudioElement.play() on looping ambience (primary audible)
-   * 2) AudioContext + resume + silent buffer (Web Audio companion)
+   * 1) Quiet-prime HTMLAudioElements (no looping ambience)
+   * 2) AudioContext + resume + silent buffer
    */
   function unlockAudio() {
     ensureHtmlPlayers();
 
-    /* --- HTML path (primary on iPhone) --- */
     if (!audio.muted) {
-      startHtmlAmbience();
+      /* Prefer marking unlocked after a real play in-gesture when possible */
+      if (!audio.html.primed) primeHtmlPlayersQuiet();
     } else {
-      /* Prime players while muted: play+pause quiet kick so later unmute works */
-      var kick = audio.html.blip;
-      try {
-        var prevVol = kick.volume;
-        kick.volume = 0.01;
-        var p = kick.play();
-        if (p && typeof p.then === "function") {
-          p.then(function () {
-            try {
-              kick.pause();
-              kick.currentTime = 0;
-              kick.volume = prevVol;
-            } catch (e) {}
-            audio.html.primed = true;
-          }).catch(function () {
-            try {
-              kick.volume = prevVol;
-            } catch (e2) {}
-          });
-        } else {
-          try {
-            kick.pause();
-            kick.currentTime = 0;
-            kick.volume = prevVol;
-          } catch (e3) {}
-          audio.html.primed = true;
-        }
-      } catch (e4) {}
+      primeHtmlPlayersQuiet();
     }
 
-    /* --- Web Audio path --- */
     var ctx = getAudioCtx();
     if (ctx) {
       try {
@@ -380,9 +252,8 @@
     }
 
     function afterRunning() {
-      if (!audio.muted) {
-        startHtmlAmbience();
-        startWebAmbience();
+      if (audio.html.primed || (ctx && ctx.state === "running")) {
+        audio.unlocked = true;
       }
       markUnlockProgress();
     }
@@ -399,13 +270,6 @@
       setTimeout(afterRunning, 120);
     } else {
       afterRunning();
-    }
-
-    /* HTML ambience alone is enough to consider unlocked */
-    if (!audio.muted && htmlAmbiencePlaying()) {
-      audio.unlocked = true;
-      disarmAudioUnlock();
-      syncSoundHint();
     }
   }
 
@@ -441,7 +305,6 @@
       if (ctx && ctx.state === "suspended") {
         try {
           ctx.resume().then(function () {
-            if (!audio.muted) startAmbience();
             markUnlockProgress();
             if (!audioIsReady()) armAudioUnlock();
           }).catch(function () {
@@ -453,18 +316,9 @@
           syncSoundHint();
         }
       }
-      if (!audio.muted && !htmlAmbiencePlaying()) {
-        /* May fail without gesture — re-arm hint if so */
-        startHtmlAmbience();
-        setTimeout(function () {
-          if (!audioIsReady()) {
-            audio.unlocked = false;
-            armAudioUnlock();
-            syncSoundHint();
-          } else {
-            markUnlockProgress();
-          }
-        }, 200);
+      if (!audio.unlocked) {
+        armAudioUnlock();
+        syncSoundHint();
       }
     }
     document.addEventListener("visibilitychange", function () {
@@ -474,12 +328,47 @@
     window.addEventListener("focus", tryResume);
     window.addEventListener("pagehide", function () {
       if (audio.muted) return;
-      if (!htmlAmbiencePlaying() && (!audio.ctx || audio.ctx.state !== "running")) {
+      if (!audio.unlocked && (!audio.ctx || audio.ctx.state !== "running")) {
         audio.unlocked = false;
         armAudioUnlock();
         syncSoundHint();
       }
     });
+  }
+
+  function playWebToneBurst(opts) {
+    var ctx = audio.ctx || getAudioCtx();
+    if (!ctx || ctx.state === "suspended") return false;
+    opts = opts || {};
+    try {
+      var t0 = ctx.currentTime;
+      var freqs = opts.freqs || [660];
+      var dur = opts.dur || 0.2;
+      var type = opts.type || "sine";
+      var peak = opts.peak || 0.28;
+      var master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, t0);
+      master.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+      master.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      master.connect(ctx.destination);
+      for (var i = 0; i < freqs.length; i++) {
+        var osc = ctx.createOscillator();
+        osc.type = type;
+        var f0 = freqs[i];
+        var f1 = opts.freqsEnd && opts.freqsEnd[i] != null ? opts.freqsEnd[i] : f0;
+        osc.frequency.setValueAtTime(f0, t0);
+        if (f1 !== f0) osc.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
+        var g = ctx.createGain();
+        g.gain.value = 1 / Math.max(1, freqs.length);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   function playWebPirateMiss() {
@@ -550,21 +439,53 @@
   /** Comic pirate miss — HTML primary (audible on iOS), Web Audio secondary */
   function playPirateMiss() {
     if (audio.muted) return;
-
     unlockAudio();
-
     ensureHtmlPlayers();
-    var el = audio.html.miss;
-    try {
-      el.pause();
-      el.currentTime = 0;
-    } catch (e) {}
-    el.muted = false;
-    el.volume = 0.9;
-    htmlPlay(el);
-
-    /* Also try Web Audio; ignore if suspended/inaudible */
+    htmlRestart(audio.html.miss, 0.9);
     playWebPirateMiss();
+  }
+
+  /** Positive chime on each correct letter */
+  function playCorrectLetter() {
+    if (audio.muted) return;
+    unlockAudio();
+    ensureHtmlPlayers();
+    htmlRestart(audio.html.correct, 0.85);
+    playWebToneBurst({
+      freqs: [660, 990],
+      dur: 0.18,
+      type: "sine",
+      peak: 0.22
+    });
+  }
+
+  /** Short win fanfare — may overlap run-away animation */
+  function playWinSound() {
+    if (audio.muted) return;
+    unlockAudio();
+    ensureHtmlPlayers();
+    htmlRestart(audio.html.win, 0.95);
+    playWebToneBurst({
+      freqs: [523.25, 659.25, 783.99],
+      dur: 0.45,
+      type: "triangle",
+      peak: 0.26
+    });
+  }
+
+  /** Short lose tone with skeleton / trap sequence */
+  function playLoseSound() {
+    if (audio.muted) return;
+    unlockAudio();
+    ensureHtmlPlayers();
+    htmlRestart(audio.html.lose, 0.9);
+    playWebToneBurst({
+      freqs: [320],
+      freqsEnd: [120],
+      dur: 0.5,
+      type: "sawtooth",
+      peak: 0.24
+    });
   }
 
   function syncMuteButton() {
@@ -586,7 +507,7 @@
     saveMutePref(audio.muted);
     syncMuteButton();
     if (audio.muted) {
-      stopAmbience();
+      stopAllHtmlSfx();
       markUnlockProgress();
     } else {
       /* Blip FIRST in the unmute tap so Chris hears feedback immediately */
@@ -1339,6 +1260,7 @@
   }
 
   function runLoseSequence() {
+    playLoseSound();
     // 1) Morph living pirate → silly cartoon skeleton
     showSkeleton();
     renderBlanks();
@@ -1380,6 +1302,7 @@
 
   /** v1.12: free from noose → drop to plank → grab treasure → run off (bounce cycle) → auto next */
   function runWinSequence() {
+    playWinSound();
     resetStageEffects();
     state.skeleton = false;
     showLivingCharacter();
@@ -1461,6 +1384,7 @@
     state.guessed[letter] = true;
 
     if (state.word.indexOf(letter) !== -1) {
+      playCorrectLetter();
       renderBlanks();
       syncKeyboard();
       if (allLettersGuessed()) showOutcome(true);
