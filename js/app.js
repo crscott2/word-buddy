@@ -19,6 +19,11 @@
   ];
 
   var MAX_MISSES = 6;
+  /** Lose sequence: morph → trap open → fall → then popup */
+  var LOSE_MORPH_MS = 400;
+  var LOSE_TRAP_MS = 400;
+  var LOSE_FALL_MS = 850;
+  var LOSE_TOTAL_MS = LOSE_MORPH_MS + LOSE_TRAP_MS + LOSE_FALL_MS;
 
   var CHARACTERS = [
     {
@@ -26,83 +31,13 @@
       name: "Captain Pip",
       hook: "Captain Pip is counting on you!",
       captions: [
-        "Pip is ready for beach spelling!",
-        "Bandana on — hello head!",
-        "Vest ahoy! Pip’s ready to sail.",
-        "One arm for high-fives!",
-        "Hook hand for comedy points!",
-        "Left boot in the sand!",
-        "Full pirate kid! Spell fast — tides wait for no letter!"
-      ]
-    },
-    {
-      id: "blink",
-      name: "Matey Blink",
-      hook: "Matey Blink is counting on you!",
-      captions: [
-        "Blink winks hello from the beach!",
-        "Hat + patch — still friendly!",
-        "Fancy coat on deck!",
-        "Wavey arm says ahoy!",
-        "Two arms… jazz hands!",
-        "Left boot ready to dance!",
-        "Full matey! Almost out of giggles — you got this!"
-      ]
-    },
-    {
-      id: "squawk",
-      name: "Captain Squawk",
-      hook: "Captain Squawk is counting on you!",
-      captions: [
-        "Squawk wants crackers… and correct letters!",
-        "Beaky head says squawk!",
-        "Feathery body fluffed up!",
-        "Left wing flap!",
-        "Right wing flap — flying letters!",
-        "One bird foot in the sand!",
-        "Full parrot pirate! Spell before the coconuts tip!"
-      ]
-    },
-    {
-      id: "crabby",
-      name: "Crabby Peg",
-      hook: "Crabby Peg is counting on you!",
-      captions: [
-        "Crabby sidesteps into spelling!",
-        "Googly eyes on duty!",
-        "Shell armor — beach ready!",
-        "Left claw for high-fives!",
-        "Right claw for… more high-fives!",
-        "Left legs scuttling!",
-        "Full crab pirate! Pinch those letters (gently)!"
-      ]
-    },
-    {
-      id: "marina",
-      name: "Marina Splash",
-      hook: "Marina Splash is counting on you!",
-      captions: [
-        "Marina swirls in from the waves!",
-        "Sparkly hair and a big smile!",
-        "Seashell top — beach chic!",
-        "Left arm splash!",
-        "Right arm splash!",
-        "Mermaid tail starting…",
-        "Full mermaid buddy! Swim those letters home!"
-      ]
-    },
-    {
-      id: "chesty",
-      name: "Chesty Gold",
-      hook: "Chesty Gold is counting on you!",
-      captions: [
-        "Chesty rattles with excitement!",
-        "Lid face grinning!",
-        "Treasure body unlocked!",
-        "Left latch arm!",
-        "Right latch arm!",
-        "Left coin foot!",
-        "Full treasure buddy! Dig up that word!"
+        "Pip waits on the beach stage — spell carefully!",
+        "Hat, bandana, patch, and a big grin — hello head!",
+        "Striped shirt + short red coat with gold buttons!",
+        "One arm ready for a high-five!",
+        "Two arms — jazz hands on the plank!",
+        "Left pirate boot on the trap door (uh-oh)!",
+        "Full pirate on stage! Spell fast — tides wait for no letter!"
       ]
     }
   ];
@@ -146,14 +81,14 @@
   ];
 
   var LOSE_MSGS = [
-    "The word was {WORD}. {NAME} turned into a goofy skeleton for laughs — next round!",
-    "It was {WORD}! {NAME} is all bones now (Halloween-cute). Practice makes giggles!",
-    "Secret word: {WORD}. {NAME} rattles a silly skeleton dance. Try the next one!"
+    "The word was {WORD}. {NAME} went comedy-skeleton and whoosh — through the trap door!",
+    "It was {WORD}! Bones + trap door = silly splash. Practice makes giggles!",
+    "Secret word: {WORD}. {NAME} rattled, the plank opened, and down they went. Try the next one!"
   ];
 
   var LOSE_SKELETON_CAPTIONS = [
-    "Rattle rattle — comedy skeleton time!",
-    "Boop! {NAME} is bones… still smiling!",
+    "Rattle rattle — trap door time!",
+    "Boop! {NAME} is bones… whoosh through the plank!",
     "Halloween-cute bones say: try again!"
   ];
 
@@ -169,7 +104,8 @@
     emptyPool: false,
     character: null, // current CHARACTERS entry
     lastCharId: null,
-    skeleton: false
+    skeleton: false,
+    loseTimer: null
   };
 
   var els = {};
@@ -316,6 +252,22 @@
     var nodes = document.querySelectorAll("#hangman .character");
     for (var i = 0; i < nodes.length; i++) {
       nodes[i].classList.add("hidden");
+      nodes[i].classList.remove("celebrating", "skel-pop");
+    }
+  }
+
+  function resetStageEffects() {
+    if (state.loseTimer) {
+      clearTimeout(state.loseTimer);
+      state.loseTimer = null;
+    }
+    var hm = els.hangman || $("hangman");
+    if (hm) hm.classList.remove("trap-open");
+    var actor = $("actor");
+    if (actor) {
+      actor.classList.remove("falling");
+      // reflow so next fall animation can restart
+      void actor.getBoundingClientRect();
     }
   }
 
@@ -334,7 +286,6 @@
     if (sk) {
       sk.classList.remove("hidden");
       sk.classList.remove("skel-pop");
-      // force reflow for pop animation
       void sk.getBoundingClientRect();
       sk.classList.add("skel-pop");
     }
@@ -376,7 +327,7 @@
     }
     if (state.skeleton && state.character) {
       els.characterHook.textContent =
-        state.character.name + " went full comedy skeleton!";
+        state.character.name + " went comedy skeleton — trap door!";
       return;
     }
     if (state.character) {
@@ -468,10 +419,7 @@
     }
   }
 
-  function showOutcome(won) {
-    state.over = true;
-    state.won = won;
-    els.outcome.classList.remove("hidden");
+  function fillOutcomeCard(won) {
     var name = charName();
     if (won) {
       els.outcomeEmoji.textContent = pick(["🎉", "🌟", "🥳", "✨", "🏴‍☠️"]);
@@ -484,10 +432,6 @@
           name +
           " cheers from the beach!"
       );
-      // keep living character celebrating
-      state.skeleton = false;
-      updateHangman();
-      setCharacterHook();
     } else {
       els.outcomeEmoji.textContent = pick(["🦴", "🌙", "🤗", "🍌", "✨"]);
       els.outcomeTitle.textContent = pick(LOSE_TITLES);
@@ -499,17 +443,81 @@
           displayWord(state.word) +
           "\"! " +
           name +
-          " went skeleton!"
+          " went skeleton… whoosh!"
       );
-      showSkeleton();
-      els.buddyCaption.textContent = pick(LOSE_SKELETON_CAPTIONS).replace(
-        "{NAME}",
-        name
-      );
-      setCharacterHook();
-      renderBlanks();
     }
+  }
+
+  function revealOutcomePopup() {
+    els.outcome.classList.remove("hidden");
     syncKeyboard();
+  }
+
+  function runLoseSequence() {
+    var name = charName();
+    // 1) Morph living pirate → silly cartoon skeleton
+    showSkeleton();
+    els.buddyCaption.textContent = pick(LOSE_SKELETON_CAPTIONS).replace(
+      "{NAME}",
+      name
+    );
+    setCharacterHook();
+    renderBlanks();
+    syncKeyboard();
+
+    var hm = els.hangman || $("hangman");
+    var actor = $("actor");
+
+    // 2) After morph, open trap door
+    state.loseTimer = setTimeout(function () {
+      if (hm) hm.classList.add("trap-open");
+
+      // 3) Then skeleton falls through
+      state.loseTimer = setTimeout(function () {
+        if (actor) {
+          actor.classList.remove("falling");
+          void actor.getBoundingClientRect();
+          actor.classList.add("falling");
+        }
+
+        // 4) Only after fall finishes → outcome popup
+        state.loseTimer = setTimeout(function () {
+          state.loseTimer = null;
+          fillOutcomeCard(false);
+          revealOutcomePopup();
+        }, LOSE_FALL_MS);
+      }, LOSE_TRAP_MS);
+    }, LOSE_MORPH_MS);
+  }
+
+  function showOutcome(won) {
+    state.over = true;
+    state.won = won;
+    syncKeyboard();
+
+    if (won) {
+      // Win: full pirate celebrates on stage; no trap door
+      resetStageEffects();
+      state.skeleton = false;
+      showLivingCharacter();
+      var pip = $("char-pip");
+      if (pip) {
+        for (var i = 1; i <= MAX_MISSES; i++) {
+          var part = pip.querySelector(".part-" + i);
+          if (part) part.classList.remove("hidden");
+        }
+        pip.classList.remove("celebrating");
+        void pip.getBoundingClientRect();
+        pip.classList.add("celebrating");
+      }
+      els.buddyCaption.textContent =
+        "Full pirate party! " + charName() + " did a happy jig!";
+      setCharacterHook();
+      fillOutcomeCard(true);
+      revealOutcomePopup();
+    } else {
+      runLoseSequence();
+    }
   }
 
   function onGuess(letter) {
@@ -551,6 +559,7 @@
       "All library words are off. Parents: open the word list and turn some On to play.";
     els.wordBlanks.appendChild(msg);
     state.skeleton = false;
+    resetStageEffects();
     if (!state.character) pickCharacter();
     updateHangman();
     // hide body parts when empty
@@ -583,6 +592,7 @@
     state.over = false;
     state.won = false;
     state.skeleton = false;
+    resetStageEffects();
     pickCharacter();
     els.progress.textContent =
       "Word " + (state.index + 1) + " of " + state.playWords.length;

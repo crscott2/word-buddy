@@ -581,14 +581,103 @@ html, body {
   .buddy-caption { font-size: 0.8rem; margin: 4px 0 2px; }
 }
 
-/* Comedy skeleton pop on lose */
+/* skel-pop keyframes moved to v1.3 block below */
+
+/* --- v1.3: storybook gallows + trap-door lose --- */
+
+#hangman {
+  width: 100%;
+  max-width: 440px;
+  max-height: none;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Trap door flaps hinge open on lose */
+#trap-left,
+#trap-right {
+  transform-box: fill-box;
+  transition: transform 0.4s ease-in;
+}
+
+#trap-left {
+  transform-origin: right top;
+}
+
+#trap-right {
+  transform-origin: left top;
+}
+
+#hangman.trap-open #trap-left {
+  transform: rotate(-102deg);
+}
+
+#hangman.trap-open #trap-right {
+  transform: rotate(102deg);
+}
+
+/* Actor group (pirate / skeleton) falls through trap */
+#actor {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transition: none;
+}
+
+#actor.falling {
+  animation: pirateFall 0.85s cubic-bezier(0.45, 0.05, 0.85, 0.4) forwards;
+}
+
+@keyframes pirateFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  35% {
+    transform: translateY(18px) rotate(-6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(130px) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+/* Skeleton morph pop before fall */
 #char-skeleton.skel-pop {
-  animation: skelPop 0.55s ease;
-  transform-origin: 170px 200px;
+  animation: skelPop 0.4s ease;
+  transform-origin: 198px 160px;
 }
 
 @keyframes skelPop {
-  0% { opacity: 0; transform: scale(0.4) rotate(-8deg); }
-  55% { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+  60% { opacity: 1; transform: scale(1.1) rotate(4deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* Win celebration wiggle */
+#char-pip.celebrating {
+  animation: celebrate 0.7s ease;
+  transform-origin: 198px 200px;
+}
+
+@keyframes celebrate {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(-4deg); }
+  50% { transform: translateY(0) rotate(3deg); }
+  75% { transform: translateY(-5px) rotate(-2deg); }
+}
+
+/* Subtle shark bob */
+#shark-fin {
+  animation: sharkBob 3.2s ease-in-out infinite;
+}
+
+@keyframes sharkBob {
+  0%, 100% { transform: translate(255px, 148px); }
+  50% { transform: translate(262px, 146px); }
+}
+
+@media (orientation: landscape) and (max-height: 700px) {
+  #hangman { max-height: 40vh; width: min(58vw, 340px); }
 }
