@@ -7,14 +7,34 @@
 
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
-  /** v1.21: Web Audio synthesis — beach ambience + pirate miss cue (offline / PWA) */
+  /**
+   * v1.22: Dual audio for iPhone Safari
+   * - HTMLAudioElement (playsInline) = primary audible path (media category; survives ringer switch)
+   * - Web Audio synth = secondary / unlock companion
+   * Bundled WAVs: audio/ambience.wav, audio/miss.wav, audio/blip.wav
+   */
   var audio = {
     ctx: null,
     muted: false,
     unlocked: false,
-    ambience: null, // { noise, hiss, lfo, master }
+    ambience: null, // Web Audio nodes { noise, hiss, lfo, master }
     noiseBuf: null,
-    unlockArmed: false
+    unlockArmed: false,
+    unlockHandler: null,
+    visibilityBound: false,
+    html: {
+      ambience: null,
+      miss: null,
+      blip: null,
+      primed: false
+    },
+    preferHtml: true
+  };
+
+  var AUDIO_URLS = {
+    ambience: "audio/ambience.wav",
+    miss: "audio/miss.wav",
+    blip: "audio/blip.wav"
   };
 
   function loadMutePref() {
@@ -43,6 +63,82 @@
     return audio.ctx;
   }
 
+  function makeHtmlAudio(src, loop) {
+    var el = new Audio();
+    el.preload = "auto";
+    el.loop = !!loop;
+    el.muted = false;
+    el.volume = 1;
+    /* iOS Safari: inline playback, not fullscreen takeover */
+    try {
+      el.setAttribute("playsinline", "true");
+      el.setAttribute("webkit-playsinline", "true");
+      el.playsInline = true;
+    } catch (e) {}
+    el.src = src;
+    try {
+      el.load();
+    } catch (e2) {}
+    return el;
+  }
+
+  function ensureHtmlPlayers() {
+    if (!audio.html.ambience) {
+      audio.html.ambience = makeHtmlAudio(AUDIO_URLS.ambience, true);
+      audio.html.ambience.volume = 0.7;
+    }
+    if (!audio.html.miss) {
+      audio.html.miss = makeHtmlAudio(AUDIO_URLS.miss, false);
+      audio.html.miss.volume = 0.9;
+    }
+    if (!audio.html.blip) {
+      audio.html.blip = makeHtmlAudio(AUDIO_URLS.blip, false);
+      audio.html.blip.volume = 1;
+    }
+    return audio.html;
+  }
+
+  /** Play HTML element from a user gesture; returns true if play() was invoked */
+  function htmlPlay(el) {
+    if (!el) return false;
+    try {
+      el.muted = false;
+      var p = el.play();
+      if (p && typeof p.then === "function") {
+        p.catch(function () {});
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function htmlPause(el) {
+    if (!el) return;
+    try {
+      el.pause();
+    } catch (e) {}
+  }
+
+  /** Classic iOS Web Audio unlock: tiny near-silent buffer in the gesture */
+  function playSilentUnlockBuffer(ctx) {
+    if (!ctx) return;
+    try {
+      var frames = Math.max(1, Math.floor((ctx.sampleRate || 44100) * 0.01));
+      var buf = ctx.createBuffer(1, frames, ctx.sampleRate || 44100);
+      var data = buf.getChannelData(0);
+      for (var i = 0; i < frames; i++) data[i] = 0;
+      var src = ctx.createBufferSource();
+      src.buffer = buf;
+      var g = ctx.createGain();
+      g.gain.value = 0.0001;
+      src.connect(g);
+      g.connect(ctx.destination);
+      if (typeof src.start === "function") src.start(0);
+      else if (typeof src.noteOn === "function") src.noteOn(0);
+    } catch (e) {}
+  }
+
   function makeBrownNoiseBuffer(ctx, seconds) {
     var len = Math.floor(ctx.sampleRate * seconds);
     var buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -61,7 +157,7 @@
     return audio.noiseBuf;
   }
 
-  function stopAmbience() {
+  function stopWebAmbience() {
     if (!audio.ambience) return;
     var a = audio.ambience;
     try {
@@ -79,14 +175,29 @@
     audio.ambience = null;
   }
 
-  function startAmbience() {
+  function stopHtmlAmbience() {
+    var el = audio.html.ambience;
+    if (!el) return;
+    htmlPause(el);
+    try {
+      el.currentTime = 0;
+    } catch (e) {}
+  }
+
+  function stopAmbience() {
+    stopWebAmbience();
+    stopHtmlAmbience();
+    htmlPause(audio.html.miss);
+    htmlPause(audio.html.blip);
+  }
+
+  function startWebAmbience() {
     if (audio.muted || audio.ambience) return;
     var ctx = getAudioCtx();
     if (!ctx || ctx.state === "suspended") return;
 
     var master = ctx.createGain();
-    /* Kid-friendly soft level — gentle surf, not loud */
-    master.gain.value = 0.04;
+    master.gain.value = 0.075;
     master.connect(ctx.destination);
 
     var buf = ensureNoiseBuffer(ctx);
@@ -99,9 +210,8 @@
     filter.frequency.value = 380;
     filter.Q.value = 0.6;
     var waveGain = ctx.createGain();
-    waveGain.gain.value = 0.75;
+    waveGain.gain.value = 0.8;
 
-    /* Slow swell so it feels like waves, not static hiss */
     var lfo = ctx.createOscillator();
     lfo.type = "sine";
     lfo.frequency.value = 0.07;
@@ -119,7 +229,7 @@
     hissFilter.frequency.value = 1100;
     hissFilter.Q.value = 0.45;
     var hissGain = ctx.createGain();
-    hissGain.gain.value = 0.12;
+    hissGain.gain.value = 0.16;
 
     noise.connect(filter);
     filter.connect(waveGain);
@@ -147,43 +257,239 @@
     };
   }
 
+  function htmlAmbiencePlaying() {
+    var el = audio.html.ambience;
+    return !!(el && !el.paused && !el.ended);
+  }
+
+  function startHtmlAmbience() {
+    if (audio.muted) return;
+    ensureHtmlPlayers();
+    var el = audio.html.ambience;
+    el.loop = true;
+    el.muted = false;
+    el.volume = 0.7;
+    try {
+      if (el.currentTime > 0.05 && el.paused) {
+        /* resume */
+      } else if (el.paused) {
+        try {
+          el.currentTime = 0;
+        } catch (e) {}
+      }
+    } catch (e2) {}
+    htmlPlay(el);
+    audio.html.primed = true;
+  }
+
+  function startAmbience() {
+    if (audio.muted) return;
+    startHtmlAmbience();
+    startWebAmbience();
+  }
+
+  /** Audible unmute confirmation — MUST be called inside the unmute tap */
+  function playUnmuteBlip() {
+    if (audio.muted) return;
+    ensureHtmlPlayers();
+    var el = audio.html.blip;
+    try {
+      el.pause();
+      el.currentTime = 0;
+    } catch (e) {}
+    el.muted = false;
+    el.volume = 1;
+    htmlPlay(el);
+  }
+
+  function audioIsReady() {
+    if (audio.muted) return true;
+    if (htmlAmbiencePlaying()) return true;
+    return !!(
+      audio.ctx &&
+      audio.ctx.state === "running" &&
+      audio.ambience
+    );
+  }
+
+  function syncSoundHint() {
+    var hint = els.soundHint || $("sound-unlock-hint");
+    if (!hint) return;
+    var show = !audio.muted && !audio.unlocked && !audioIsReady();
+    hint.classList.toggle("hidden", !show);
+    hint.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+
+  function markUnlockProgress() {
+    var ready = audioIsReady();
+    if (ready) audio.unlocked = true;
+    syncSoundHint();
+    /* Disarm only when truly ready, or muted (no need to keep hunting) */
+    if (audio.unlocked || audio.muted) disarmAudioUnlock();
+  }
+
+  /**
+   * iOS-safe unlock — MUST run synchronously inside a user gesture.
+   * 1) HTMLAudioElement.play() on looping ambience (primary audible)
+   * 2) AudioContext + resume + silent buffer (Web Audio companion)
+   */
   function unlockAudio() {
-    var ctx = getAudioCtx();
-    if (!ctx) return;
-    audio.unlocked = true;
-    function afterResume() {
-      if (!audio.muted) startAmbience();
-    }
-    if (ctx.state === "suspended") {
-      ctx.resume().then(afterResume).catch(function () {});
+    ensureHtmlPlayers();
+
+    /* --- HTML path (primary on iPhone) --- */
+    if (!audio.muted) {
+      startHtmlAmbience();
     } else {
-      afterResume();
+      /* Prime players while muted: play+pause quiet kick so later unmute works */
+      var kick = audio.html.blip;
+      try {
+        var prevVol = kick.volume;
+        kick.volume = 0.01;
+        var p = kick.play();
+        if (p && typeof p.then === "function") {
+          p.then(function () {
+            try {
+              kick.pause();
+              kick.currentTime = 0;
+              kick.volume = prevVol;
+            } catch (e) {}
+            audio.html.primed = true;
+          }).catch(function () {
+            try {
+              kick.volume = prevVol;
+            } catch (e2) {}
+          });
+        } else {
+          try {
+            kick.pause();
+            kick.currentTime = 0;
+            kick.volume = prevVol;
+          } catch (e3) {}
+          audio.html.primed = true;
+        }
+      } catch (e4) {}
     }
+
+    /* --- Web Audio path --- */
+    var ctx = getAudioCtx();
+    if (ctx) {
+      try {
+        if (typeof ctx.resume === "function") ctx.resume();
+      } catch (e) {}
+      playSilentUnlockBuffer(ctx);
+    }
+
+    function afterRunning() {
+      if (!audio.muted) {
+        startHtmlAmbience();
+        startWebAmbience();
+      }
+      markUnlockProgress();
+    }
+
+    if (ctx && ctx.state === "running") {
+      afterRunning();
+    } else if (ctx && typeof ctx.resume === "function") {
+      ctx
+        .resume()
+        .then(afterRunning)
+        .catch(function () {
+          markUnlockProgress();
+        });
+      setTimeout(afterRunning, 120);
+    } else {
+      afterRunning();
+    }
+
+    /* HTML ambience alone is enough to consider unlocked */
+    if (!audio.muted && htmlAmbiencePlaying()) {
+      audio.unlocked = true;
+      disarmAudioUnlock();
+      syncSoundHint();
+    }
+  }
+
+  function onUnlockGesture() {
+    unlockAudio();
+  }
+
+  function disarmAudioUnlock() {
+    if (!audio.unlockArmed || !audio.unlockHandler) return;
+    var h = audio.unlockHandler;
+    document.removeEventListener("touchstart", h, true);
+    document.removeEventListener("pointerdown", h, true);
+    document.removeEventListener("click", h, true);
+    audio.unlockArmed = false;
+    audio.unlockHandler = null;
   }
 
   function armAudioUnlock() {
     if (audio.unlockArmed) return;
     audio.unlockArmed = true;
-    function onGesture() {
-      unlockAudio();
-      document.removeEventListener("pointerdown", onGesture, true);
-      document.removeEventListener("keydown", onGesture, true);
-    }
-    document.addEventListener("pointerdown", onGesture, true);
-    document.addEventListener("keydown", onGesture, true);
+    audio.unlockHandler = onUnlockGesture;
+    document.addEventListener("touchstart", onUnlockGesture, true);
+    document.addEventListener("pointerdown", onUnlockGesture, true);
+    document.addEventListener("click", onUnlockGesture, true);
   }
 
-  /** Short comic pirate “arr!” — not scary; Web Audio only */
-  function playPirateMiss() {
-    if (audio.muted) return;
-    var ctx = getAudioCtx();
-    if (!ctx) return;
+  function bindAudioVisibility() {
+    if (audio.visibilityBound) return;
+    audio.visibilityBound = true;
+    function tryResume() {
+      if (audio.muted) return;
+      var ctx = audio.ctx;
+      if (ctx && ctx.state === "suspended") {
+        try {
+          ctx.resume().then(function () {
+            if (!audio.muted) startAmbience();
+            markUnlockProgress();
+            if (!audioIsReady()) armAudioUnlock();
+          }).catch(function () {
+            armAudioUnlock();
+            syncSoundHint();
+          });
+        } catch (e) {
+          armAudioUnlock();
+          syncSoundHint();
+        }
+      }
+      if (!audio.muted && !htmlAmbiencePlaying()) {
+        /* May fail without gesture — re-arm hint if so */
+        startHtmlAmbience();
+        setTimeout(function () {
+          if (!audioIsReady()) {
+            audio.unlocked = false;
+            armAudioUnlock();
+            syncSoundHint();
+          } else {
+            markUnlockProgress();
+          }
+        }, 200);
+      }
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") tryResume();
+    });
+    window.addEventListener("pageshow", tryResume);
+    window.addEventListener("focus", tryResume);
+    window.addEventListener("pagehide", function () {
+      if (audio.muted) return;
+      if (!htmlAmbiencePlaying() && (!audio.ctx || audio.ctx.state !== "running")) {
+        audio.unlocked = false;
+        armAudioUnlock();
+        syncSoundHint();
+      }
+    });
+  }
 
-    function fire() {
+  function playWebPirateMiss() {
+    var ctx = audio.ctx || getAudioCtx();
+    if (!ctx || ctx.state === "suspended") return false;
+    try {
       var t0 = ctx.currentTime;
       var master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, t0);
-      master.gain.exponentialRampToValueAtTime(0.28, t0 + 0.025);
+      master.gain.exponentialRampToValueAtTime(0.36, t0 + 0.025);
       master.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
       master.connect(ctx.destination);
 
@@ -198,8 +504,8 @@
       nFilter.frequency.value = 720;
       nFilter.Q.value = 1.1;
       var nGain = ctx.createGain();
-      nGain.gain.setValueAtTime(0.35, t0);
-      nGain.gain.exponentialRampToValueAtTime(0.04, t0 + 0.32);
+      nGain.gain.setValueAtTime(0.42, t0);
+      nGain.gain.exponentialRampToValueAtTime(0.05, t0 + 0.32);
       noise.connect(nFilter);
       nFilter.connect(nGain);
       nGain.connect(master);
@@ -222,28 +528,43 @@
       vFilter.Q.value = 2.2;
 
       var vGain = ctx.createGain();
-      vGain.gain.value = 0.22;
+      vGain.gain.value = 0.28;
 
       osc.connect(vFilter);
       osc2.connect(vFilter);
       vFilter.connect(vGain);
       vGain.connect(master);
 
-      try {
-        noise.start(t0);
-        noise.stop(t0 + 0.45);
-        osc.start(t0);
-        osc.stop(t0 + 0.45);
-        osc2.start(t0);
-        osc2.stop(t0 + 0.45);
-      } catch (e) {}
+      noise.start(t0);
+      noise.stop(t0 + 0.45);
+      osc.start(t0);
+      osc.stop(t0 + 0.45);
+      osc2.start(t0);
+      osc2.stop(t0 + 0.45);
+      return true;
+    } catch (e) {
+      return false;
     }
+  }
 
-    if (ctx.state === "suspended") {
-      ctx.resume().then(fire).catch(function () {});
-    } else {
-      fire();
-    }
+  /** Comic pirate miss — HTML primary (audible on iOS), Web Audio secondary */
+  function playPirateMiss() {
+    if (audio.muted) return;
+
+    unlockAudio();
+
+    ensureHtmlPlayers();
+    var el = audio.html.miss;
+    try {
+      el.pause();
+      el.currentTime = 0;
+    } catch (e) {}
+    el.muted = false;
+    el.volume = 0.9;
+    htmlPlay(el);
+
+    /* Also try Web Audio; ignore if suspended/inaudible */
+    playWebPirateMiss();
   }
 
   function syncMuteButton() {
@@ -256,23 +577,33 @@
     );
     btn.title = audio.muted ? "Unmute" : "Mute";
     btn.textContent = audio.muted ? "🔇" : "🔊";
+    syncSoundHint();
   }
 
-  function setMuted(muted) {
+  function setMuted(muted, opts) {
+    opts = opts || {};
     audio.muted = !!muted;
     saveMutePref(audio.muted);
     syncMuteButton();
     if (audio.muted) {
       stopAmbience();
+      markUnlockProgress();
     } else {
+      /* Blip FIRST in the unmute tap so Chris hears feedback immediately */
+      if (opts.playBlip) playUnmuteBlip();
       unlockAudio();
+      if (!audioIsReady()) armAudioUnlock();
     }
   }
 
   function toggleMute() {
-    setMuted(!audio.muted);
+    if (audio.muted) {
+      /* Unmute: audible blip in this same tap handler */
+      setMuted(false, { playBlip: true });
+    } else {
+      setMuted(true);
+    }
   }
-
 
   // Scholastic Fry 100 Word List (flashcards) — stored lowercase; "I" displays capital
   var FRY_100 = [
@@ -1125,6 +1456,7 @@
   }
 
   function onGuess(letter) {
+    unlockAudio();
     if (state.over || state.emptyPool || state.guessed[letter]) return;
     state.guessed[letter] = true;
 
@@ -1368,6 +1700,7 @@
   }
 
   function openParentGate() {
+    unlockAudio();
     newGateProblem();
     els.parentGate.classList.remove("hidden");
   }
@@ -1537,7 +1870,15 @@
     if (els.btnMute) {
       els.btnMute.addEventListener("click", function (e) {
         e.preventDefault();
+        /* toggleMute unmutes with audible blip in this same tap */
         toggleMute();
+      });
+    }
+    if (els.soundHint) {
+      els.soundHint.addEventListener("click", function (e) {
+        e.preventDefault();
+        playUnmuteBlip();
+        unlockAudio();
       });
     }
     els.gateCancel.addEventListener("click", closeParentGate);
@@ -1647,6 +1988,7 @@
     els.btnNext = $("btn-next");
     els.btnParents = $("btn-parents");
     els.btnMute = $("btn-mute");
+    els.soundHint = $("sound-unlock-hint");
     els.gateCancel = $("gate-cancel");
     els.gateProblem = $("gate-problem");
     els.gateAnswer = $("gate-answer");
@@ -1678,6 +2020,8 @@
     audio.muted = loadMutePref();
     syncMuteButton();
     armAudioUnlock();
+    bindAudioVisibility();
+    syncSoundHint();
     state.library = loadLibrary();
     saveLibrary(state.library); // persist v2 (and migration)
     buildKeyboard();

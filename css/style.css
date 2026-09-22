@@ -1,4 +1,4 @@
-/* Spell Buddy v1.21 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.22 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -163,6 +163,32 @@ body::before {
   border: 2px dashed var(--cork-dark);
   border-radius: 999px;
   padding: 4px 10px;
+}
+
+
+/* v1.22: iOS sound unlock hint — hide once AudioContext is running */
+.sound-unlock-hint {
+  border: 2px solid var(--cork-dark);
+  background: #FFF3C4;
+  color: var(--accent-dark);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 6px 10px;
+  cursor: pointer;
+  min-height: 44px;
+  border-radius: 999px;
+  box-shadow: 0 2px 0 rgba(139, 90, 43, 0.35);
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+.sound-unlock-hint.hidden {
+  display: none !important;
+}
+.sound-unlock-hint:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(139, 90, 43, 0.35);
 }
 
 /* v1.21: mute / unmute craft pill in header */
@@ -1061,6 +1087,11 @@ body::before {
   .version {
     font-size: 0.7rem;
     padding: 2px 8px;
+  }
+  .sound-unlock-hint {
+    font-size: 0.65rem;
+    min-height: 40px;
+    padding: 4px 8px;
   }
   .mute-btn {
     min-height: 40px;

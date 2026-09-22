@@ -1,5 +1,5 @@
 /* Spell Buddy service worker — cache shell for offline play */
-var CACHE = "spell-buddy-v1.21";
+var CACHE = "spell-buddy-v1.22";
 var ASSETS = [
   "./",
   "./index.html",
@@ -7,7 +7,10 @@ var ASSETS = [
   "./js/app.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/icon-512.png",
+  "./audio/ambience.wav",
+  "./audio/miss.wav",
+  "./audio/blip.wav"
 ];
 
 self.addEventListener("install", function (event) {
