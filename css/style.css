@@ -1,4 +1,4 @@
-/* Spell Buddy v1.13 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.14 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -186,18 +186,69 @@ body::before {
 
 .screen.hidden { display: none; }
 
-.progress {
-  text-align: center;
-  font-weight: 800;
-  color: var(--soft);
-  margin: 6px 0 2px;
-  font-size: 0.95rem;
-  background: rgba(255, 248, 238, 0.75);
-  display: inline-block;
+/* v1.14: green progress bar (cleared wins / shuffled set) */
+.progress-wrap {
+  position: relative;
   width: 100%;
-  border-radius: 12px;
-  padding: 4px 8px;
-  border: 2px dashed rgba(180, 130, 80, 0.35);
+  height: 14px;
+  margin: 6px 0 4px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 248, 238, 0.85);
+  border: 2px solid rgba(180, 130, 80, 0.35);
+  box-shadow: inset 0 1px 2px rgba(120, 80, 40, 0.12);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #7DDB6A 0%, #3CB54A 55%, #2F9A3C 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: width 0.35s ease;
+}
+
+.progress-wrap.is-empty .progress-fill {
+  width: 0% !important;
+  background: transparent;
+}
+
+/* v1.14: full-screen confetti celebration */
+.confetti-layer {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  overflow: hidden;
+}
+
+.confetti-layer:not(.is-on) {
+  display: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.95;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx, 0), 110vh, 0) rotate(720deg);
+    opacity: 0.85;
+  }
 }
 
 /* v1.11: play chrome (joke / hook / buddy caption) removed from play view */
@@ -772,10 +823,9 @@ body::before {
     min-height: 0;
   }
 
-  .progress {
-    margin: 0 0 2px;
-    padding: 2px 8px;
-    font-size: 0.85rem;
+  .progress-wrap {
+    margin: 0 0 4px;
+    height: 12px;
     flex-shrink: 0;
   }
 
@@ -974,7 +1024,7 @@ body::before {
 /* Extra-short landscape (phones / split view): keep big targets, tighten */
 @media (orientation: landscape) and (max-height: 520px) {
   .top-bar { padding: 2px 10px; margin-bottom: 4px; }
-  .progress { font-size: 0.78rem; }
+  .progress-wrap { height: 10px; margin: 0 0 2px; }
   .play-layout {
     grid-template-columns: minmax(220px, 0.95fr) minmax(280px, 1.2fr);
     gap: 8px 12px;

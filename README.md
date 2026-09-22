@@ -1,12 +1,15 @@
-# Spell Buddy (Spelling Hangman) — v1.13
+# Spell Buddy (Spelling Hangman) — v1.14
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Random play order (v1.14)**: words parents turn On are always shuffled for play — never walked in parent/storage order. Reshuffles when a play session starts, when the enabled set changes, and when looping a new pass of remaining words
+- **Green progress bar (v1.14)**: play screen shows a landscape-friendly green bar for cleared wins / current set size (subtle aria fraction); replaces “Word x of x” text
+- **Confetti on full clear (v1.14)**: when every enabled word in the current set has been **won** (losses do not clear a word), the screen fills with confetti; then a fresh shuffled round begins
 - **Attempts fraction (v1.13)**: craft badge in the bottom-right of the beach stage shows miss status (`0/6` … `6/6`); updates after each wrong guess; resets each new word
 - **No foreground sword (v1.12)**: pirate sword prop removed from the beach stage
 - **Clearer win run (v1.12)**: Pip’s escape uses a stronger run cycle (alternating limbs), bounce in stride, forward lean, and dust puffs at the feet
-- **Clean play UI (v1.11)**: play view shows only the header (title / Parents) and **Word x of x** progress — no joke lines, character hooks, buddy captions, or other chrome copy
+- **Clean play UI (v1.11)**: play view shows only the header (title / Parents) and the progress bar — no joke lines, character hooks, buddy captions, or other chrome copy
 - **Bigger highlighted blanks (v1.11)**: empty letter bubbles are larger with stronger contrast, outline, and warm glow so they read clearly on iPad landscape
 - **Lose popup display word (v1.11)**: missed word is large bold display typography that dominates the popup (word + Next only)
 - **Landscape-first layout (v1.9+)**: hangman/beach stage beside word blanks + large letter keyboard (stacked fallback in portrait)
@@ -28,10 +31,10 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - **Win (v1.12)**: Pip frees from the noose, drops to the plank, grabs the treasure, then **runs** off-screen — clearer opposite-phase arm/leg cycle, stride bounce, forward lean, foot dust puffs — **no outcome popup**; auto-advances after the run
 - Scrapbook / fabric outcome cards; Parents screen uses the same craft UI language
 - Parent library seeded with **Fry 100** sight words; toggle On/Off per word
-- Play pool = words that are On; progress shows empty-pool state if none are on
+- Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.13** in the UI
+- Version label **v1.14** in the UI
 
 ## Preview locally
 ```bash

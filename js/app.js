@@ -82,7 +82,11 @@
 
   var state = {
     library: [], // [{ word, on }]
-    playWords: [], // strings currently ON
+    playWords: [], // shuffled ON words for this round (storage order never used)
+    enabledSig: "", // signature of enabled set for change detection
+    roundTotal: 0, // enabled count at round start (progress denominator)
+    cleared: {}, // word -> true for wins this round
+    passSteps: 0, // advances since last reshuffle (detect list loop)
     index: 0,
     word: "",
     guessed: {},
@@ -97,8 +101,11 @@
     winTimer: null,
     snapClearTimer: null,
     rippleTimer: null,
-    rippleClearTimer: null
+    rippleClearTimer: null,
+    confettiTimer: null
   };
+
+  var CONFETTI_MS = 3200;
 
   var els = {};
 
@@ -196,18 +203,173 @@
   function saveLibrary(library) {
     state.library = library.slice();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.library));
-    refreshPlayPool();
+    syncPlaySession();
   }
 
-  function refreshPlayPool() {
-    state.playWords = state.library
-      .filter(function (entry) {
-        return entry.on;
-      })
-      .map(function (entry) {
-        return entry.word;
-      });
+  function enabledWordList() {
+    var out = [];
+    for (var i = 0; i < state.library.length; i++) {
+      if (state.library[i].on) out.push(state.library[i].word);
+    }
+    return out;
+  }
+
+  function enabledSignature(words) {
+    return words
+      .slice()
+      .sort()
+      .join("\0");
+  }
+
+  /** Fisher–Yates — never present parent/storage order as play order */
+  function shuffleArray(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i];
+      a[i] = a[j];
+      a[j] = t;
+    }
+    return a;
+  }
+
+  function clearedCount() {
+    var n = 0;
+    var w;
+    for (w in state.cleared) {
+      if (state.cleared[w]) n++;
+    }
+    return n;
+  }
+
+  /** Full new round: reshuffle all enabled words, reset clears */
+  function beginShuffledRound() {
+    var enabled = enabledWordList();
+    state.enabledSig = enabledSignature(enabled);
+    state.roundTotal = enabled.length;
+    state.playWords = shuffleArray(enabled);
+    state.cleared = {};
+    state.passSteps = 0;
+    state.index = 0;
+  }
+
+  /**
+   * Keep session if enabled set unchanged; reshuffle when set changes.
+   * Call after library edits.
+   */
+  function syncPlaySession() {
+    var enabled = enabledWordList();
+    var sig = enabledSignature(enabled);
+    if (sig !== state.enabledSig) {
+      beginShuffledRound();
+      return;
+    }
+    // Drop cleared entries that are no longer enabled (shouldn't happen if sig matches)
     if (state.index >= state.playWords.length) state.index = 0;
+  }
+
+  /** Reshuffle only remaining uncleared words (loop of the list) */
+  function reshuffleUncleared() {
+    var remaining = [];
+    var i;
+    for (i = 0; i < state.playWords.length; i++) {
+      if (!state.cleared[state.playWords[i]]) remaining.push(state.playWords[i]);
+    }
+    var done = [];
+    for (i = 0; i < state.playWords.length; i++) {
+      if (state.cleared[state.playWords[i]]) done.push(state.playWords[i]);
+    }
+    state.playWords = shuffleArray(remaining).concat(done);
+    state.index = 0;
+    state.passSteps = 0;
+  }
+
+  function findNextUncleared(fromIndex) {
+    var n = state.playWords.length;
+    if (!n) return { index: -1, wrapped: false };
+    var step;
+    for (step = 0; step < n; step++) {
+      var i = (fromIndex + step) % n;
+      if (!state.cleared[state.playWords[i]]) {
+        return { index: i, wrapped: fromIndex + step >= n };
+      }
+    }
+    return { index: -1, wrapped: false };
+  }
+
+  function updateProgressBar() {
+    var wrap = els.progress || $("progress");
+    var fill = els.progressFill || $("progress-fill");
+    if (!wrap) return;
+    var total = state.roundTotal | 0;
+    var done = clearedCount();
+    if (total < 0) total = 0;
+    if (done > total) done = total;
+    var pct = total ? Math.round((done / total) * 100) : 0;
+    if (fill) fill.style.width = pct + "%";
+    wrap.setAttribute("aria-valuemin", "0");
+    wrap.setAttribute("aria-valuemax", String(total));
+    wrap.setAttribute("aria-valuenow", String(done));
+    wrap.setAttribute(
+      "aria-label",
+      total
+        ? "Words cleared " + done + " of " + total
+        : "No words turned on"
+    );
+    if (!total) wrap.classList.add("is-empty");
+    else wrap.classList.remove("is-empty");
+  }
+
+  function clearConfetti() {
+    if (state.confettiTimer) {
+      clearTimeout(state.confettiTimer);
+      state.confettiTimer = null;
+    }
+    var layer = els.confettiLayer || $("confetti-layer");
+    if (layer) {
+      layer.classList.remove("is-on");
+      layer.innerHTML = "";
+    }
+  }
+
+  function fireConfetti(thenFn) {
+    var layer = els.confettiLayer || $("confetti-layer");
+    if (!layer) {
+      if (thenFn) thenFn();
+      return;
+    }
+    clearConfetti();
+    layer.classList.add("is-on");
+    var colors = [
+      "#FF6B6B",
+      "#FFD93D",
+      "#6BCB77",
+      "#4D96FF",
+      "#FF8FAB",
+      "#C77DFF",
+      "#FF9F1C",
+      "#2EC4B6"
+    ];
+    var count = 120;
+    var i;
+    for (i = 0; i < count; i++) {
+      var piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.left = Math.random() * 100 + "%";
+      piece.style.background = colors[i % colors.length];
+      piece.style.width = 6 + Math.random() * 8 + "px";
+      piece.style.height = 8 + Math.random() * 10 + "px";
+      piece.style.setProperty("--dx", Math.floor(Math.random() * 120 - 60) + "px");
+      piece.style.animationDuration = 2.2 + Math.random() * 1.6 + "s";
+      piece.style.animationDelay = Math.random() * 0.45 + "s";
+      piece.style.transform = "rotate(" + Math.floor(Math.random() * 360) + "deg)";
+      layer.appendChild(piece);
+    }
+    state.confettiTimer = setTimeout(function () {
+      state.confettiTimer = null;
+      clearConfetti();
+      if (thenFn) thenFn();
+    }, CONFETTI_MS);
   }
 
   function onCount() {
@@ -631,7 +793,7 @@
           // 4) Short beat, then auto-advance (no popup)
           state.winTimer = setTimeout(function () {
             state.winTimer = null;
-            nextWord();
+            advanceAfterWin();
           }, WIN_ADVANCE_BEAT_MS);
         }, WIN_RUN_MS);
       }, WIN_GRAB_MS);
@@ -674,7 +836,7 @@
     state.over = true;
     state.won = false;
     els.outcome.classList.add("hidden");
-    els.progress.textContent = "No words turned on";
+    updateProgressBar();
     els.wordBlanks.innerHTML = "";
     state.skeleton = false;
     resetStageEffects();
@@ -697,9 +859,9 @@
 
   function startRound() {
     els.outcome.classList.add("hidden");
-    refreshPlayPool();
+    syncPlaySession();
 
-    if (!state.playWords.length) {
+    if (!state.playWords.length || !state.roundTotal) {
       showEmptyPoolUI();
       return;
     }
@@ -707,7 +869,17 @@
     state.emptyPool = false;
     hideEmptyBanner();
 
+    // Prefer current index if still uncleared; otherwise next uncleared
+    if (state.cleared[state.playWords[state.index]]) {
+      var pick = findNextUncleared(state.index);
+      if (pick.index === -1) {
+        beginShuffledRound();
+      } else {
+        state.index = pick.index;
+      }
+    }
     if (state.index >= state.playWords.length) state.index = 0;
+
     state.word = state.playWords[state.index];
     state.guessed = {};
     state.misses = 0;
@@ -716,20 +888,82 @@
     state.skeleton = false;
     resetStageEffects();
     pickCharacter();
-    els.progress.textContent =
-      "Word " + (state.index + 1) + " of " + state.playWords.length;
+    updateProgressBar();
     updateHangman();
     renderBlanks();
     syncKeyboard();
   }
 
+  /** After a loss (or manual Next): advance without counting a clear */
   function nextWord() {
-    refreshPlayPool();
-    if (!state.playWords.length) {
+    syncPlaySession();
+    if (!state.playWords.length || !state.roundTotal) {
       startRound();
       return;
     }
-    state.index = (state.index + 1) % state.playWords.length;
+
+    var found = findNextUncleared(state.index + 1);
+    if (found.index === -1) {
+      beginShuffledRound();
+      startRound();
+      return;
+    }
+
+    // Looping the list → reshuffle remaining uncleared so order is never fixed
+    if (found.wrapped) {
+      reshuffleUncleared();
+      found = findNextUncleared(0);
+      if (found.index === -1) {
+        beginShuffledRound();
+        startRound();
+        return;
+      }
+    }
+
+    state.index = found.index;
+    startRound();
+  }
+
+  /** After a win animation: mark cleared; confetti when full set won */
+  function advanceAfterWin() {
+    var wonWord = state.word;
+    syncPlaySession();
+    if (!state.playWords.length || !state.roundTotal) {
+      startRound();
+      return;
+    }
+
+    // Count win only if the word is still in this round's enabled set
+    if (wonWord && state.playWords.indexOf(wonWord) !== -1) {
+      state.cleared[wonWord] = true;
+    }
+    updateProgressBar();
+
+    if (clearedCount() >= state.roundTotal) {
+      fireConfetti(function () {
+        beginShuffledRound();
+        startRound();
+      });
+      return;
+    }
+
+    var found = findNextUncleared(state.index + 1);
+    if (found.index === -1) {
+      beginShuffledRound();
+      startRound();
+      return;
+    }
+    if (found.wrapped) {
+      reshuffleUncleared();
+      found = findNextUncleared(0);
+      if (found.index === -1) {
+        beginShuffledRound();
+        startRound();
+        return;
+      }
+    }
+    state.index = found.index;
+    state.passSteps = 0;
     startRound();
   }
 
@@ -949,7 +1183,7 @@
       )
         return;
       saveLibrary(seedFry());
-      state.index = 0;
+      beginShuffledRound();
       renderWordList();
     });
 
@@ -966,6 +1200,8 @@
     els.screenWords = $("screen-words");
     els.parentGate = $("parent-gate");
     els.progress = $("progress");
+    els.progressFill = $("progress-fill");
+    els.confettiLayer = $("confetti-layer");
     els.jokeLine = $("joke-line");
     els.buddy = $("buddy"); // legacy id unused; characters live under #hangman
     els.buddyCaption = $("buddy-caption");
@@ -1007,6 +1243,7 @@
     saveLibrary(state.library); // persist v2 (and migration)
     buildKeyboard();
     bind();
+    beginShuffledRound();
     startRound();
     registerSW();
   }

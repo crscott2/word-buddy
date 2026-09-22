@@ -24,14 +24,25 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.13</span>
+        <span class="version" title="App version">v1.14</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
 
     <!-- PLAY SCREEN -->
     <main id="screen-play" class="screen" aria-live="polite">
-      <p id="progress" class="progress">Word 1 of 4</p>
+      <div
+        id="progress"
+        class="progress-wrap"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="0"
+        aria-valuenow="0"
+        aria-label="Words cleared 0 of 0"
+      >
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
 
       <div class="play-layout">
       <section class="stage beach-stage" aria-label="Craft beach pirate buddy stage">
