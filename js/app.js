@@ -548,7 +548,7 @@
     }, LOSE_MORPH_MS);
   }
 
-  /** v1.10: free from noose → drop to plank → grab treasure → run off → auto next */
+  /** v1.12: free from noose → drop to plank → grab treasure → run off (bounce cycle) → auto next */
   function runWinSequence() {
     resetStageEffects();
     state.skeleton = false;

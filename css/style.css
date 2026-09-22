@@ -1,4 +1,4 @@
-/* Spell Buddy v1.11 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.12 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -1331,60 +1331,112 @@ body::before {
   animation-delay: 0.12s;
 }
 
-/* v1.10 win run: silly limb run cycle while escaping with loot */
+/* v1.12 win run: clearer opposite-phase run cycle + bounce (not slide) */
 #actor.win-run .sway-limb {
-  animation-timing-function: ease-in-out;
+  animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95);
   animation-iteration-count: infinite;
-  animation-direction: alternate;
+  animation-direction: normal;
 }
 #actor.win-run .sway-arm-l {
   animation-name: runArmL;
-  animation-duration: 0.22s;
+  animation-duration: 0.18s;
 }
 #actor.win-run .sway-arm-r {
   animation-name: runArmR;
-  animation-duration: 0.22s;
+  animation-duration: 0.18s;
 }
 #actor.win-run .sway-leg-l {
   animation-name: runLegL;
-  animation-duration: 0.22s;
+  animation-duration: 0.18s;
 }
 #actor.win-run .sway-leg-r {
   animation-name: runLegR;
-  animation-duration: 0.22s;
+  animation-duration: 0.18s;
 }
 #actor.win-run .sway-coat-l {
   animation-name: runCoatL;
-  animation-duration: 0.28s;
+  animation-duration: 0.22s;
 }
 #actor.win-run .sway-coat-r {
   animation-name: runCoatR;
-  animation-duration: 0.28s;
+  animation-duration: 0.22s;
 }
 
+/* Full stride cycles — L/R opposite; bigger swing than v1.10 */
 @keyframes runArmL {
-  0% { transform: rotate(18deg); }
-  100% { transform: rotate(-28deg); }
+  0%   { transform: rotate(42deg); }
+  25%  { transform: rotate(8deg); }
+  50%  { transform: rotate(-38deg); }
+  75%  { transform: rotate(6deg); }
+  100% { transform: rotate(42deg); }
 }
 @keyframes runArmR {
-  0% { transform: rotate(-22deg); }
-  100% { transform: rotate(24deg); }
+  0%   { transform: rotate(-38deg); }
+  25%  { transform: rotate(6deg); }
+  50%  { transform: rotate(42deg); }
+  75%  { transform: rotate(8deg); }
+  100% { transform: rotate(-38deg); }
 }
 @keyframes runLegL {
-  0% { transform: rotate(-22deg); }
-  100% { transform: rotate(18deg); }
+  0%   { transform: rotate(-40deg); }
+  25%  { transform: rotate(-6deg); }
+  50%  { transform: rotate(36deg); }
+  75%  { transform: rotate(-4deg); }
+  100% { transform: rotate(-40deg); }
 }
 @keyframes runLegR {
-  0% { transform: rotate(20deg); }
-  100% { transform: rotate(-20deg); }
+  0%   { transform: rotate(36deg); }
+  25%  { transform: rotate(-4deg); }
+  50%  { transform: rotate(-40deg); }
+  75%  { transform: rotate(-6deg); }
+  100% { transform: rotate(36deg); }
 }
 @keyframes runCoatL {
-  0% { transform: rotate(-8deg); }
-  100% { transform: rotate(10deg); }
+  0%   { transform: rotate(-14deg); }
+  50%  { transform: rotate(16deg); }
+  100% { transform: rotate(-14deg); }
 }
 @keyframes runCoatR {
-  0% { transform: rotate(8deg); }
-  100% { transform: rotate(-10deg); }
+  0%   { transform: rotate(14deg); }
+  50%  { transform: rotate(-16deg); }
+  100% { transform: rotate(14deg); }
+}
+
+/* Foot dust puffs trail under Pip while running */
+#run-dust {
+  opacity: 0;
+  pointer-events: none;
+}
+#actor.win-run #run-dust {
+  opacity: 1;
+}
+#actor.win-run #run-dust .rd1 {
+  animation: runDustPuff 0.36s ease-out infinite;
+  transform-origin: 178px 216px;
+}
+#actor.win-run #run-dust .rd2 {
+  animation: runDustPuff 0.36s ease-out 0.09s infinite;
+  transform-origin: 198px 218px;
+}
+#actor.win-run #run-dust .rd3 {
+  animation: runDustPuff 0.36s ease-out 0.18s infinite;
+  transform-origin: 218px 216px;
+}
+#actor.win-run #run-dust .rd4 {
+  animation: runDustSpeck 0.36s ease-out 0.04s infinite;
+}
+#actor.win-run #run-dust .rd5 {
+  animation: runDustSpeck 0.36s ease-out 0.14s infinite;
+}
+@keyframes runDustPuff {
+  0%   { transform: translate(0, 0) scale(0.35); opacity: 0; }
+  25%  { transform: translate(-6px, -2px) scale(1); opacity: 0.85; }
+  100% { transform: translate(-22px, -6px) scale(1.35); opacity: 0; }
+}
+@keyframes runDustSpeck {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  20%  { opacity: 0.9; }
+  100% { transform: translate(-18px, -8px); opacity: 0; }
 }
 
 /* Stop limb motion cleanly when falling */
@@ -1526,34 +1578,71 @@ body::before {
   100% { transform: translate(0, 46px) scale(1, 1); }
 }
 
-/* Silly sideways run off-screen to the right with loot */
+/* v1.12: stride bounce + forward lean while running off with loot */
 #actor.win-run {
-  animation: pipWinRun 1.5s cubic-bezier(0.35, 0.05, 0.65, 1) forwards;
+  animation: pipWinRun 1.5s linear forwards;
   transform-origin: 198px 90px;
 }
 @keyframes pipWinRun {
+  /* bounce every ~0.18s to match limb cycle; lean into travel (CW) */
   0% {
-    transform: translate(0, 46px) rotate(0deg);
+    transform: translate(0, 46px) rotate(10deg);
+    opacity: 1;
+  }
+  6% {
+    transform: translate(16px, 36px) rotate(12deg);
     opacity: 1;
   }
   12% {
-    transform: translate(18px, 42px) rotate(-3deg);
+    transform: translate(32px, 50px) rotate(10deg);
     opacity: 1;
   }
-  28% {
-    transform: translate(55px, 48px) rotate(4deg);
+  18% {
+    transform: translate(50px, 36px) rotate(13deg);
+    opacity: 1;
+  }
+  24% {
+    transform: translate(68px, 50px) rotate(10deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(88px, 36px) rotate(12deg);
+    opacity: 1;
+  }
+  36% {
+    transform: translate(108px, 50px) rotate(10deg);
+    opacity: 1;
+  }
+  42% {
+    transform: translate(128px, 36px) rotate(13deg);
     opacity: 1;
   }
   48% {
-    transform: translate(110px, 40px) rotate(-3deg);
+    transform: translate(148px, 50px) rotate(10deg);
     opacity: 1;
   }
-  70% {
-    transform: translate(175px, 47px) rotate(3deg);
+  54% {
+    transform: translate(168px, 36px) rotate(12deg);
     opacity: 1;
+  }
+  60% {
+    transform: translate(188px, 50px) rotate(10deg);
+    opacity: 1;
+  }
+  68% {
+    transform: translate(210px, 36px) rotate(13deg);
+    opacity: 1;
+  }
+  76% {
+    transform: translate(228px, 48px) rotate(11deg);
+    opacity: 1;
+  }
+  88% {
+    transform: translate(245px, 40px) rotate(12deg);
+    opacity: 0.55;
   }
   100% {
-    transform: translate(250px, 44px) rotate(-2deg);
+    transform: translate(268px, 42px) rotate(10deg);
     opacity: 0;
   }
 }
