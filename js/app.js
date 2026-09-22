@@ -102,7 +102,8 @@
     snapClearTimer: null,
     rippleTimer: null,
     rippleClearTimer: null,
-    confettiTimer: null
+    confettiTimer: null,
+    shipTimer: null
   };
 
   var CONFETTI_MS = 3200;
@@ -320,11 +321,42 @@
     else wrap.classList.remove("is-empty");
   }
 
+  function clearShipSail() {
+    if (state.shipTimer) {
+      clearTimeout(state.shipTimer);
+      state.shipTimer = null;
+    }
+    var ship = els.shipLayer || $("ship-layer");
+    if (ship) {
+      ship.classList.remove("is-on");
+    }
+  }
+
+  /** Big LBP craft pirate ship sails across during full-set confetti (pointer-events none). */
+  function fireShipSail() {
+    var ship = els.shipLayer || $("ship-layer");
+    if (!ship) return;
+    clearShipSail();
+    ship.classList.add("is-on");
+    /* restart sail keyframes (child holds the animation) */
+    var craft = ship.querySelector(".pirate-ship");
+    if (craft) {
+      craft.style.animation = "none";
+      void craft.offsetWidth;
+      craft.style.animation = "";
+    }
+    state.shipTimer = setTimeout(function () {
+      state.shipTimer = null;
+      clearShipSail();
+    }, CONFETTI_MS);
+  }
+
   function clearConfetti() {
     if (state.confettiTimer) {
       clearTimeout(state.confettiTimer);
       state.confettiTimer = null;
     }
+    clearShipSail();
     var layer = els.confettiLayer || $("confetti-layer");
     if (layer) {
       layer.classList.remove("is-on");
@@ -340,6 +372,7 @@
     }
     clearConfetti();
     layer.classList.add("is-on");
+    fireShipSail();
     var colors = [
       "#FF6B6B",
       "#FFD93D",
@@ -1202,6 +1235,7 @@
     els.progress = $("progress");
     els.progressFill = $("progress-fill");
     els.confettiLayer = $("confetti-layer");
+    els.shipLayer = $("ship-layer");
     els.jokeLine = $("joke-line");
     els.buddy = $("buddy"); // legacy id unused; characters live under #hangman
     els.buddyCaption = $("buddy-caption");

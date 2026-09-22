@@ -1,10 +1,11 @@
-# Spell Buddy (Spelling Hangman) — v1.14
+# Spell Buddy (Spelling Hangman) — v1.15
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
 - **Random play order (v1.14)**: words parents turn On are always shuffled for play — never walked in parent/storage order. Reshuffles when a play session starts, when the enabled set changes, and when looping a new pass of remaining words
 - **Green progress bar (v1.14)**: play screen shows a landscape-friendly green bar for cleared wins / current set size (subtle aria fraction); replaces “Word x of x” text
+- **Pirate ship sail-by (v1.15)**: when full-set confetti fires (all enabled words cleared correctly), a big LBP craft pirate ship sails across the background with the celebration; pointer-events none so keys stay usable after the same short celebration, then play continues as before
 - **Confetti on full clear (v1.14)**: when every enabled word in the current set has been **won** (losses do not clear a word), the screen fills with confetti; then a fresh shuffled round begins
 - **Attempts fraction (v1.13)**: craft badge in the bottom-right of the beach stage shows miss status (`0/6` … `6/6`); updates after each wrong guess; resets each new word
 - **No foreground sword (v1.12)**: pirate sword prop removed from the beach stage
@@ -34,7 +35,7 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.14** in the UI
+- Version label **v1.15** in the UI
 
 ## Preview locally
 ```bash

@@ -24,7 +24,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.14</span>
+        <span class="version" title="App version">v1.15</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -43,6 +43,82 @@
         <div id="progress-fill" class="progress-fill"></div>
       </div>
       <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
+      <div id="ship-layer" class="ship-layer" aria-hidden="true">
+        <div class="pirate-ship" aria-hidden="true">
+          <svg class="pirate-ship-svg" viewBox="0 0 420 240" role="img" aria-label="Craft pirate ship">
+            <defs>
+              <linearGradient id="shipHullGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#E0B878"/>
+                <stop offset="55%" stop-color="#C49050"/>
+                <stop offset="100%" stop-color="#8B5A2B"/>
+              </linearGradient>
+              <linearGradient id="sailFelt" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#FFF8EE"/>
+                <stop offset="100%" stop-color="#F0E0C8"/>
+              </linearGradient>
+              <linearGradient id="flagFelt" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#E07060"/>
+                <stop offset="100%" stop-color="#C45C4A"/>
+              </linearGradient>
+              <pattern id="shipCork" width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="3" r="1" fill="#A87848" opacity="0.35"/>
+                <circle cx="7" cy="7" r="0.8" fill="#8B5A2B" opacity="0.25"/>
+              </pattern>
+            </defs>
+            <!-- soft water wake -->
+            <ellipse class="ship-wake" cx="210" cy="210" rx="150" ry="14" fill="#A8E0F0" opacity="0.35"/>
+            <path d="M40 208 Q120 198 210 210 T380 206" fill="none" stroke="#E8F8FF" stroke-width="3" stroke-dasharray="8 5" opacity="0.55"/>
+            <!-- hull -->
+            <g class="ship-hull">
+              <path d="M36 168 Q50 128 120 122 L300 122 Q370 128 392 168 Q340 198 210 202 Q80 198 36 168 Z"
+                    fill="url(#shipHullGrad)" stroke="#6B4226" stroke-width="4"/>
+              <path d="M36 168 Q50 128 120 122 L300 122 Q370 128 392 168 Q340 198 210 202 Q80 198 36 168 Z"
+                    fill="url(#shipCork)" opacity="0.45"/>
+              <!-- gunwale stitch -->
+              <path d="M55 140 Q120 128 210 132 T365 140" fill="none" stroke="#8B5A2B" stroke-width="2" stroke-dasharray="5 3" opacity="0.55"/>
+              <!-- cabin (felt) -->
+              <rect x="155" y="98" width="90" height="36" rx="8" fill="#F4B07A" stroke="#C45C4A" stroke-width="3"/>
+              <rect x="155" y="98" width="90" height="36" rx="8" fill="none" stroke="#E8886A" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.6"/>
+              <rect x="168" y="108" width="22" height="16" rx="3" fill="#8EC5E8" stroke="#5A90B0" stroke-width="2"/>
+              <rect x="210" y="108" width="22" height="16" rx="3" fill="#8EC5E8" stroke="#5A90B0" stroke-width="2"/>
+              <!-- button portholes -->
+              <circle cx="90" cy="155" r="10" fill="#8EC5E8" stroke="#5A90B0" stroke-width="2.5"/>
+              <circle cx="90" cy="155" r="4" fill="#FFF8EE" opacity="0.55"/>
+              <circle cx="130" cy="158" r="9" fill="#8EC5E8" stroke="#5A90B0" stroke-width="2.5"/>
+              <circle cx="130" cy="158" r="3.5" fill="#FFF8EE" opacity="0.55"/>
+              <circle cx="290" cy="155" r="10" fill="#8EC5E8" stroke="#5A90B0" stroke-width="2.5"/>
+              <circle cx="290" cy="155" r="4" fill="#FFF8EE" opacity="0.55"/>
+              <circle cx="330" cy="158" r="9" fill="#8EC5E8" stroke="#5A90B0" stroke-width="2.5"/>
+              <circle cx="330" cy="158" r="3.5" fill="#FFF8EE" opacity="0.55"/>
+            </g>
+            <!-- masts + sails -->
+            <g class="ship-rig">
+              <rect x="118" y="28" width="8" height="100" rx="3" fill="#C49050" stroke="#6B4226" stroke-width="2"/>
+              <rect x="248" y="18" width="8" height="110" rx="3" fill="#C49050" stroke="#6B4226" stroke-width="2"/>
+              <!-- main sail -->
+              <path d="M128 40 L128 118 L210 100 L210 48 Z" fill="url(#sailFelt)" stroke="#C49A5C" stroke-width="3"/>
+              <path d="M132 50 L200 56 M132 70 L200 74 M132 90 L198 92" fill="none" stroke="#D4B08A" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.7"/>
+              <!-- fore sail -->
+              <path d="M258 30 L258 120 L340 98 L340 42 Z" fill="url(#sailFelt)" stroke="#C49A5C" stroke-width="3"/>
+              <path d="M262 42 L330 48 M262 65 L328 70 M262 90 L326 92" fill="none" stroke="#D4B08A" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.7"/>
+              <!-- jolly roger (kid-safe felt) -->
+              <path d="M256 18 L256 8 L318 18 L256 28 Z" fill="url(#flagFelt)" stroke="#8B3A30" stroke-width="2"/>
+              <circle cx="278" cy="18" r="5.5" fill="#FFF8EE"/>
+              <circle cx="290" cy="18" r="5.5" fill="#FFF8EE"/>
+              <path d="M280 24 Q284 28 288 24" fill="none" stroke="#FFF8EE" stroke-width="2" stroke-linecap="round"/>
+              <!-- yarn ropes -->
+              <path d="M122 36 L210 48 M122 100 L210 100" fill="none" stroke="#C4A070" stroke-width="2" opacity="0.75"/>
+              <path d="M252 28 L340 42 M252 110 L340 98" fill="none" stroke="#C4A070" stroke-width="2" opacity="0.75"/>
+            </g>
+            <!-- craft crow / felt bird on mast -->
+            <g transform="translate(112,22)">
+              <ellipse cx="8" cy="6" rx="7" ry="5" fill="#5A7088" stroke="#3A4858" stroke-width="1.5"/>
+              <path d="M2 4 Q-4 -2 2 2" fill="#5A7088"/>
+              <circle cx="11" cy="5" r="1.2" fill="#FFE08A"/>
+            </g>
+          </svg>
+        </div>
+      </div>
 
       <div class="play-layout">
       <section class="stage beach-stage" aria-label="Craft beach pirate buddy stage">
