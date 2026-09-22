@@ -24,7 +24,7 @@
         <h1>Spell Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.9</span>
+        <span class="version" title="App version">v1.10</span>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
@@ -374,6 +374,21 @@
                     <path d="M202 204 L222 204" stroke="#6A6A78" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.6"/>
                     <ellipse cx="221" cy="209" rx="5" ry="3" fill="#2A2A38"/>
                   </g>
+                  <!-- v1.10: carried treasure sack/chest (shown on win grab+run) -->
+                  <g id="pip-loot" class="pip-loot hidden" aria-hidden="true">
+                    <g transform="translate(214,158) scale(0.72)">
+                      <ellipse cx="22" cy="36" rx="18" ry="4" fill="#5C4030" opacity="0.25"/>
+                      <path d="M2 4 Q22 -10 42 4 L42 8 L2 8 Z" fill="#D4A060" stroke="#6B4226" stroke-width="2"/>
+                      <rect x="2" y="8" width="40" height="22" rx="3" fill="#C49050" stroke="#6B4226" stroke-width="2"/>
+                      <rect x="6" y="10" width="32" height="10" rx="2" fill="#5C4030" opacity="0.45"/>
+                      <ellipse cx="14" cy="16" rx="5" ry="2.6" fill="#FFE08A" stroke="#A88830" stroke-width="1"/>
+                      <ellipse cx="24" cy="18" rx="4.5" ry="2.4" fill="#F0D060" stroke="#A88830" stroke-width="1"/>
+                      <ellipse cx="32" cy="15" rx="4" ry="2.2" fill="#F8E070" stroke="#A88830" stroke-width="1"/>
+                      <path d="M18 12 L21 9 L24 12 L21 15 Z" fill="#6AC8E8" stroke="#3A88A8" stroke-width="0.8"/>
+                      <rect x="2" y="20" width="40" height="3" fill="#E8C060" stroke="#A88830" stroke-width="0.8"/>
+                      <circle cx="22" cy="24" r="3.5" fill="#F0D060" stroke="#A88830" stroke-width="1"/>
+                    </g>
+                  </g>
                 </g>
 
                 <!-- Felt / cardboard comedy skeleton -->
@@ -461,11 +476,9 @@
       </div>
       </div>
 
-      <div id="outcome" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="outcome-title">
-        <div class="outcome-card">
-          <p id="outcome-emoji" class="outcome-emoji" aria-hidden="true">🎉</p>
-          <h2 id="outcome-title"></h2>
-          <p id="outcome-msg"></p>
+      <div id="outcome" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="outcome-word">
+        <div class="outcome-card lose-word-card">
+          <p id="outcome-word" class="outcome-word"></p>
           <button type="button" id="btn-next" class="btn primary big">Next word! ▶</button>
         </div>
       </div>

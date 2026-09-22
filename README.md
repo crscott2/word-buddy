@@ -1,10 +1,10 @@
-# Spell Buddy (Spelling Hangman) — v1.9
+# Spell Buddy (Spelling Hangman) — v1.10
 
 Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
-- **Landscape-first layout (v1.9)**: hangman/beach stage beside word blanks + large letter keyboard (stacked fallback in portrait)
-- Compact header in landscape; outcome popup sized for short landscape height
+- **Landscape-first layout (v1.10)**: hangman/beach stage beside word blanks + large letter keyboard (stacked fallback in portrait)
+- Compact header in landscape; **lose-only** outcome popup (big bold word + Next) sized for short landscape height
 - Parents screen two-column in landscape (forms | word list)
 - Big letter blanks + large A–Z tap keys (fabric / cardboard tile look) — kids touch targets kept large
 - **LittleBigPlanet craft vibe**: felt, cardboard, cork, yarn stitches, buttons — soft cozy diorama (not flat Material Design)
@@ -19,14 +19,14 @@ Private prototype: a kid-friendly spelling Hangman PWA for ~5-year-olds learning
 - **Stage framing**: gallows dominates; Pip / skeleton scaled down; trap door centered under noose/character; cartoon dust burst on fall
 - **Hero buddy — Captain Pip** (SVG segments): felt head, button eye, stitch smile, yarn bandana, cloth striped shirt, felt red coat with button gold studs, fabric boots (dangling hang pose)
 - Classic **6-miss** reveal (head → torso → L arm → R arm → L leg → R leg) — wholesome, no gore
-- **Lose sequence**: living craft pirate (hanging) → silly felt/cardboard skeleton (still hanging briefly) → trap opens → **detaches and drops ALL THE WAY DOWN** through the trap + dust puff → **3s pause** → outcome popup
-- **Win**: Pip celebrates with a cheerful side-sway while still on the rope; trap door stays shut — no fall
+- **Lose sequence**: living craft pirate (hanging) → silly felt/cardboard skeleton (still hanging briefly) → trap opens → **detaches and drops ALL THE WAY DOWN** through the trap + dust puff → **3s pause** → outcome popup showing **only the secret word (bold)** + Next word
+- **Win (v1.10)**: Pip frees from the noose, drops to the plank, grabs the treasure, and runs off-screen with a silly run — **no outcome popup**; auto-advances to the next word after the run
 - Scrapbook / fabric outcome cards; Parents screen uses the same craft UI language
 - Parent library seeded with **Fry 100** sight words; toggle On/Off per word
 - Play pool = words that are On; gentle message if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.9** in the UI
+- Version label **v1.10** in the UI
 
 ## Preview locally
 ```bash

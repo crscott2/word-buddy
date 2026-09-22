@@ -31,6 +31,13 @@
     Math.max(LOSE_FALL_MS, LOSE_DUST_MS) +
     LOSE_POPUP_DELAY_MS;
 
+  /** Win sequence: free+drop → grab loot → run off → beat → auto next (no popup) */
+  var WIN_DROP_MS = 450;
+  var WIN_GRAB_MS = 350;
+  var WIN_RUN_MS = 1500;
+  var WIN_ADVANCE_BEAT_MS = 700;
+  var WIN_TOTAL_MS = WIN_DROP_MS + WIN_GRAB_MS + WIN_RUN_MS + WIN_ADVANCE_BEAT_MS;
+
   var CHARACTERS = [
     {
       id: "pip",
@@ -66,31 +73,6 @@
     "Letter detective strikes again!"
   ];
 
-  var WIN_TITLES = [
-    "You spelled it!",
-    "Word wizard!",
-    "Spelling superstar!",
-    "Boom — you got it!"
-  ];
-
-  var WIN_MSGS = [
-    "{NAME} is doing a happy craft-beach dance! 💃",
-    "{NAME} says that word never stood a chance!",
-    "Confetti in your brain! {NAME} is proud. (Invisible, but sparkly.)",
-    "You, {NAME}, and the alphabet are best friends today!"
-  ];
-
-  var LOSE_TITLES = [
-    "Nice try!",
-    "Almost there!",
-    "Good guess adventure!"
-  ];
-
-  var LOSE_MSGS = [
-    "The word was {WORD}. {NAME} turned into crafty felt bones, slipped the noose, and whoosh — all the way down!",
-    "It was {WORD}! Felt bones dropped all the way through the cardboard trap. Practice makes giggles!",
-    "Secret word: {WORD}. {NAME} rattled (softly!), slipped the rope, and dropped way down. Try the next one!"
-  ];
 
   var LOSE_SKELETON_CAPTIONS = [
     "Rattle rattle — felt bones still hanging… trap door time!",
@@ -112,6 +94,7 @@
     lastCharId: null,
     skeleton: false,
     loseTimer: null,
+    winTimer: null,
     snapClearTimer: null,
     rippleTimer: null,
     rippleClearTimer: null
@@ -270,13 +253,23 @@
       clearTimeout(state.loseTimer);
       state.loseTimer = null;
     }
+    if (state.winTimer) {
+      clearTimeout(state.winTimer);
+      state.winTimer = null;
+    }
     clearMotionTimers();
     clearSnapClasses(document);
     var hm = els.hangman || $("hangman");
-    if (hm) hm.classList.remove("trap-open");
+    if (hm) hm.classList.remove("trap-open", "win-escape");
     var actor = $("actor");
     if (actor) {
-      actor.classList.remove("falling", "impact-ripple");
+      actor.classList.remove(
+        "falling",
+        "impact-ripple",
+        "win-drop",
+        "win-grab",
+        "win-run"
+      );
       actor.classList.add("hanging");
       // reflow so next hang/fall animation can restart
       void actor.getBoundingClientRect();
@@ -286,8 +279,13 @@
       dust.classList.remove("dust-burst");
       void dust.getBoundingClientRect();
     }
+    var chest = $("treasure-chest");
+    if (chest) chest.classList.remove("loot-taken");
+    var lootEl = $("pip-loot");
+    if (lootEl) lootEl.classList.add("hidden");
+    var pip = $("char-pip");
+    if (pip) pip.classList.remove("celebrating");
   }
-
   function showLivingCharacter() {
     hideAllCharacters();
     state.skeleton = false;
@@ -338,6 +336,13 @@
   function triggerImpactRipple() {
     var actor = $("actor");
     if (!actor || actor.classList.contains("falling")) return;
+    if (
+      actor.classList.contains("win-drop") ||
+      actor.classList.contains("win-grab") ||
+      actor.classList.contains("win-run")
+    ) {
+      return;
+    }
     if (state.rippleTimer) {
       clearTimeout(state.rippleTimer);
       state.rippleTimer = null;
@@ -507,36 +512,16 @@
     }
   }
 
-  function fillOutcomeCard(won) {
-    var name = charName();
-    if (won) {
-      els.outcomeEmoji.textContent = pick(["🎉", "🌟", "🥳", "✨", "🏴‍☠️"]);
-      els.outcomeTitle.textContent = pick(WIN_TITLES);
-      els.outcomeMsg.textContent = pick(WIN_MSGS).replace(/\{NAME\}/g, name);
-      setJoke(
-        "You spelled \"" +
-          displayWord(state.word) +
-          "\"! " +
-          name +
-          " cheers from the beach!"
-      );
-    } else {
-      els.outcomeEmoji.textContent = pick(["🦴", "🌙", "🤗", "🍌", "✨"]);
-      els.outcomeTitle.textContent = pick(LOSE_TITLES);
-      els.outcomeMsg.textContent = pick(LOSE_MSGS)
-        .replace("{WORD}", "“" + displayWord(state.word) + "”")
-        .replace(/\{NAME\}/g, name);
-      setJoke(
-        "Nice try — the word was \"" +
-          displayWord(state.word) +
-          "\"! " +
-          name +
-          " went skeleton… whoosh!"
-      );
+  function fillLoseOutcomeCard() {
+    var raw = displayWord(state.word);
+    var shown = raw === "I" ? "I" : String(raw).toUpperCase();
+    if (els.outcomeWord) {
+      els.outcomeWord.textContent = shown;
     }
+    setJoke("The word was \"" + displayWord(state.word) + "\".");
   }
 
-  function revealOutcomePopup() {
+  function revealLosePopup() {
     els.outcome.classList.remove("hidden");
     syncKeyboard();
   }
@@ -579,12 +564,88 @@
         state.loseTimer = setTimeout(function () {
           state.loseTimer = setTimeout(function () {
             state.loseTimer = null;
-            fillOutcomeCard(false);
-            revealOutcomePopup();
+            fillLoseOutcomeCard();
+            revealLosePopup();
           }, LOSE_POPUP_DELAY_MS);
         }, afterAnimMs);
       }, LOSE_TRAP_MS);
     }, LOSE_MORPH_MS);
+  }
+
+  /** v1.10: free from noose → drop to plank → grab treasure → run off → auto next */
+  function runWinSequence() {
+    resetStageEffects();
+    state.skeleton = false;
+    showLivingCharacter();
+
+    var pip = $("char-pip");
+    if (pip) {
+      for (var i = 1; i <= MAX_MISSES; i++) {
+        var part = pip.querySelector(".part-" + i);
+        if (part) part.classList.remove("hidden");
+      }
+      pip.classList.remove("celebrating");
+    }
+
+    var hm = els.hangman || $("hangman");
+    var actor = $("actor");
+    var chest = $("treasure-chest");
+    var lootEl = $("pip-loot");
+
+    if (hm) hm.classList.add("win-escape");
+
+    els.buddyCaption.textContent =
+      charName() + " slips free and makes a break for the treasure!";
+    setCharacterHook();
+    setJoke(charName() + " is making off with the treasure!");
+
+    // No popup on win
+    els.outcome.classList.add("hidden");
+
+    // 1) Drop from noose onto plank
+    if (actor) {
+      actor.classList.remove(
+        "hanging",
+        "falling",
+        "win-drop",
+        "win-grab",
+        "win-run"
+      );
+      void actor.getBoundingClientRect();
+      actor.classList.add("win-drop");
+    }
+
+    state.winTimer = setTimeout(function () {
+      // 2) Grab loot — empty beach chest, show carried loot
+      if (chest) chest.classList.add("loot-taken");
+      if (lootEl) lootEl.classList.remove("hidden");
+      if (actor) {
+        actor.classList.remove("win-drop");
+        void actor.getBoundingClientRect();
+        actor.classList.add("win-grab");
+      }
+      els.buddyCaption.textContent =
+        charName() + " scoops up the treasure — yoink!";
+
+      state.winTimer = setTimeout(function () {
+        // 3) Silly run off-screen with the loot
+        if (actor) {
+          actor.classList.remove("win-grab");
+          void actor.getBoundingClientRect();
+          actor.classList.add("win-run");
+        }
+        els.buddyCaption.textContent =
+          "Heave-ho! " + charName() + " runs away with the treasure!";
+
+        state.winTimer = setTimeout(function () {
+          // 4) Short beat, then auto-advance (no popup)
+          state.winTimer = setTimeout(function () {
+            state.winTimer = null;
+            nextWord();
+          }, WIN_ADVANCE_BEAT_MS);
+        }, WIN_RUN_MS);
+      }, WIN_GRAB_MS);
+    }, WIN_DROP_MS);
   }
 
   function showOutcome(won) {
@@ -593,25 +654,7 @@
     syncKeyboard();
 
     if (won) {
-      // Win: full pirate celebrates on stage; no trap door
-      resetStageEffects();
-      state.skeleton = false;
-      showLivingCharacter();
-      var pip = $("char-pip");
-      if (pip) {
-        for (var i = 1; i <= MAX_MISSES; i++) {
-          var part = pip.querySelector(".part-" + i);
-          if (part) part.classList.remove("hidden");
-        }
-        pip.classList.remove("celebrating");
-        void pip.getBoundingClientRect();
-        pip.classList.add("celebrating");
-      }
-      els.buddyCaption.textContent =
-        "Full craft pirate party! " + charName() + " cheers from the rope!";
-      setCharacterHook();
-      fillOutcomeCard(true);
-      revealOutcomePopup();
+      runWinSequence();
     } else {
       runLoseSequence();
     }
@@ -953,9 +996,7 @@
     els.wordBlanks = $("word-blanks");
     els.keyboard = $("keyboard");
     els.outcome = $("outcome");
-    els.outcomeEmoji = $("outcome-emoji");
-    els.outcomeTitle = $("outcome-title");
-    els.outcomeMsg = $("outcome-msg");
+    els.outcomeWord = $("outcome-word");
     els.btnNext = $("btn-next");
     els.btnParents = $("btn-parents");
     els.gateCancel = $("gate-cancel");

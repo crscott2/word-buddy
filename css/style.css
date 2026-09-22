@@ -1,4 +1,4 @@
-/* Spell Buddy v1.9 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Spell Buddy v1.10 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -519,6 +519,24 @@ body::before {
   z-index: 1;
 }
 
+/* v1.10 lose popup: big bold secret word only */
+.lose-word-card {
+  padding: 32px 28px 24px;
+}
+
+.outcome-word {
+  margin: 0 0 22px;
+  font-size: clamp(2.4rem, 8vw, 3.6rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  color: var(--ink, #3A2818);
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+  word-break: break-word;
+}
+
 .outcome-card .btn {
   position: relative;
   z-index: 1;
@@ -878,6 +896,10 @@ body::before {
   .outcome-emoji { font-size: 2.4rem; margin: 0; }
   .outcome-card h2 { font-size: 1.35rem; margin: 0 0 6px; }
   .outcome-card p { font-size: 0.95rem; margin: 0 0 12px; }
+  .outcome-word {
+    font-size: clamp(2rem, 6vw, 3rem);
+    margin: 0 0 16px;
+  }
   .outcome-card .btn.big {
     padding: 12px 18px;
     font-size: 1.05rem;
@@ -1212,13 +1234,13 @@ body::before {
   transition: none;
 }
 
-/* Idle hang: still. Motion only on impact-ripple (miss) or falling/celebrate */
-#actor.hanging:not(.falling):not(.impact-ripple) {
+/* Idle hang: still. Motion only on impact-ripple (miss) or falling / win escape */
+#actor.hanging:not(.falling):not(.impact-ripple):not(.win-drop):not(.win-grab):not(.win-run) {
   transform: rotate(0deg);
 }
 
 /* Brief whole-body impact after a part snaps on */
-#actor.impact-ripple:not(.falling) {
+#actor.impact-ripple:not(.falling):not(.win-drop):not(.win-grab):not(.win-run) {
   animation: hangImpact 0.58s ease-out;
 }
 
@@ -1313,39 +1335,60 @@ body::before {
   animation-delay: 0.12s;
 }
 
-/* Win celebrate: short intentional limb wiggle (finite), not idle loops */
-#char-pip.celebrating .sway-limb {
+/* v1.10 win run: silly limb run cycle while escaping with loot */
+#actor.win-run .sway-limb {
   animation-timing-function: ease-in-out;
-  animation-iteration-count: 2;
+  animation-iteration-count: infinite;
   animation-direction: alternate;
 }
-#char-pip.celebrating .sway-arm-l {
-  animation-name: limbReactA;
-  animation-duration: 0.45s;
+#actor.win-run .sway-arm-l {
+  animation-name: runArmL;
+  animation-duration: 0.22s;
 }
-#char-pip.celebrating .sway-arm-r {
-  animation-name: limbReactB;
-  animation-duration: 0.5s;
-  animation-delay: 0.05s;
+#actor.win-run .sway-arm-r {
+  animation-name: runArmR;
+  animation-duration: 0.22s;
 }
-#char-pip.celebrating .sway-leg-l {
-  animation-name: limbReactC;
-  animation-duration: 0.55s;
-  animation-delay: 0.08s;
+#actor.win-run .sway-leg-l {
+  animation-name: runLegL;
+  animation-duration: 0.22s;
 }
-#char-pip.celebrating .sway-leg-r {
-  animation-name: limbReactD;
-  animation-duration: 0.48s;
-  animation-delay: 0.03s;
+#actor.win-run .sway-leg-r {
+  animation-name: runLegR;
+  animation-duration: 0.22s;
 }
-#char-pip.celebrating .sway-coat-l {
-  animation-name: limbReactE;
-  animation-duration: 0.6s;
+#actor.win-run .sway-coat-l {
+  animation-name: runCoatL;
+  animation-duration: 0.28s;
 }
-#char-pip.celebrating .sway-coat-r {
-  animation-name: limbReactF;
-  animation-duration: 0.58s;
-  animation-delay: 0.06s;
+#actor.win-run .sway-coat-r {
+  animation-name: runCoatR;
+  animation-duration: 0.28s;
+}
+
+@keyframes runArmL {
+  0% { transform: rotate(18deg); }
+  100% { transform: rotate(-28deg); }
+}
+@keyframes runArmR {
+  0% { transform: rotate(-22deg); }
+  100% { transform: rotate(24deg); }
+}
+@keyframes runLegL {
+  0% { transform: rotate(-22deg); }
+  100% { transform: rotate(18deg); }
+}
+@keyframes runLegR {
+  0% { transform: rotate(20deg); }
+  100% { transform: rotate(-20deg); }
+}
+@keyframes runCoatL {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(10deg); }
+}
+@keyframes runCoatR {
+  0% { transform: rotate(8deg); }
+  100% { transform: rotate(-10deg); }
 }
 
 /* Stop limb motion cleanly when falling */
@@ -1437,17 +1480,86 @@ body::before {
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-/* Win: cheerful side-to-side sway on the rope (no vertical bounce, no trap fall) */
-#char-pip.celebrating {
-  animation: celebrateSway 0.9s ease-in-out;
-  transform-origin: 198px 132px; /* neck-ish within scaled local space */
+/* ===== v1.10 win escape: free from noose → drop → grab loot → run off ===== */
+
+/* Empty / cut noose left behind */
+#hangman.win-escape #noose-loop {
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+#hangman.win-escape #rope-noose {
+  filter: none;
 }
 
-@keyframes celebrateSway {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-8deg); }
-  50% { transform: rotate(7deg); }
-  75% { transform: rotate(-5deg); }
+/* Beach chest empties; loot rides with Pip */
+#treasure-chest.loot-taken #chest-treasure {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+#treasure-chest.loot-taken {
+  opacity: 0.92;
+}
+
+.pip-loot.hidden {
+  display: none;
+}
+#char-pip .pip-loot:not(.hidden) {
+  display: inline;
+}
+
+/* Drop from noose onto plank (~feet land near y=190) */
+#actor.win-drop {
+  animation: pipWinDrop 0.45s cubic-bezier(0.4, 0.05, 0.7, 1) forwards;
+  transform-origin: 198px 90px;
+}
+@keyframes pipWinDrop {
+  0% { transform: translate(0, 0) rotate(-2deg); }
+  55% { transform: translate(0, 50px) rotate(4deg); }
+  78% { transform: translate(0, 42px) rotate(-2deg); }
+  100% { transform: translate(0, 46px) rotate(0deg); }
+}
+
+/* Brief squat / scoop beat before run */
+#actor.win-grab {
+  animation: pipWinGrab 0.35s ease-out forwards;
+  transform-origin: 198px 90px;
+}
+@keyframes pipWinGrab {
+  0% { transform: translate(0, 46px) scale(1, 1); }
+  40% { transform: translate(0, 52px) scale(1.02, 0.92); }
+  100% { transform: translate(0, 46px) scale(1, 1); }
+}
+
+/* Silly sideways run off-screen to the right with loot */
+#actor.win-run {
+  animation: pipWinRun 1.5s cubic-bezier(0.35, 0.05, 0.65, 1) forwards;
+  transform-origin: 198px 90px;
+}
+@keyframes pipWinRun {
+  0% {
+    transform: translate(0, 46px) rotate(0deg);
+    opacity: 1;
+  }
+  12% {
+    transform: translate(18px, 42px) rotate(-3deg);
+    opacity: 1;
+  }
+  28% {
+    transform: translate(55px, 48px) rotate(4deg);
+    opacity: 1;
+  }
+  48% {
+    transform: translate(110px, 40px) rotate(-3deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(175px, 47px) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(250px, 44px) rotate(-2deg);
+    opacity: 0;
+  }
 }
 
 #shark-fin {
