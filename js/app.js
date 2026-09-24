@@ -8,7 +8,7 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
-   * v1.25: Soft miss cue + win word popup (mirrors lose: anim → 3s → big bold word → Next)
+   * v1.25: Soft miss cue + celebratory win popup (3s delay, gold/green, sparkles; lose stays plain)
    * v1.24: Word Buddy rename + public Pages
    * v1.23: Event SFX only (no looping beach ambience)
    * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
@@ -496,6 +496,16 @@
   var WIN_POPUP_DELAY_MS = 3000; /* pause after run-off before outcome (mirrors lose) */
   var WIN_TOTAL_MS =
     WIN_DROP_MS + WIN_GRAB_MS + WIN_RUN_MS + WIN_POPUP_DELAY_MS;
+
+  /** Kid-friendly celebration lines for the win popup title */
+  var WIN_CHEERS = [
+    "You got it!",
+    "Yarr!",
+    "Treasure!",
+    "Nice spelling!",
+    "Booyah!",
+    "Letter hero!"
+  ];
 
   var CHARACTERS = [
     {
@@ -1183,11 +1193,92 @@
     }
   }
 
+  function pickWinCheer() {
+    return WIN_CHEERS[Math.floor(Math.random() * WIN_CHEERS.length)] || "You got it!";
+  }
+
+  function pickWinEmoji() {
+    var emojis = ["🎉", "⭐", "🏴‍☠️", "🏆", "✨", "🥳"];
+    return emojis[Math.floor(Math.random() * emojis.length)] || "🎉";
+  }
+
+  function buildWinSparkles(container) {
+    if (!container) return;
+    container.innerHTML = "";
+    var glyphs = ["✨", "⭐", "🌟", "💛", "✦"];
+    var spots = [
+      { top: "2%", left: "8%" },
+      { top: "6%", right: "10%" },
+      { top: "28%", left: "-2%" },
+      { top: "32%", right: "-2%" },
+      { top: "58%", left: "4%" },
+      { top: "62%", right: "6%" },
+      { bottom: "10%", left: "18%" },
+      { bottom: "8%", right: "16%" },
+      { top: "-4%", left: "42%" },
+      { bottom: "-2%", left: "48%" }
+    ];
+    for (var i = 0; i < spots.length; i++) {
+      var s = document.createElement("span");
+      s.className = "spark";
+      s.textContent = glyphs[i % glyphs.length];
+      s.style.animationDelay = (i * 0.09) + "s";
+      var spot = spots[i];
+      if (spot.top != null) s.style.top = spot.top;
+      if (spot.bottom != null) s.style.bottom = spot.bottom;
+      if (spot.left != null) s.style.left = spot.left;
+      if (spot.right != null) s.style.right = spot.right;
+      container.appendChild(s);
+    }
+  }
+
   function fillOutcomeCard() {
     var raw = displayWord(state.word);
     var shown = raw === "I" ? "I" : String(raw).toUpperCase();
     if (els.outcomeWord) {
       els.outcomeWord.textContent = shown;
+    }
+
+    var card = els.outcomeCard || $("outcome-card");
+    var title = els.outcomeTitle || $("outcome-title");
+    var emoji = els.outcomeEmoji || $("outcome-emoji");
+    var sparkles = els.outcomeSparkles || $("outcome-sparkles");
+    var won = !!state.won;
+
+    if (els.outcome) {
+      els.outcome.classList.toggle("is-win", won);
+      if (won) {
+        els.outcome.setAttribute("aria-labelledby", "outcome-title outcome-word");
+      } else {
+        els.outcome.setAttribute("aria-labelledby", "outcome-word");
+      }
+    }
+    if (card) {
+      card.classList.toggle("win-word-card", won);
+      card.classList.toggle("lose-word-card", !won);
+    }
+    if (title) {
+      if (won) {
+        title.textContent = pickWinCheer();
+        title.classList.remove("hidden");
+      } else {
+        title.textContent = "";
+        title.classList.add("hidden");
+      }
+    }
+    if (emoji) {
+      if (won) {
+        emoji.textContent = pickWinEmoji();
+        emoji.classList.remove("hidden");
+        emoji.setAttribute("aria-hidden", "true");
+      } else {
+        emoji.textContent = "";
+        emoji.classList.add("hidden");
+      }
+    }
+    if (sparkles) {
+      if (won) buildWinSparkles(sparkles);
+      else sparkles.innerHTML = "";
     }
   }
 
@@ -1366,6 +1457,12 @@
 
   function startRound() {
     els.outcome.classList.add("hidden");
+    els.outcome.classList.remove("is-win");
+    var card = els.outcomeCard || $("outcome-card");
+    if (card) {
+      card.classList.remove("win-word-card");
+      card.classList.add("lose-word-card");
+    }
     syncPlaySession();
 
     if (!state.playWords.length || !state.roundTotal) {
@@ -1848,8 +1945,12 @@
     els.attemptsFraction = $("attempts-fraction");
     els.wordBlanks = $("word-blanks");
     els.keyboard = $("keyboard");
-    els.outcome = $("outcome");
+        els.outcome = $("outcome");
+    els.outcomeCard = $("outcome-card");
     els.outcomeWord = $("outcome-word");
+    els.outcomeTitle = $("outcome-title");
+    els.outcomeEmoji = $("outcome-emoji");
+    els.outcomeSparkles = $("outcome-sparkles");
     els.btnNext = $("btn-next");
     els.btnParents = $("btn-parents");
     els.btnMute = $("btn-mute");

@@ -1,5 +1,5 @@
-/* Word Buddy service worker — cache shell for offline play (v1.25: soft miss + win popup) */
-var CACHE = "word-buddy-v1.25";
+/* Word Buddy service worker — cache shell for offline play (v1.25: soft miss + celebratory win popup) */
+var CACHE = "word-buddy-v1.25b";
 var ASSETS = [
   "./",
   "./index.html",

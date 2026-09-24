@@ -558,7 +558,10 @@
       </div>
 
       <div id="outcome" class="outcome hidden" role="dialog" aria-modal="true" aria-labelledby="outcome-word">
-        <div class="outcome-card lose-word-card">
+        <div id="outcome-card" class="outcome-card lose-word-card">
+          <div id="outcome-sparkles" class="outcome-sparkles" aria-hidden="true"></div>
+          <p id="outcome-emoji" class="outcome-emoji hidden" aria-hidden="true">🎉</p>
+          <h2 id="outcome-title" class="outcome-title hidden"></h2>
           <p id="outcome-word" class="outcome-word"></p>
           <button type="button" id="btn-next" class="btn primary big">Next word! ▶</button>
         </div>
