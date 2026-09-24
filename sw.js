@@ -1,5 +1,5 @@
-/* Word Buddy service worker — v1.29: network-first shell so version UI updates; skipWaiting + clients.claim; offline assets still cached */
-var CACHE = "word-buddy-v1.29";
+/* Word Buddy service worker — v1.30: network-first shell so version UI updates; skipWaiting + clients.claim; offline assets still cached */
+var CACHE = "word-buddy-v1.30";
 var ASSETS = [
   "./",
   "./index.html",

@@ -8,6 +8,7 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
+   * v1.30: Auto-speak word when win/lose popup shows; speak button icon-only (en-US speechSynthesis)
    * v1.29: US pronunciation button (Web Speech en-US) replaces phonetic text in win/lose popups
    * v1.28: Network-first shell SW + update/reload so version UI is not stuck behind cache-first
    * v1.26: Win popup text = word only (no cheer sentence); soft miss + celebratory chrome kept
@@ -1292,8 +1293,10 @@
   }
 
   /**
-   * Speak the current word in US English.
-   * Must run inside a user gesture on iOS Safari (tap unlocks speechSynthesis).
+   * Speak the current word in US English (Web Speech API).
+   * Independent of game SFX mute — pronunciation is intentional learning audio.
+   * Tap replay is reliable on iOS (user gesture). Auto-speak on popup show is
+   * best-effort (may need prior unlock from gameplay taps).
    */
   function speakCurrentWordUS() {
     var word = state.word;
@@ -1306,7 +1309,7 @@
       return;
     }
 
-    /* Cancel any in-flight utterance, then speak in this same gesture. */
+    /* Cancel any prior utterance, then speak the current word. */
     try {
       window.speechSynthesis.cancel();
     } catch (e) { /* ignore */ }
@@ -1351,7 +1354,7 @@
     if (speakBtn) {
       speakBtn.setAttribute(
         "aria-label",
-        "Hear US pronunciation of " + (shown || "word")
+        "Hear pronunciation of " + (shown || "word")
       );
       speakBtn.classList.remove("is-speaking");
     }
@@ -1364,7 +1367,7 @@
 
     if (els.outcome) {
       els.outcome.classList.toggle("is-win", won);
-      /* v1.26/v1.29: text content is the word (+ US speak); no cheer title */
+      /* v1.26–v1.30: text content is the word (+ speak icon); no cheer title */
       els.outcome.setAttribute("aria-labelledby", "outcome-word");
     }
     if (card) {
@@ -1395,6 +1398,9 @@
   function revealOutcomePopup() {
     els.outcome.classList.remove("hidden");
     syncKeyboard();
+    /* v1.30: auto-speak the word when win/lose popup appears (same path as icon tap).
+       Ignores SFX mute. Best-effort on iOS if speech was unlocked by earlier gameplay taps. */
+    speakCurrentWordUS();
   }
 
   function runLoseSequence() {
@@ -1438,7 +1444,7 @@
     }, LOSE_MORPH_MS);
   }
 
-  /** v1.26/v1.29: free+drop → grab → run off → wait 3s → celebratory word popup (word + US speak; no cheer sentence) */
+  /** v1.26–v1.30: free+drop → grab → run off → wait 3s → celebratory word popup (word + auto-speak; no cheer sentence) */
   function runWinSequence() {
     playWinSound();
     resetStageEffects();
