@@ -1,8 +1,9 @@
-# Word Buddy (Spelling Hangman) — v1.26
+# Word Buddy (Spelling Hangman) — v1.27
 
 Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Tall pirate galleon sail-by (v1.27)**: when full-set confetti fires, a classic multi-mast craft galleon (hull, decks, 3 masts, sails, rigging, flag — original kid-friendly art, not movie IP) sails across with **Cap’n Pip celebrating on deck** and **cannons firing** funny muzzle flashes / smoke / ball arcs; confetti kept; landscape-friendly; SVG + CSS only
 - **Win popup = word only + phonetics (v1.26)**: celebratory gold/green chrome, emoji, and sparkles stay on win; cheer titles (“You got it!”, “Yarr!”, etc.) removed — popup text is the **big bold word** (like lose). Both win and lose show a **smaller phonetic respelling** under the word when known (offline dictionary; omitted if unknown)
 - **Softer miss cue (v1.25)**: wrong-letter sound is a short gentle descending blip (soft muted pluck) — no abrasive pirate yell / harsh Web Audio companion; correct / win / lose / unmute blip unchanged
 - **Celebratory win popup (v1.25→v1.26)**: after a solved word, Pip’s escape animation still plays, then a **3s pause**, then a **fun gold/green popup** with emoji, sparkles, and the big bold solved word (no cheer sentence as of v1.26) — tap Next to continue. Lose popup stays plain (missed word only). Both show phonetics when available
@@ -16,7 +17,7 @@ Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds le
 - **Alphabetical Parents library (v1.16)**: word list stays A–Z after add, paste import, Fry restore, toggle, edit/delete, and load/migrate — sorted on every save and when rendering. Play order remains shuffled (unchanged)
 - **Random play order (v1.14)**: words parents turn On are always shuffled for play — never walked in parent/storage order. Reshuffles when a play session starts, when the enabled set changes, and when looping a new pass of remaining words
 - **Green progress bar (v1.14)**: play screen shows a landscape-friendly green bar for cleared wins / current set size (subtle aria fraction); replaces “Word x of x” text
-- **Pirate ship sail-by (v1.15)**: when full-set confetti fires (all enabled words cleared correctly), a big LBP craft pirate ship sails across the background with the celebration; pointer-events none so keys stay usable after the same short celebration, then play continues as before
+- **Pirate ship sail-by (v1.15→v1.27)**: when full-set confetti fires (all enabled words cleared correctly), a big craft tall-ship / galleon sails across with Cap’n Pip on deck and cannons firing (kid-safe FX); pointer-events none so keys stay usable after the same short celebration, then play continues as before
 - **Confetti on full clear (v1.14)**: when every enabled word in the current set has been **won** (losses do not clear a word), the screen fills with confetti; then a fresh shuffled round begins
 - **Attempts fraction (v1.13)**: craft badge in the bottom-right of the beach stage shows miss status (`0/6` … `6/6`); updates after each wrong guess; resets each new word
 - **No foreground sword (v1.12)**: pirate sword prop removed from the beach stage
@@ -46,7 +47,7 @@ Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds le
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.26** in the UI
+- Version label **v1.27** in the UI
 
 ## Live
 https://crscott2.github.io/word-buddy/

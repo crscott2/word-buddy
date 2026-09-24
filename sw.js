@@ -1,5 +1,5 @@
-/* Word Buddy service worker — cache shell for offline play (v1.26: phonetics under word, win text = word only) */
-var CACHE = "word-buddy-v1.26";
+/* Word Buddy service worker — cache shell for offline play (v1.27: tall craft galleon + Cap'n Pip + cannons on full-clear confetti) */
+var CACHE = "word-buddy-v1.27";
 var ASSETS = [
   "./",
   "./index.html",

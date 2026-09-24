@@ -801,7 +801,7 @@
     }
   }
 
-  /** Big LBP craft pirate ship sails across during full-set confetti (pointer-events none). */
+  /** v1.27: tall craft galleon + Cap'n Pip + cannons sails across during full-set confetti (pointer-events none). */
   function fireShipSail() {
     var ship = els.shipLayer || $("ship-layer");
     if (!ship) return;
