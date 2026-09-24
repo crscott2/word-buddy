@@ -8,6 +8,7 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
+   * v1.28: Network-first shell SW + update/reload so version UI is not stuck behind cache-first
    * v1.26: Win popup text = word only (no cheer sentence); phonetics under word (win+lose); soft miss + celebratory chrome kept
    * v1.25: Soft miss cue + celebratory win popup (3s delay, gold/green, sparkles; lose stays plain)
    * v1.24: Word Buddy rename + public Pages
@@ -1978,8 +1979,22 @@
 
   function registerSW() {
     if (!("serviceWorker" in navigator)) return;
+    var hadController = !!navigator.serviceWorker.controller;
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (!hadController || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("./sw.js").catch(function () {});
+      navigator.serviceWorker.register("./sw.js").then(function (reg) {
+        try { reg.update(); } catch (e) {}
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") {
+            try { reg.update(); } catch (e2) {}
+          }
+        });
+      }).catch(function () {});
     });
   }
 

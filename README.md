@@ -1,8 +1,9 @@
-# Word Buddy (Spelling Hangman) — v1.27
+# Word Buddy (Spelling Hangman) — v1.28
 
 Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Reliable PWA updates (v1.28)**: service worker uses network-first for HTML/CSS/JS/manifest so the version badge and shell refresh; keeps skipWaiting + clients.claim; cache-first for audio/icons so offline play still works; client calls update() on load/visibility and reloads once when a new worker takes control
 - **Tall pirate galleon sail-by (v1.27)**: when full-set confetti fires, a classic multi-mast craft galleon (hull, decks, 3 masts, sails, rigging, flag — original kid-friendly art, not movie IP) sails across with **Cap’n Pip celebrating on deck** and **cannons firing** funny muzzle flashes / smoke / ball arcs; confetti kept; landscape-friendly; SVG + CSS only
 - **Win popup = word only + phonetics (v1.26)**: celebratory gold/green chrome, emoji, and sparkles stay on win; cheer titles (“You got it!”, “Yarr!”, etc.) removed — popup text is the **big bold word** (like lose). Both win and lose show a **smaller phonetic respelling** under the word when known (offline dictionary; omitted if unknown)
 - **Softer miss cue (v1.25)**: wrong-letter sound is a short gentle descending blip (soft muted pluck) — no abrasive pirate yell / harsh Web Audio companion; correct / win / lose / unmute blip unchanged
@@ -47,7 +48,7 @@ Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds le
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.27** in the UI
+- Version label **v1.28** in the UI
 
 ## Live
 https://crscott2.github.io/word-buddy/
