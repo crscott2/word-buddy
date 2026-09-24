@@ -1,5 +1,5 @@
 /* Word Buddy service worker — cache shell for offline play */
-var CACHE = "word-buddy-v1.24";
+var CACHE = "word-buddy-v1.25";
 var ASSETS = [
   "./",
   "./index.html",

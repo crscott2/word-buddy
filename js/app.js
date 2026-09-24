@@ -8,10 +8,11 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
+   * v1.25: Soft miss cue (gentle descending blip; no harsh pirate Web Audio layer)
    * v1.24: Word Buddy rename + public Pages
    * v1.23: Event SFX only (no looping beach ambience)
    * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
-   * - Web Audio one-shots = secondary companion
+   * - Web Audio one-shots = secondary companion (correct / win / lose only; miss is HTML-only)
    * Bundled WAVs: miss / correct / win / lose / blip (unmute)
    * Unlock on tap: prime HTML players + AudioContext resume + silent buffer
    */
@@ -89,7 +90,7 @@
   function ensureHtmlPlayers() {
     if (!audio.html.miss) {
       audio.html.miss = makeHtmlAudio(AUDIO_URLS.miss, false);
-      audio.html.miss.volume = 0.9;
+      audio.html.miss.volume = 0.65;
     }
     if (!audio.html.correct) {
       audio.html.correct = makeHtmlAudio(AUDIO_URLS.correct, false);
@@ -372,78 +373,12 @@
     }
   }
 
-  function playWebPirateMiss() {
-    var ctx = audio.ctx || getAudioCtx();
-    if (!ctx || ctx.state === "suspended") return false;
-    try {
-      var t0 = ctx.currentTime;
-      var master = ctx.createGain();
-      master.gain.setValueAtTime(0.0001, t0);
-      master.gain.exponentialRampToValueAtTime(0.36, t0 + 0.025);
-      master.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
-      master.connect(ctx.destination);
-
-      var nLen = Math.floor(ctx.sampleRate * 0.45);
-      var nBuf = ctx.createBuffer(1, nLen, ctx.sampleRate);
-      var nd = nBuf.getChannelData(0);
-      for (var i = 0; i < nLen; i++) nd[i] = Math.random() * 2 - 1;
-      var noise = ctx.createBufferSource();
-      noise.buffer = nBuf;
-      var nFilter = ctx.createBiquadFilter();
-      nFilter.type = "bandpass";
-      nFilter.frequency.value = 720;
-      nFilter.Q.value = 1.1;
-      var nGain = ctx.createGain();
-      nGain.gain.setValueAtTime(0.42, t0);
-      nGain.gain.exponentialRampToValueAtTime(0.05, t0 + 0.32);
-      noise.connect(nFilter);
-      nFilter.connect(nGain);
-      nGain.connect(master);
-
-      var osc = ctx.createOscillator();
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(175, t0);
-      osc.frequency.exponentialRampToValueAtTime(115, t0 + 0.38);
-
-      var osc2 = ctx.createOscillator();
-      osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(350, t0);
-      osc2.frequency.exponentialRampToValueAtTime(230, t0 + 0.38);
-
-      var vFilter = ctx.createBiquadFilter();
-      vFilter.type = "bandpass";
-      vFilter.frequency.setValueAtTime(480, t0);
-      vFilter.frequency.linearRampToValueAtTime(620, t0 + 0.12);
-      vFilter.frequency.linearRampToValueAtTime(380, t0 + 0.38);
-      vFilter.Q.value = 2.2;
-
-      var vGain = ctx.createGain();
-      vGain.gain.value = 0.28;
-
-      osc.connect(vFilter);
-      osc2.connect(vFilter);
-      vFilter.connect(vGain);
-      vGain.connect(master);
-
-      noise.start(t0);
-      noise.stop(t0 + 0.45);
-      osc.start(t0);
-      osc.stop(t0 + 0.45);
-      osc2.start(t0);
-      osc2.stop(t0 + 0.45);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /** Comic pirate miss — HTML primary (audible on iOS), Web Audio secondary */
+  /** Soft miss cue — single gentle HTML blip (no harsh Web Audio companion) */
   function playPirateMiss() {
     if (audio.muted) return;
     unlockAudio();
     ensureHtmlPlayers();
-    htmlRestart(audio.html.miss, 0.9);
-    playWebPirateMiss();
+    htmlRestart(audio.html.miss, 0.65);
   }
 
   /** Positive chime on each correct letter */
