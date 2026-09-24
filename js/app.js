@@ -8,8 +8,9 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
+   * v1.29: US pronunciation button (Web Speech en-US) replaces phonetic text in win/lose popups
    * v1.28: Network-first shell SW + update/reload so version UI is not stuck behind cache-first
-   * v1.26: Win popup text = word only (no cheer sentence); phonetics under word (win+lose); soft miss + celebratory chrome kept
+   * v1.26: Win popup text = word only (no cheer sentence); soft miss + celebratory chrome kept
    * v1.25: Soft miss cue + celebratory win popup (3s delay, gold/green, sparkles; lose stays plain)
    * v1.24: Word Buddy rename + public Pages
    * v1.23: Event SFX only (no looping beach ambience)
@@ -1220,10 +1221,123 @@
     }
   }
 
-  function lookupPhoneticForWord(word) {
-    var api = typeof window !== "undefined" ? window.WordBuddyPhonetics : null;
-    if (!api || typeof api.lookup !== "function") return "";
-    return api.lookup(word) || "";
+  /* ---- US pronunciation via Web Speech API (no third-party audio) ---- */
+  var speakUs = {
+    preferred: null,
+    voicesReady: false
+  };
+
+  function pickUsVoice() {
+    if (!window.speechSynthesis) return null;
+    var voices = window.speechSynthesis.getVoices() || [];
+    if (!voices.length) return null;
+    speakUs.voicesReady = true;
+    var i;
+    var v;
+    /* Prefer explicit en-US voices */
+    for (i = 0; i < voices.length; i++) {
+      v = voices[i];
+      if (/^en-US$/i.test(v.lang || "")) {
+        speakUs.preferred = v;
+        return v;
+      }
+    }
+    for (i = 0; i < voices.length; i++) {
+      v = voices[i];
+      if (/^en[-_]?US/i.test(v.lang || "")) {
+        speakUs.preferred = v;
+        return v;
+      }
+    }
+    for (i = 0; i < voices.length; i++) {
+      v = voices[i];
+      if (/en/i.test(v.lang || "") && /us|american/i.test(v.name || "")) {
+        speakUs.preferred = v;
+        return v;
+      }
+    }
+    for (i = 0; i < voices.length; i++) {
+      v = voices[i];
+      if (/^en/i.test(v.lang || "")) {
+        speakUs.preferred = v;
+        return v;
+      }
+    }
+    speakUs.preferred = voices[0] || null;
+    return speakUs.preferred;
+  }
+
+  function ensureSpeechVoices() {
+    if (!window.speechSynthesis) return;
+    pickUsVoice();
+    if (typeof window.speechSynthesis.addEventListener === "function") {
+      window.speechSynthesis.addEventListener("voiceschanged", function () {
+        pickUsVoice();
+      });
+    } else {
+      window.speechSynthesis.onvoiceschanged = function () {
+        pickUsVoice();
+      };
+    }
+  }
+
+  function stopSpeakingWord() {
+    var btn = els.btnSpeakUs || $("btn-speak-us");
+    if (btn) btn.classList.remove("is-speaking");
+    if (window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  /**
+   * Speak the current word in US English.
+   * Must run inside a user gesture on iOS Safari (tap unlocks speechSynthesis).
+   */
+  function speakCurrentWordUS() {
+    var word = state.word;
+    if (!word) return;
+    var btn = els.btnSpeakUs || $("btn-speak-us");
+    if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance === "undefined") {
+      if (btn) {
+        btn.setAttribute("aria-label", "Speech not supported on this device");
+      }
+      return;
+    }
+
+    /* Cancel any in-flight utterance, then speak in this same gesture. */
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) { /* ignore */ }
+
+    var voice = speakUs.preferred || pickUsVoice();
+    var utter = new window.SpeechSynthesisUtterance(String(word));
+    utter.lang = "en-US";
+    utter.rate = 0.92;
+    utter.pitch = 1;
+    if (voice) {
+      utter.voice = voice;
+      if (voice.lang) utter.lang = voice.lang;
+    }
+
+    if (btn) btn.classList.add("is-speaking");
+    utter.onend = function () {
+      if (btn) btn.classList.remove("is-speaking");
+    };
+    utter.onerror = function () {
+      if (btn) btn.classList.remove("is-speaking");
+    };
+
+    try {
+      window.speechSynthesis.speak(utter);
+      /* iOS sometimes needs a nudge if paused after cancel */
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (e2) { /* ignore */ }
+      }
+    } catch (err) {
+      if (btn) btn.classList.remove("is-speaking");
+    }
   }
 
   function fillOutcomeCard() {
@@ -1233,18 +1347,13 @@
       els.outcomeWord.textContent = shown;
     }
 
-    var phoneticEl = els.outcomePhonetic || $("outcome-phonetic");
-    var phonetic = lookupPhoneticForWord(state.word);
-    if (phoneticEl) {
-      if (phonetic) {
-        phoneticEl.textContent = phonetic;
-        phoneticEl.classList.remove("hidden");
-        phoneticEl.setAttribute("aria-hidden", "false");
-      } else {
-        phoneticEl.textContent = "";
-        phoneticEl.classList.add("hidden");
-        phoneticEl.setAttribute("aria-hidden", "true");
-      }
+    var speakBtn = els.btnSpeakUs || $("btn-speak-us");
+    if (speakBtn) {
+      speakBtn.setAttribute(
+        "aria-label",
+        "Hear US pronunciation of " + (shown || "word")
+      );
+      speakBtn.classList.remove("is-speaking");
     }
 
     var card = els.outcomeCard || $("outcome-card");
@@ -1255,13 +1364,12 @@
 
     if (els.outcome) {
       els.outcome.classList.toggle("is-win", won);
-      /* v1.26: text content is the word (+ phonetics); no cheer title */
+      /* v1.26/v1.29: text content is the word (+ US speak); no cheer title */
       els.outcome.setAttribute("aria-labelledby", "outcome-word");
     }
     if (card) {
       card.classList.toggle("win-word-card", won);
       card.classList.toggle("lose-word-card", !won);
-      card.classList.toggle("no-phonetic", !phonetic);
     }
     /* v1.26: never show cheer sentence — keep title node hidden for layout stability */
     if (title) {
@@ -1330,7 +1438,7 @@
     }, LOSE_MORPH_MS);
   }
 
-  /** v1.26: free+drop → grab → run off → wait 3s → celebratory word popup (word + phonetics; no cheer sentence) */
+  /** v1.26/v1.29: free+drop → grab → run off → wait 3s → celebratory word popup (word + US speak; no cheer sentence) */
   function runWinSequence() {
     playWinSound();
     resetStageEffects();
@@ -1458,6 +1566,7 @@
   }
 
   function startRound() {
+    stopSpeakingWord();
     els.outcome.classList.add("hidden");
     els.outcome.classList.remove("is-win");
     var card = els.outcomeCard || $("outcome-card");
@@ -1864,9 +1973,17 @@
       startRound();
     });
     els.btnNext.addEventListener("click", function () {
+      stopSpeakingWord();
       if (state.won) advanceAfterWin();
       else nextWord();
     });
+    if (els.btnSpeakUs) {
+      els.btnSpeakUs.addEventListener("click", function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        /* Keep this synchronous in the tap so iOS unlocks speechSynthesis */
+        speakCurrentWordUS();
+      });
+    }
 
     els.addOneForm.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -1950,7 +2067,7 @@
         els.outcome = $("outcome");
     els.outcomeCard = $("outcome-card");
     els.outcomeWord = $("outcome-word");
-    els.outcomePhonetic = $("outcome-phonetic");
+    els.btnSpeakUs = $("btn-speak-us");
     els.outcomeTitle = $("outcome-title");
     els.outcomeEmoji = $("outcome-emoji");
     els.outcomeSparkles = $("outcome-sparkles");
@@ -2011,6 +2128,7 @@
     bind();
     beginShuffledRound();
     startRound();
+    ensureSpeechVoices();
     registerSW();
   }
 
