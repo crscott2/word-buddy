@@ -1,10 +1,11 @@
-# Word Buddy (Spelling Hangman) — v1.25
+# Word Buddy (Spelling Hangman) — v1.26
 
 Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
 
 ## Features
+- **Win popup = word only + phonetics (v1.26)**: celebratory gold/green chrome, emoji, and sparkles stay on win; cheer titles (“You got it!”, “Yarr!”, etc.) removed — popup text is the **big bold word** (like lose). Both win and lose show a **smaller phonetic respelling** under the word when known (offline dictionary; omitted if unknown)
 - **Softer miss cue (v1.25)**: wrong-letter sound is a short gentle descending blip (soft muted pluck) — no abrasive pirate yell / harsh Web Audio companion; correct / win / lose / unmute blip unchanged
-- **Celebratory win popup (v1.25)**: after a solved word, Pip’s escape animation still plays, then a **3s pause**, then a **fun gold/green popup** with cheer title (e.g. “You got it!” / “Yarr!”), emoji, sparkles, and the big bold solved word — tap Next to continue. Lose popup stays plain (missed word only)
+- **Celebratory win popup (v1.25→v1.26)**: after a solved word, Pip’s escape animation still plays, then a **3s pause**, then a **fun gold/green popup** with emoji, sparkles, and the big bold solved word (no cheer sentence as of v1.26) — tap Next to continue. Lose popup stays plain (missed word only). Both show phonetics when available
 - **Rename + public Pages (v1.24)**: product renamed Spell Buddy → **Word Buddy**; public GitHub Pages PWA
 - **Audio redesign (v1.23)**: no looping beach ambience; event SFX only — pirate miss on wrong letter, positive chime on each correct letter, win fanfare on word won (with/before run-away), lose tone with skeleton/trap; unmute blip kept
 - **iOS-safe audio (v1.22–v1.23)**: HTML5 `Audio` (playsInline) primary path for bundled WAVs (works when Web Audio is silenced by the iPhone ringer switch); Web Audio unlocked in parallel (resume + silent buffer); gesture unlock stays armed until primed; mute / letter / Parents / “Tap 🔊 for sound” unlock; unmute plays an audible blip in the same tap; mute preference in localStorage
@@ -39,13 +40,13 @@ Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds le
 - **Hero buddy — Captain Pip** (SVG segments): felt head, button eye, stitch smile, yarn bandana, cloth striped shirt, felt red coat with button gold studs, fabric boots (dangling hang pose)
 - Classic **6-miss** reveal (head → torso → L arm → R arm → L leg → R leg) — wholesome, no gore
 - **Lose sequence**: living craft pirate (hanging) → silly felt/cardboard skeleton (still hanging briefly) → trap opens → **detaches and drops ALL THE WAY DOWN** through the trap + dust puff → **3s pause** → outcome popup showing **only the secret word (big bold display)** + Next word
-- **Win (v1.12 / v1.25)**: Pip frees from the noose, drops to the plank, grabs the treasure, then **runs** off-screen — clearer opposite-phase arm/leg cycle, stride bounce, forward lean, foot dust puffs — then **3s pause** and a **celebratory** big-bold word popup (cheer title, sparkles, gold/green); lose stays plain (Next continues)
+- **Win (v1.12 / v1.25)**: Pip frees from the noose, drops to the plank, grabs the treasure, then **runs** off-screen — clearer opposite-phase arm/leg cycle, stride bounce, forward lean, foot dust puffs — then **3s pause** and a **celebratory** big-bold word popup (sparkles, gold/green, phonetics; no cheer sentence); lose stays plain + phonetics (Next continues)
 - Scrapbook / fabric outcome cards; Parents screen uses the same craft UI language
 - Parent library seeded with **Fry 100** sight words; toggle On/Off per word
 - Play pool = words that are On; progress bar shows empty-pool state if none are on
 - Add one / paste list (custom words default On); edit/delete
 - Offline PWA shell (manifest + service worker); manifest `orientation` stays **any** so Safari Add to Home Screen is not locked
-- Version label **v1.25** in the UI
+- Version label **v1.26** in the UI
 
 ## Live
 https://crscott2.github.io/word-buddy/
@@ -60,3 +61,12 @@ python3 -m http.server 8765
 ## Parent words
 Tap **Parents** → solve the easy multiplication gate → toggle words, add custom words, or paste a list. The library always displays and stores in alphabetical order.
 Storage key: `spellBuddy.words.v2` (`{ word, on }`). Migrates older v1 string lists.
+
+## Offline phonetics (v1.26)
+
+Win and lose popups show a **kid-friendly respelling** under the big word (e.g. FRIEND → `frend`, PEOPLE → `pee-pul`) so a parent can read it aloud.
+
+- Source: bundled `js/phonetics.js` (~8k common words) — CMUdict ARPAbet mapped to simple English syllables, with hand-tuned Fry 100 + common spelling overrides
+- Works fully **offline** (cached by the service worker); no live dictionary API
+- If a custom word is not in the map, the phonetic line is **omitted** (no broken text)
+

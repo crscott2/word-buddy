@@ -8,6 +8,7 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
+   * v1.26: Win popup text = word only (no cheer sentence); phonetics under word (win+lose); soft miss + celebratory chrome kept
    * v1.25: Soft miss cue + celebratory win popup (3s delay, gold/green, sparkles; lose stays plain)
    * v1.24: Word Buddy rename + public Pages
    * v1.23: Event SFX only (no looping beach ambience)
@@ -496,16 +497,6 @@
   var WIN_POPUP_DELAY_MS = 3000; /* pause after run-off before outcome (mirrors lose) */
   var WIN_TOTAL_MS =
     WIN_DROP_MS + WIN_GRAB_MS + WIN_RUN_MS + WIN_POPUP_DELAY_MS;
-
-  /** Kid-friendly celebration lines for the win popup title */
-  var WIN_CHEERS = [
-    "You got it!",
-    "Yarr!",
-    "Treasure!",
-    "Nice spelling!",
-    "Booyah!",
-    "Letter hero!"
-  ];
 
   var CHARACTERS = [
     {
@@ -1193,10 +1184,6 @@
     }
   }
 
-  function pickWinCheer() {
-    return WIN_CHEERS[Math.floor(Math.random() * WIN_CHEERS.length)] || "You got it!";
-  }
-
   function pickWinEmoji() {
     var emojis = ["🎉", "⭐", "🏴‍☠️", "🏆", "✨", "🥳"];
     return emojis[Math.floor(Math.random() * emojis.length)] || "🎉";
@@ -1232,11 +1219,31 @@
     }
   }
 
+  function lookupPhoneticForWord(word) {
+    var api = typeof window !== "undefined" ? window.WordBuddyPhonetics : null;
+    if (!api || typeof api.lookup !== "function") return "";
+    return api.lookup(word) || "";
+  }
+
   function fillOutcomeCard() {
     var raw = displayWord(state.word);
     var shown = raw === "I" ? "I" : String(raw).toUpperCase();
     if (els.outcomeWord) {
       els.outcomeWord.textContent = shown;
+    }
+
+    var phoneticEl = els.outcomePhonetic || $("outcome-phonetic");
+    var phonetic = lookupPhoneticForWord(state.word);
+    if (phoneticEl) {
+      if (phonetic) {
+        phoneticEl.textContent = phonetic;
+        phoneticEl.classList.remove("hidden");
+        phoneticEl.setAttribute("aria-hidden", "false");
+      } else {
+        phoneticEl.textContent = "";
+        phoneticEl.classList.add("hidden");
+        phoneticEl.setAttribute("aria-hidden", "true");
+      }
     }
 
     var card = els.outcomeCard || $("outcome-card");
@@ -1247,24 +1254,18 @@
 
     if (els.outcome) {
       els.outcome.classList.toggle("is-win", won);
-      if (won) {
-        els.outcome.setAttribute("aria-labelledby", "outcome-title outcome-word");
-      } else {
-        els.outcome.setAttribute("aria-labelledby", "outcome-word");
-      }
+      /* v1.26: text content is the word (+ phonetics); no cheer title */
+      els.outcome.setAttribute("aria-labelledby", "outcome-word");
     }
     if (card) {
       card.classList.toggle("win-word-card", won);
       card.classList.toggle("lose-word-card", !won);
+      card.classList.toggle("no-phonetic", !phonetic);
     }
+    /* v1.26: never show cheer sentence — keep title node hidden for layout stability */
     if (title) {
-      if (won) {
-        title.textContent = pickWinCheer();
-        title.classList.remove("hidden");
-      } else {
-        title.textContent = "";
-        title.classList.add("hidden");
-      }
+      title.textContent = "";
+      title.classList.add("hidden");
     }
     if (emoji) {
       if (won) {
@@ -1328,7 +1329,7 @@
     }, LOSE_MORPH_MS);
   }
 
-  /** v1.25: free+drop → grab → run off → wait 3s → same big-bold word popup as lose */
+  /** v1.26: free+drop → grab → run off → wait 3s → celebratory word popup (word + phonetics; no cheer sentence) */
   function runWinSequence() {
     playWinSound();
     resetStageEffects();
@@ -1948,6 +1949,7 @@
         els.outcome = $("outcome");
     els.outcomeCard = $("outcome-card");
     els.outcomeWord = $("outcome-word");
+    els.outcomePhonetic = $("outcome-phonetic");
     els.outcomeTitle = $("outcome-title");
     els.outcomeEmoji = $("outcome-emoji");
     els.outcomeSparkles = $("outcome-sparkles");

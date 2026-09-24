@@ -1,4 +1,4 @@
-/* Word Buddy v1.25 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
+/* Word Buddy v1.26 — LittleBigPlanet craft / handmade aesthetic; landscape-first */
 
 :root {
   --bg-top: #F7E8D4;
@@ -716,7 +716,7 @@ body::before {
 
 .outcome-card .outcome-word,
 .lose-word-card .outcome-word {
-  margin: 0 0 28px;
+  margin: 0 0 6px;
   font-size: clamp(3.6rem, 16vw, 7rem);
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -729,6 +729,33 @@ body::before {
   text-shadow:
     0 2px 0 rgba(255, 248, 230, 0.9),
     0 4px 0 rgba(160, 100, 40, 0.25);
+}
+
+/* v1.26: kid-friendly phonetic respelling under the big word (win + lose) */
+.outcome-phonetic {
+  margin: 0 0 22px;
+  font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  color: rgba(60, 40, 25, 0.72);
+  position: relative;
+  z-index: 1;
+  word-break: break-word;
+}
+
+.outcome-phonetic.hidden {
+  display: none !important;
+}
+
+/* when phonetic omitted, JS adds .no-phonetic so the word keeps space before Next */
+.outcome-card.no-phonetic .outcome-word {
+  margin-bottom: 28px;
+}
+
+.outcome-card.win-word-card .outcome-phonetic {
+  color: rgba(27, 94, 32, 0.78);
+  font-weight: 600;
 }
 
 
@@ -1343,7 +1370,14 @@ body::before {
   .outcome-card .outcome-word,
   .lose-word-card .outcome-word {
     font-size: clamp(3.2rem, 12vw, 5.5rem);
-    margin: 0 0 18px;
+    margin: 0 0 4px;
+  }
+  .outcome-phonetic {
+    font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+    margin: 0 0 14px;
+  }
+  .outcome-card.no-phonetic .outcome-word {
+    margin-bottom: 18px;
   }
   .outcome-card .btn.big {
     padding: 12px 18px;

@@ -1,10 +1,11 @@
-/* Word Buddy service worker — cache shell for offline play (v1.25: soft miss + celebratory win popup) */
-var CACHE = "word-buddy-v1.25b";
+/* Word Buddy service worker — cache shell for offline play (v1.26: phonetics under word, win text = word only) */
+var CACHE = "word-buddy-v1.26";
 var ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
+  "./js/phonetics.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

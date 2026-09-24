@@ -24,7 +24,7 @@
         <h1>Word Buddy</h1>
       </div>
       <div class="top-meta">
-        <span class="version" title="App version">v1.25</span>
+        <span class="version" title="App version">v1.26</span>
         <button type="button" id="btn-mute" class="mute-btn" aria-pressed="false" aria-label="Mute sound" title="Mute / unmute">🔊</button>
         <button type="button" id="sound-unlock-hint" class="sound-unlock-hint" aria-hidden="false" title="Tap to enable sound">Tap 🔊 for sound</button>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
@@ -563,6 +563,7 @@
           <p id="outcome-emoji" class="outcome-emoji hidden" aria-hidden="true">🎉</p>
           <h2 id="outcome-title" class="outcome-title hidden"></h2>
           <p id="outcome-word" class="outcome-word"></p>
+          <p id="outcome-phonetic" class="outcome-phonetic hidden" aria-hidden="true"></p>
           <button type="button" id="btn-next" class="btn primary big">Next word! ▶</button>
         </div>
       </div>
@@ -639,6 +640,7 @@
     </div>
   </div>
 
+  <script src="js/phonetics.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
