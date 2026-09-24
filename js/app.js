@@ -8,7 +8,7 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
 
   /**
-   * v1.25: Soft miss cue (gentle descending blip; no harsh pirate Web Audio layer)
+   * v1.25: Soft miss cue + win word popup (mirrors lose: anim → 3s → big bold word → Next)
    * v1.24: Word Buddy rename + public Pages
    * v1.23: Event SFX only (no looping beach ambience)
    * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
@@ -489,12 +489,13 @@
     Math.max(LOSE_FALL_MS, LOSE_DUST_MS) +
     LOSE_POPUP_DELAY_MS;
 
-  /** Win sequence: free+drop → grab loot → run off → beat → auto next (no popup) */
+  /** Win sequence: free+drop → grab loot → run off → wait 3s → same word popup as lose */
   var WIN_DROP_MS = 450;
   var WIN_GRAB_MS = 350;
   var WIN_RUN_MS = 1500;
-  var WIN_ADVANCE_BEAT_MS = 700;
-  var WIN_TOTAL_MS = WIN_DROP_MS + WIN_GRAB_MS + WIN_RUN_MS + WIN_ADVANCE_BEAT_MS;
+  var WIN_POPUP_DELAY_MS = 3000; /* pause after run-off before outcome (mirrors lose) */
+  var WIN_TOTAL_MS =
+    WIN_DROP_MS + WIN_GRAB_MS + WIN_RUN_MS + WIN_POPUP_DELAY_MS;
 
   var CHARACTERS = [
     {
@@ -1182,7 +1183,7 @@
     }
   }
 
-  function fillLoseOutcomeCard() {
+  function fillOutcomeCard() {
     var raw = displayWord(state.word);
     var shown = raw === "I" ? "I" : String(raw).toUpperCase();
     if (els.outcomeWord) {
@@ -1190,7 +1191,7 @@
     }
   }
 
-  function revealLosePopup() {
+  function revealOutcomePopup() {
     els.outcome.classList.remove("hidden");
     syncKeyboard();
   }
@@ -1228,15 +1229,15 @@
         state.loseTimer = setTimeout(function () {
           state.loseTimer = setTimeout(function () {
             state.loseTimer = null;
-            fillLoseOutcomeCard();
-            revealLosePopup();
+            fillOutcomeCard();
+            revealOutcomePopup();
           }, LOSE_POPUP_DELAY_MS);
         }, afterAnimMs);
       }, LOSE_TRAP_MS);
     }, LOSE_MORPH_MS);
   }
 
-  /** v1.12: free from noose → drop to plank → grab treasure → run off (bounce cycle) → auto next */
+  /** v1.25: free+drop → grab → run off → wait 3s → same big-bold word popup as lose */
   function runWinSequence() {
     playWinSound();
     resetStageEffects();
@@ -1259,7 +1260,7 @@
 
     if (hm) hm.classList.add("win-escape");
 
-    // No popup on win
+    // Popup after animation + delay (same card as lose)
     els.outcome.classList.add("hidden");
 
     // 1) Drop from noose onto plank
@@ -1292,11 +1293,12 @@
           actor.classList.add("win-run");
         }
         state.winTimer = setTimeout(function () {
-          // 4) Short beat, then auto-advance (no popup)
+          // 4) After run-off, wait WIN_POPUP_DELAY_MS, then same word popup as lose
           state.winTimer = setTimeout(function () {
             state.winTimer = null;
-            advanceAfterWin();
-          }, WIN_ADVANCE_BEAT_MS);
+            fillOutcomeCard();
+            revealOutcomePopup();
+          }, WIN_POPUP_DELAY_MS);
         }, WIN_RUN_MS);
       }, WIN_GRAB_MS);
     }, WIN_DROP_MS);
@@ -1762,7 +1764,10 @@
       showPlay();
       startRound();
     });
-    els.btnNext.addEventListener("click", nextWord);
+    els.btnNext.addEventListener("click", function () {
+      if (state.won) advanceAfterWin();
+      else nextWord();
+    });
 
     els.addOneForm.addEventListener("submit", function (e) {
       e.preventDefault();
