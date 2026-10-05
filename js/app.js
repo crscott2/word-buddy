@@ -6,19 +6,17 @@
 
 
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
+  var SETTINGS_KEY = "spellBuddy.settings.v1";
+  var PROGRESS_KEY = "spellBuddy.progress.v1";
+  var APP_VERSION = "2.0";
 
   /**
+   * v2.0: Home menu + Savvas myView levels + Word Island build-a-scene; Hangman unchanged
    * v1.30: Auto-speak word when win/lose popup shows; speak button icon-only (en-US speechSynthesis)
-   * v1.29: US pronunciation button (Web Speech en-US) replaces phonetic text in win/lose popups
-   * v1.28: Network-first shell SW + update/reload so version UI is not stuck behind cache-first
-   * v1.26: Win popup text = word only (no cheer sentence); soft miss + celebratory chrome kept
-   * v1.25: Soft miss cue + celebratory win popup (3s delay, gold/green, sparkles; lose stays plain)
-   * v1.24: Word Buddy rename + public Pages
-   * v1.23: Event SFX only (no looping beach ambience)
    * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
-   * - Web Audio one-shots = secondary companion (correct / win / lose only; miss is HTML-only)
    * Bundled WAVs: miss / correct / win / lose / blip (unmute)
    * Unlock on tap: prime HTML players + AudioContext resume + silent buffer
+   * spellBuddy.* localStorage keys preserved
    */
   var audio = {
     ctx: null,
@@ -566,7 +564,14 @@
     rippleTimer: null,
     rippleClearTimer: null,
     confettiTimer: null,
-    shipTimer: null
+    shipTimer: null,
+    /* v2 navigation */
+    screen: "home",
+    game: null, /* "hangman" | "island" */
+    levelId: null,
+    wordSource: "level", /* "level" | "library" */
+    settings: null,
+    progress: null
   };
 
   var CONFETTI_MS = 3200;
@@ -580,6 +585,7 @@
   function normalizeWord(raw) {
     return String(raw || "")
       .toLowerCase()
+      .replace(/[\u2018\u2019\u02BC]/g, "'")
       .replace(/[^a-z\s'-]/g, "")
       .replace(/\s+/g, " ")
       .trim();
@@ -680,6 +686,9 @@
   }
 
   function enabledWordList() {
+    if (state.wordSource === "level" && state.levelId) {
+      return wordsForLevel(state.levelId);
+    }
     var out = [];
     for (var i = 0; i < state.library.length; i++) {
       if (state.library[i].on) out.push(state.library[i].word);
@@ -1688,16 +1697,25 @@
     startRound();
   }
 
+  function hideAllScreens() {
+    ["screen-home","screen-map","screen-play","screen-island","screen-words"].forEach(function (id) {
+      var el = $(id);
+      if (el) el.classList.add("hidden");
+    });
+    if (els.parentGate) els.parentGate.classList.add("hidden");
+  }
+
   function showPlay() {
-    els.screenPlay.classList.remove("hidden");
-    els.screenWords.classList.add("hidden");
-    els.parentGate.classList.add("hidden");
+    hideAllScreens();
+    if (els.screenPlay) els.screenPlay.classList.remove("hidden");
+    state.screen = "play";
   }
 
   function showWords() {
-    els.screenPlay.classList.add("hidden");
-    els.screenWords.classList.remove("hidden");
-    els.parentGate.classList.add("hidden");
+    hideAllScreens();
+    if (els.screenWords) els.screenWords.classList.remove("hidden");
+    state.screen = "words";
+    renderParentsLevels();
     renderWordList();
   }
 
@@ -1975,8 +1993,7 @@
       });
     }
     els.btnBackPlay.addEventListener("click", function () {
-      showPlay();
-      startRound();
+      showHome();
     });
     els.btnNext.addEventListener("click", function () {
       stopSpeakingWord();
@@ -2046,7 +2063,7 @@
         }
         return;
       }
-      if (els.screenPlay.classList.contains("hidden")) return;
+      if (!els.screenPlay || els.screenPlay.classList.contains("hidden")) return;
       if (state.over || state.emptyPool) return;
       var k = e.key.toLowerCase();
       if (/^[a-z]$/.test(k)) onGuess(k);
@@ -2100,6 +2117,467 @@
     els.emptyBanner = $("empty-pool-banner");
   }
 
+
+  /* ===== v2.0: settings, levels, navigation, Word Island bridge ===== */
+
+  var UNIT_COLORS = {
+    1: { name: "blue", fill: "#5B9BD5", deep: "#2E6FA8" },
+    2: { name: "green", fill: "#6BBF6B", deep: "#3A8F3A" },
+    3: { name: "gold", fill: "#E0B040", deep: "#B88418" },
+    4: { name: "purple", fill: "#9B7AD8", deep: "#6A4AAD" },
+    5: { name: "rose", fill: "#E07A9A", deep: "#B84868" }
+  };
+
+  function defaultSettings() {
+    return {
+      unit: 1,
+      week: 1,
+      wordMode: "both", /* both | sight | spelling */
+      customByLevel: {} /* levelId -> [words] */
+    };
+  }
+
+  function defaultProgress() {
+    return { hangman: {}, island: {} };
+  }
+
+  function loadSettings() {
+    try {
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        var d = defaultSettings();
+        return {
+          unit: Math.min(5, Math.max(1, parseInt(p.unit, 10) || 1)),
+          week: Math.min(6, Math.max(1, parseInt(p.week, 10) || 1)),
+          wordMode: p.wordMode === "sight" || p.wordMode === "spelling" ? p.wordMode : "both",
+          customByLevel: p.customByLevel && typeof p.customByLevel === "object" ? p.customByLevel : {}
+        };
+      }
+    } catch (e) {}
+    return defaultSettings();
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    } catch (e) {}
+  }
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(PROGRESS_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        return {
+          hangman: p.hangman && typeof p.hangman === "object" ? p.hangman : {},
+          island: p.island && typeof p.island === "object" ? p.island : {}
+        };
+      }
+    } catch (e) {}
+    return defaultProgress();
+  }
+
+  function saveProgress() {
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress));
+    } catch (e) {}
+  }
+
+  function allLevels() {
+    return (window.WORD_BUDDY_LEVELS && window.WORD_BUDDY_LEVELS.levels) || [];
+  }
+
+  function findLevel(levelId) {
+    var levels = allLevels();
+    for (var i = 0; i < levels.length; i++) {
+      if (levels[i].id === levelId) return levels[i];
+    }
+    return null;
+  }
+
+  function levelIdFor(unit, week) {
+    return "u" + unit + "w" + week;
+  }
+
+  function dedupeWords(list) {
+    var seen = {};
+    var out = [];
+    list.forEach(function (w) {
+      var n = normalizeWord(w);
+      if (!isValidWord(n) || seen[n]) return;
+      seen[n] = true;
+      out.push(n === "i" ? "i" : n);
+    });
+    return out;
+  }
+
+  function wordsForLevel(levelId) {
+    var L = findLevel(levelId);
+    if (!L) return [];
+    var mode = (state.settings && state.settings.wordMode) || "both";
+    var words = [];
+    if (mode !== "spelling") words = words.concat(L.sightWords || []);
+    if (mode !== "sight") words = words.concat(L.spellingWords || []);
+    var custom = (state.settings && state.settings.customByLevel && state.settings.customByLevel[levelId]) || [];
+    words = words.concat(custom);
+    return dedupeWords(words);
+  }
+
+  function markLevelComplete(game, levelId) {
+    if (!state.progress) state.progress = defaultProgress();
+    if (!state.progress[game]) state.progress[game] = {};
+    state.progress[game][levelId] = true;
+    saveProgress();
+    renderLevelMap();
+  }
+
+  function isLevelComplete(game, levelId) {
+    return !!(state.progress && state.progress[game] && state.progress[game][levelId]);
+  }
+
+  function nextHighlightId() {
+    var s = state.settings || defaultSettings();
+    return levelIdFor(s.unit, s.week);
+  }
+
+  function showHome() {
+    stopSpeakingWord();
+    hideAllScreens();
+    var home = $("screen-home");
+    if (home) home.classList.remove("hidden");
+    state.screen = "home";
+    state.game = null;
+  }
+
+  function showMap(game) {
+    stopSpeakingWord();
+    state.game = game || state.game || "hangman";
+    hideAllScreens();
+    var map = $("screen-map");
+    if (map) map.classList.remove("hidden");
+    state.screen = "map";
+    var title = $("map-title");
+    if (title) {
+      title.textContent = state.game === "island" ? "Word Island — pick a week" : "Hangman — pick a week";
+    }
+    var custom = $("map-custom");
+    if (custom) {
+      custom.classList.toggle("hidden", state.game !== "hangman");
+    }
+    renderLevelMap();
+  }
+
+  function renderLevelMap() {
+    var box = $("level-map");
+    if (!box) return;
+    box.innerHTML = "";
+    var highlight = nextHighlightId();
+    var game = state.game || "hangman";
+    for (var unit = 1; unit <= 5; unit++) {
+      var island = document.createElement("section");
+      island.className = "map-unit unit-" + unit;
+      island.setAttribute("role", "listitem");
+      var color = UNIT_COLORS[unit];
+      island.style.setProperty("--unit-fill", color.fill);
+      island.style.setProperty("--unit-deep", color.deep);
+      var head = document.createElement("h3");
+      head.className = "map-unit-title";
+      head.textContent = "Unit " + unit;
+      island.appendChild(head);
+      var row = document.createElement("div");
+      row.className = "map-weeks";
+      for (var week = 1; week <= 6; week++) {
+        var id = levelIdFor(unit, week);
+        var L = findLevel(id);
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "map-week";
+        btn.setAttribute("data-level", id);
+        if (id === highlight) btn.classList.add("is-next");
+        if (isLevelComplete(game, id)) btn.classList.add("is-done");
+        btn.innerHTML =
+          '<span class="map-week-num">' + week + "</span>" +
+          (isLevelComplete(game, id) ? '<span class="map-star" aria-label="done">★</span>' : "") +
+          (L ? '<span class="map-pattern">' + escapeHtml(L.pattern) + "</span>" : "");
+        btn.addEventListener("click", (function (levelId) {
+          return function () {
+            unlockAudio();
+            startGameLevel(state.game, levelId);
+          };
+        })(id));
+        row.appendChild(btn);
+      }
+      island.appendChild(row);
+      box.appendChild(island);
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function startGameLevel(game, levelId) {
+    state.game = game;
+    state.levelId = levelId;
+    state.wordSource = "level";
+    var label = "";
+    var L = findLevel(levelId);
+    if (L) label = "Unit " + L.unit + " · Week " + L.week;
+    if (game === "hangman") {
+      var hl = $("hangman-level-label");
+      if (hl) hl.textContent = label;
+      beginShuffledRound();
+      showPlay();
+      startRound();
+    } else if (game === "island") {
+      hideAllScreens();
+      var isl = $("screen-island");
+      if (isl) isl.classList.remove("hidden");
+      state.screen = "island";
+      if (window.IslandGame) {
+        window.IslandGame.startLevel(levelId);
+        /* Speak synchronously in this tap so iOS unlocks speech */
+        window.IslandGame.speakCurrent();
+      }
+    }
+  }
+
+  function startHangmanLibrary() {
+    state.game = "hangman";
+    state.levelId = null;
+    state.wordSource = "library";
+    var hl = $("hangman-level-label");
+    if (hl) hl.textContent = "My words";
+    beginShuffledRound();
+    showPlay();
+    startRound();
+  }
+
+  function speakWordUS(word) {
+    if (!word) return;
+    if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance === "undefined") return;
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    var voice = speakUs.preferred || pickUsVoice();
+    var utter = new window.SpeechSynthesisUtterance(String(displayWord(word)));
+    utter.lang = "en-US";
+    utter.rate = 0.92;
+    utter.pitch = 1;
+    if (voice) {
+      utter.voice = voice;
+      if (voice.lang) utter.lang = voice.lang;
+    }
+    try {
+      window.speechSynthesis.speak(utter);
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (e2) {}
+      }
+    } catch (err) {}
+  }
+
+  function renderParentsLevels() {
+    var unitSel = $("parent-unit");
+    var weekSel = $("parent-week");
+    if (!unitSel || !weekSel || !state.settings) return;
+    if (!unitSel.options.length) {
+      for (var u = 1; u <= 5; u++) {
+        var o = document.createElement("option");
+        o.value = String(u);
+        o.textContent = "Unit " + u + " (" + UNIT_COLORS[u].name + ")";
+        unitSel.appendChild(o);
+      }
+    }
+    if (!weekSel.options.length) {
+      for (var w = 1; w <= 6; w++) {
+        var o2 = document.createElement("option");
+        o2.value = String(w);
+        o2.textContent = "Week " + w;
+        weekSel.appendChild(o2);
+      }
+    }
+    unitSel.value = String(state.settings.unit);
+    weekSel.value = String(state.settings.week);
+    document.querySelectorAll(".mode-btn").forEach(function (btn) {
+      btn.classList.toggle("is-on", btn.getAttribute("data-mode") === state.settings.wordMode);
+    });
+    renderParentLevelWords();
+  }
+
+  function renderParentLevelWords() {
+    var box = $("parent-level-words");
+    if (!box || !state.settings) return;
+    var id = levelIdFor(state.settings.unit, state.settings.week);
+    var L = findLevel(id);
+    if (!L) { box.innerHTML = ""; return; }
+    var sight = (L.sightWords || []).slice().sort(function (a, b) {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+    var spell = (L.spellingWords || []).slice().sort(function (a, b) {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+    var custom = ((state.settings.customByLevel[id]) || []).slice().sort();
+    var html = '<p class="level-meta"><strong>' + escapeHtml(L.pattern) + "</strong> · " + id.toUpperCase() + "</p>";
+    html += '<div class="level-word-cols">';
+    html += "<div><h4>Sight</h4><ul>" + sight.map(function (w) {
+      return "<li>" + escapeHtml(displayWord(w)) + "</li>";
+    }).join("") + "</ul></div>";
+    html += "<div><h4>Spelling</h4><ul>" + spell.map(function (w) {
+      return "<li>" + escapeHtml(displayWord(w)) + "</li>";
+    }).join("") + "</ul></div>";
+    if (custom.length) {
+      html += "<div><h4>Custom</h4><ul>" + custom.map(function (w) {
+        return '<li>' + escapeHtml(displayWord(w)) +
+          ' <button type="button" class="linkish tiny remove-level-word" data-word="' + escapeHtml(w) + '">remove</button></li>';
+      }).join("") + "</ul></div>";
+    }
+    html += "</div>";
+    var play = wordsForLevel(id);
+    html += '<p class="hint compact">Play pool (' + play.length + "): " +
+      play.slice().sort().map(function (w) { return escapeHtml(displayWord(w)); }).join(", ") + "</p>";
+    box.innerHTML = html;
+    box.querySelectorAll(".remove-level-word").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var w = btn.getAttribute("data-word");
+        var list = state.settings.customByLevel[id] || [];
+        state.settings.customByLevel[id] = list.filter(function (x) { return x !== w; });
+        saveSettings();
+        renderParentLevelWords();
+      });
+    });
+  }
+
+  function bindV2() {
+    var homeHm = $("home-hangman");
+    var homeIs = $("home-island");
+    var mapBack = $("map-back-home");
+    var mapCustom = $("map-custom");
+    var btnHome = $("btn-home");
+    var hangBack = $("hangman-back");
+    if (homeHm) homeHm.addEventListener("click", function () {
+      unlockAudio();
+      showMap("hangman");
+    });
+    if (homeIs) homeIs.addEventListener("click", function () {
+      unlockAudio();
+      showMap("island");
+    });
+    if (mapBack) mapBack.addEventListener("click", showHome);
+    if (mapCustom) mapCustom.addEventListener("click", function () {
+      unlockAudio();
+      startHangmanLibrary();
+    });
+    if (btnHome) btnHome.addEventListener("click", function () {
+      showHome();
+    });
+    if (hangBack) hangBack.addEventListener("click", function () {
+      showMap("hangman");
+    });
+    var unitSel = $("parent-unit");
+    var weekSel = $("parent-week");
+    if (unitSel) unitSel.addEventListener("change", function () {
+      state.settings.unit = parseInt(unitSel.value, 10) || 1;
+      saveSettings();
+      renderParentLevelWords();
+      renderLevelMap();
+    });
+    if (weekSel) weekSel.addEventListener("change", function () {
+      state.settings.week = parseInt(weekSel.value, 10) || 1;
+      saveSettings();
+      renderParentLevelWords();
+      renderLevelMap();
+    });
+    document.querySelectorAll(".mode-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.settings.wordMode = btn.getAttribute("data-mode") || "both";
+        saveSettings();
+        renderParentsLevels();
+        if (state.wordSource === "level" && state.screen === "play") {
+          beginShuffledRound();
+          startRound();
+        }
+      });
+    });
+    var addLevelForm = $("add-level-word-form");
+    if (addLevelForm) {
+      addLevelForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var input = $("level-word-input");
+        var words = parseWordList(input && input.value);
+        if (!words.length) return;
+        var id = levelIdFor(state.settings.unit, state.settings.week);
+        if (!state.settings.customByLevel[id]) state.settings.customByLevel[id] = [];
+        words.forEach(function (w) {
+          if (state.settings.customByLevel[id].indexOf(w) === -1) {
+            state.settings.customByLevel[id].push(w);
+          }
+        });
+        saveSettings();
+        if (input) input.value = "";
+        renderParentLevelWords();
+      });
+    }
+    var resetProg = $("btn-reset-progress");
+    if (resetProg) {
+      resetProg.addEventListener("click", function () {
+        if (!confirm("Clear all level stars for Hangman and Word Island?")) return;
+        state.progress = defaultProgress();
+        saveProgress();
+        renderLevelMap();
+      });
+    }
+    if (window.IslandGame && window.IslandGame.bind) window.IslandGame.bind();
+  }
+
+  function exposeWordBuddy() {
+    window.WordBuddy = {
+      version: APP_VERSION,
+      wordsForLevel: wordsForLevel,
+      markLevelComplete: markLevelComplete,
+      speakWord: speakWordUS,
+      unlockAudio: unlockAudio,
+      playCorrect: playCorrectLetter,
+      playMiss: playPirateMiss,
+      playWin: playWinSound,
+      burstConfetti: function () {
+        /* Island has its own overlay; reuse color burst on play confetti layer if visible */
+        var layer = els.confettiLayer || $("confetti-layer");
+        if (layer && state.screen === "play") fireConfetti();
+        else fireIslandConfetti();
+      },
+      showHome: showHome,
+      showMap: showMap
+    };
+  }
+
+  function fireIslandConfetti() {
+    var host = $("screen-island") || document.body;
+    var layer = document.createElement("div");
+    layer.className = "confetti-layer is-on island-confetti";
+    layer.setAttribute("aria-hidden", "true");
+    host.appendChild(layer);
+    var colors = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#FF8FAB","#C77DFF","#FF9F1C","#2EC4B6"];
+    for (var i = 0; i < 80; i++) {
+      var piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.left = Math.random() * 100 + "%";
+      piece.style.background = colors[i % colors.length];
+      piece.style.width = 6 + Math.random() * 8 + "px";
+      piece.style.height = 8 + Math.random() * 10 + "px";
+      piece.style.setProperty("--dx", Math.floor(Math.random() * 120 - 60) + "px");
+      piece.style.animationDuration = 2.2 + Math.random() * 1.6 + "s";
+      piece.style.animationDelay = Math.random() * 0.45 + "s";
+      layer.appendChild(piece);
+    }
+    setTimeout(function () {
+      if (layer.parentNode) layer.parentNode.removeChild(layer);
+    }, 3200);
+  }
+
+
   function registerSW() {
     if (!("serviceWorker" in navigator)) return;
     var hadController = !!navigator.serviceWorker.controller;
@@ -2129,13 +2607,19 @@
     bindAudioVisibility();
     syncSoundHint();
     state.library = loadLibrary();
-    saveLibrary(state.library); // persist v2 (and migration)
+    saveLibrary(state.library); // persist library (and migration) — keep spellBuddy.words.*
+    state.settings = loadSettings();
+    state.progress = loadProgress();
     buildKeyboard();
     bind();
-    beginShuffledRound();
-    startRound();
+    bindV2();
+    exposeWordBuddy();
     ensureSpeechVoices();
     registerSW();
+    /* v2: land on home menu; do not auto-start Hangman */
+    showHome();
+    var ver = document.querySelector(".version");
+    if (ver) ver.textContent = "v" + APP_VERSION;
   }
 
   if (document.readyState === "loading") {

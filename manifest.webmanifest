@@ -1,7 +1,7 @@
 {
-  "name": "Word Buddy — Spelling Hangman",
+  "name": "Word Buddy — Hangman & Word Island",
   "short_name": "Word Buddy",
-  "description": "Crafty LittleBigPlanet-style kid spelling Hangman. Landscape-first for iPad. Offline PWA.",
+  "description": "Crafty kid spelling: Hangman + Word Island build-a-scene. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

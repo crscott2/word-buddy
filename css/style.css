@@ -2418,3 +2418,359 @@ body::before {
     font-size: clamp(1rem, 1.8vw, 1.35rem);
   }
 }
+
+/* ===== v2.0 Home / Level map / Word Island / Parents levels ===== */
+
+.brand {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+.brand:active { transform: scale(0.98); }
+
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  min-height: calc(100dvh - 4.5rem);
+  padding: 1rem 1.25rem 2rem;
+}
+.home-tag {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #6A4A2A;
+  letter-spacing: 0.02em;
+}
+.home-games {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  width: min(920px, 100%);
+}
+.home-game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 220px;
+  padding: 1.5rem 1rem;
+  border: 4px solid #5C3418;
+  border-radius: 28px;
+  background: linear-gradient(165deg, #FFF8EE 0%, #F0DCC0 100%);
+  box-shadow: 0 8px 0 #5C3418, 0 12px 24px rgba(92,52,24,0.18);
+  cursor: pointer;
+  font: inherit;
+  color: #3A2818;
+  transition: transform 0.12s ease;
+}
+.home-game-card:active { transform: translateY(4px); box-shadow: 0 4px 0 #5C3418; }
+.home-game-card.hangman-card { background: linear-gradient(165deg, #FFF0E8 0%, #F0C8A8 100%); }
+.home-game-card.home-island-card { background: linear-gradient(165deg, #E8F8FF 0%, #B8E0F0 100%); }
+.home-game-icon { font-size: 4rem; line-height: 1; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.1)); }
+.home-game-title { font-size: 1.75rem; font-weight: 900; }
+.home-game-sub { font-size: 1rem; font-weight: 600; opacity: 0.75; text-align: center; }
+
+@media (max-width: 640px) {
+  .home-games { grid-template-columns: 1fr; }
+  .home-game-card { min-height: 150px; }
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  flex-wrap: wrap;
+}
+.map-title {
+  margin: 0;
+  flex: 1;
+  font-size: 1.25rem;
+  color: #5C3418;
+}
+.level-map {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 1rem 2rem;
+  overflow: auto;
+  max-height: calc(100dvh - 6rem);
+}
+.map-unit {
+  border-radius: 22px;
+  padding: 0.85rem 1rem 1rem;
+  background: var(--unit-fill, #5B9BD5);
+  border: 3px solid var(--unit-deep, #2E6FA8);
+  box-shadow: 0 5px 0 var(--unit-deep, #2E6FA8);
+}
+.map-unit-title {
+  margin: 0 0 0.65rem;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+.map-weeks {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.map-week {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 72px;
+  padding: 0.45rem 0.25rem;
+  border-radius: 16px;
+  border: 3px solid rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.92);
+  color: #3A2818;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.12);
+}
+.map-week:active { transform: translateY(2px); }
+.map-week.is-next {
+  outline: 3px solid #FFF59A;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255,245,154,0.55), 0 3px 0 rgba(0,0,0,0.12);
+}
+.map-week.is-done { background: #E8FFE8; }
+.map-week-num { font-size: 1.35rem; line-height: 1; }
+.map-star { color: #E0A020; font-size: 1rem; line-height: 1; }
+.map-pattern {
+  font-size: 0.62rem;
+  font-weight: 700;
+  opacity: 0.7;
+  text-align: center;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+@media (max-width: 700px) {
+  .map-weeks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.game-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.75rem 0;
+  position: relative;
+  z-index: 5;
+}
+.game-level-label {
+  font-weight: 800;
+  color: #5C3418;
+  font-size: 1rem;
+}
+.game-nav .btn-speak-us {
+  margin-left: auto;
+  background: #FFF8EE;
+  border: 3px solid #5C3418;
+  border-radius: 999px;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #3A2818;
+  cursor: pointer;
+}
+.game-nav .btn-speak-us:active { transform: scale(0.95); }
+
+/* Island scene */
+.island-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.75rem;
+  padding: 0.35rem 0.75rem 1rem;
+  min-height: 0;
+  flex: 1;
+}
+@media (max-width: 800px), (orientation: portrait) {
+  .island-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(180px, 42vh) auto;
+  }
+}
+.island-scene-wrap {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 4px solid #5C3418;
+  box-shadow: 0 6px 0 #5C3418;
+  background: #B8E4F8;
+  min-height: 220px;
+}
+.island-scene-bg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+}
+.island-stickers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.island-sticker {
+  position: absolute;
+  transition: transform 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.15));
+}
+.island-sticker.alive {
+  animation: sticker-bob 1.6s ease-in-out infinite;
+}
+@keyframes sticker-bob {
+  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(-2deg); }
+  50% { transform: translate(-50%, -54%) scale(1.05) rotate(2deg); }
+}
+.island-play {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  justify-content: center;
+}
+.island-hint {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  color: #5C3418;
+  font-size: 1.1rem;
+}
+.island-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.island-card {
+  min-height: 88px;
+  padding: 0.75rem 0.5rem;
+  border-radius: 20px;
+  border: 4px solid #5C3418;
+  background: linear-gradient(180deg, #FFFCF5, #F0DCC0);
+  box-shadow: 0 5px 0 #5C3418;
+  font-size: clamp(1.35rem, 3.5vw, 2rem);
+  font-weight: 900;
+  color: #3A2818;
+  cursor: pointer;
+
+}
+.island-card:active { transform: translateY(3px); box-shadow: 0 2px 0 #5C3418; }
+.island-card.correct {
+  background: linear-gradient(180deg, #E8FFE8, #B8F0B8);
+  border-color: #2E8B3A;
+}
+.island-card.wiggle {
+  animation: card-wiggle 0.4s ease;
+}
+@keyframes card-wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px) rotate(-2deg); }
+  75% { transform: translateX(8px) rotate(2deg); }
+}
+.island-done-sub { margin: 0.25rem 0 1rem; font-weight: 700; color: #5C3418; }
+.island-done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+.island-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+#screen-island {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 3.5rem);
+}
+#screen-island.hidden { display: none; }
+#screen-home.hidden,
+#screen-map.hidden { display: none !important; }
+
+.cardish {
+  background: rgba(255,248,238,0.9);
+  border: 3px solid #C4A070;
+  border-radius: 18px;
+  padding: 0.85rem 1rem;
+  margin: 0.75rem 0 1rem;
+}
+.parents-level-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+.parents-level-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 700;
+  color: #5C3418;
+}
+.parents-level-row select {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  border: 2px solid #5C3418;
+  min-width: 9rem;
+}
+.mode-toggles { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.mode-btn.is-on {
+  background: #6BBF6B;
+  color: #fff;
+  border-color: #3A8F3A;
+}
+.toggle-label { font-weight: 800; color: #5C3418; }
+.parent-level-words {
+  margin-top: 0.75rem;
+  max-height: 220px;
+  overflow: auto;
+  background: #FFF;
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  border: 2px solid #E0C8A0;
+}
+.level-word-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+.level-word-cols h4 { margin: 0 0 0.35rem; font-size: 0.95rem; }
+.level-word-cols ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.95rem;
+}
+.level-meta { margin: 0 0 0.5rem; }
+.hint.compact { font-size: 0.9rem; margin: 0.35rem 0; }
+.parents-dict-heading { margin: 1rem 0 0.25rem; color: #5C3418; }
+.tiny { font-size: 0.8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .island-sticker.alive { animation: none; }
+  .island-card.wiggle { animation: none; }
+}

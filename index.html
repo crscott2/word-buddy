@@ -7,32 +7,67 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Word Buddy" />
+  <meta name="application-name" content="Word Buddy" />
   <meta name="mobile-web-app-capable" content="yes" />
   <!-- Landscape is primary UX; orientation left free for Safari A2HS -->
-  <meta name="description" content="Silly spelling Hangman for kids — LittleBigPlanet craft vibe: felt pirate on a cardboard beach stage, big letters, school word lists." />
+  <meta name="description" content="Word Buddy: crafty spelling Hangman and Word Island build-a-scene. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="css/style.css" />
-  <title>Word Buddy — Spelling Hangman</title>
+  <title>Word Buddy — Hangman &amp; Word Island</title>
 </head>
 <body>
   <div id="app">
     <header class="top-bar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">🏴‍☠️</span>
+      <button type="button" class="brand" id="btn-home" aria-label="Word Buddy home">
+        <span class="brand-mark" aria-hidden="true">🏝️</span>
         <h1>Word Buddy</h1>
-      </div>
+      </button>
       <div class="top-meta">
-        <span class="version" title="App version">v1.30</span>
+        <span class="version" title="App version">v2.0</span>
         <button type="button" id="btn-mute" class="mute-btn" aria-pressed="false" aria-label="Mute sound" title="Mute / unmute">🔊</button>
         <button type="button" id="sound-unlock-hint" class="sound-unlock-hint" aria-hidden="false" title="Tap to enable sound">Tap 🔊 for sound</button>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
       </div>
     </header>
 
-    <!-- PLAY SCREEN -->
-    <main id="screen-play" class="screen" aria-live="polite">
+
+    <!-- HOME MENU -->
+    <main id="screen-home" class="screen" aria-label="Choose a game">
+      <div class="home-hero">
+        <p class="home-tag">Pick a game</p>
+        <div class="home-games">
+          <button type="button" id="home-hangman" class="home-game-card hangman-card">
+            <span class="home-game-icon" aria-hidden="true">🏴‍☠️</span>
+            <span class="home-game-title">Hangman</span>
+            <span class="home-game-sub">Spell with Cap'n Pip</span>
+          </button>
+          <button type="button" id="home-island" class="home-game-card home-island-card">
+            <span class="home-game-icon" aria-hidden="true">🏝️</span>
+            <span class="home-game-title">Word Island</span>
+            <span class="home-game-sub">Hear a word · build a scene</span>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- LEVEL MAP -->
+    <main id="screen-map" class="screen hidden" aria-label="Level map">
+      <div class="map-toolbar">
+        <button type="button" id="map-back-home" class="btn secondary">← Games</button>
+        <h2 id="map-title" class="map-title">Pick a week</h2>
+        <button type="button" id="map-custom" class="btn secondary small hidden">My words</button>
+      </div>
+      <div id="level-map" class="level-map" role="list"></div>
+    </main>
+
+    <!-- PLAY SCREEN (Hangman) -->
+    <main id="screen-play" class="screen hidden" aria-live="polite">
+      <div class="game-nav">
+        <button type="button" id="hangman-back" class="btn secondary small">← Weeks</button>
+        <span id="hangman-level-label" class="game-level-label"></span>
+      </div>
       <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
       <div id="ship-layer" class="ship-layer" aria-hidden="true">
         <div class="pirate-ship" aria-hidden="true">
@@ -795,13 +830,112 @@
       </div>
     </main>
 
+
+    <!-- WORD ISLAND -->
+    <main id="screen-island" class="screen hidden" aria-label="Word Island">
+      <div class="game-nav">
+        <button type="button" id="island-back-map" class="btn secondary small">← Weeks</button>
+        <span id="island-level-label" class="game-level-label"></span>
+        <button type="button" id="island-speak" class="btn-speak-us" aria-label="Hear the word again">
+          <svg class="speak-us-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M3.5 9.5v5h3.2L12 19.2V4.8L6.7 9.5H3.5z"/>
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.2 8.2a4.2 4.2 0 0 1 0 7.6"/>
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17.8 5.4a8 8 0 0 1 0 13.2"/>
+          </svg>
+        </button>
+      </div>
+      <div id="island-progress" class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+        <div id="island-progress-fill" class="progress-fill"></div>
+      </div>
+      <div class="island-layout">
+        <div class="island-scene-wrap" aria-hidden="true">
+          <svg class="island-scene-bg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#B8E4F8"/>
+                <stop offset="55%" stop-color="#E8F6FF"/>
+                <stop offset="100%" stop-color="#FFF4D8"/>
+              </linearGradient>
+              <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#6EC4E8"/>
+                <stop offset="100%" stop-color="#3A8FBE"/>
+              </linearGradient>
+              <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#F5E0B8"/>
+                <stop offset="100%" stop-color="#E0C090"/>
+              </linearGradient>
+              <pattern id="corkDots" width="12" height="12" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="3" r="1" fill="#C4A070" opacity="0.25"/>
+                <circle cx="8" cy="8" r="0.8" fill="#A88858" opacity="0.2"/>
+              </pattern>
+            </defs>
+            <rect width="640" height="360" fill="url(#skyGrad)"/>
+            <rect y="150" width="640" height="120" fill="url(#seaGrad)"/>
+            <path d="M0 250 Q160 230 320 255 T640 245 L640 360 L0 360 Z" fill="url(#sandGrad)"/>
+            <path d="M0 250 Q160 230 320 255 T640 245 L640 270 Q320 280 0 265 Z" fill="url(#corkDots)" opacity="0.5"/>
+            <path d="M0 200 Q80 188 160 202 T320 195 T480 205 T640 198" fill="none" stroke="#E8F8FF" stroke-width="4" stroke-dasharray="10 8" opacity="0.55"/>
+            <ellipse cx="520" cy="175" rx="50" ry="14" fill="#A8E0F0" opacity="0.35"/>
+          </svg>
+          <div id="island-stickers" class="island-stickers"></div>
+        </div>
+        <div class="island-play">
+          <p id="island-listen-hint" class="island-hint">Tap the word you hear</p>
+          <div id="island-cards" class="island-cards" role="group" aria-label="Word choices"></div>
+        </div>
+      </div>
+      <div id="island-done" class="outcome hidden" role="dialog" aria-modal="true">
+        <div class="outcome-card win-word-card">
+          <p class="outcome-emoji" aria-hidden="true">🎉</p>
+          <h2 class="outcome-title">Level done!</h2>
+          <p class="island-done-sub">Your beach scene is complete</p>
+          <div class="island-done-actions">
+            <button type="button" id="island-again" class="btn primary big">Play again</button>
+            <button type="button" id="island-done-map" class="btn secondary">More weeks</button>
+            <button type="button" id="island-done-home" class="btn secondary">Games</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <!-- PARENT / WORDS SCREEN -->
     <main id="screen-words" class="screen hidden">
       <div class="parent-header">
         <h2>Parent word list</h2>
         <button type="button" id="btn-back-play" class="btn secondary">← Back to play</button>
       </div>
-      <p class="hint">Library starts as the Fry 100 sight words. Toggle which ones he practices — play only uses words that are On. Add custom words anytime. Kids play offline — nothing leaves this device.</p>
+      <p class="hint">School levels (Savvas myView Grade 1) plus your custom Fry list. Kids play offline — nothing leaves this device.</p>
+
+      <section class="parents-levels cardish">
+        <h3>School levels</h3>
+        <div class="parents-level-row">
+          <label>Highlight unit
+            <select id="parent-unit"></select>
+          </label>
+          <label>Week
+            <select id="parent-week"></select>
+          </label>
+        </div>
+        <div class="parents-level-row">
+          <span class="toggle-label">Words in levels</span>
+          <div class="mode-toggles" role="group" aria-label="Word types">
+            <button type="button" class="btn small mode-btn" data-mode="both">Both</button>
+            <button type="button" class="btn small mode-btn" data-mode="sight">Sight</button>
+            <button type="button" class="btn small mode-btn" data-mode="spelling">Spelling</button>
+          </div>
+        </div>
+        <div id="parent-level-words" class="parent-level-words"></div>
+        <form id="add-level-word-form" class="add-one">
+          <label for="level-word-input">Add custom word to this level</label>
+          <div class="row">
+            <input id="level-word-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="e.g. beach" maxlength="24" />
+            <button type="submit" class="btn primary">Add to level</button>
+          </div>
+        </form>
+        <button type="button" id="btn-reset-progress" class="btn secondary small">Reset level stars</button>
+      </section>
+
+      <h3 class="parents-dict-heading">My word list (Hangman “My words”)</h3>
+      <p class="hint compact">Fry 100 + custom. Used when he taps <strong>My words</strong> on the Hangman map.</p>
 
       <div class="parents-layout">
       <div class="parents-forms">
@@ -866,6 +1000,8 @@
     </div>
   </div>
 
+  <script src="js/levels-data.js"></script>
+  <script src="js/island.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,6 +1,13 @@
-# Word Buddy (Spelling Hangman) — v1.30
+# Word Buddy — v2.0 (Hangman + Word Island)
 
-Public GitHub Pages PWA: a kid-friendly spelling Hangman PWA for ~5-year-olds learning school words on **iPad in landscape**.
+Public GitHub Pages PWA for Chris’s kid on **iPad in landscape**: crafty spelling games with Savvas myView Grade 1 levels.
+
+## v2.0
+- **Home menu**: pick **Hangman** (Cap’n Pip — unchanged gameplay) or **Word Island** (hear a word, tap the matching card, build a felt beach scene).
+- **Shared levels**: Units 1–5 × Weeks 1–6 from Savvas myView Grade 1 (sight + spelling lists in `data/words.json` / `js/levels-data.js`). Unit map colors: blue / green / gold / purple / rose. All levels unlocked; Parents highlight the current week.
+- **Hangman** uses the chosen level’s words (mode: both / sight / spelling) or **My words** (Fry 100 + custom library — existing `spellBuddy.words.*` keys preserved).
+- **Word Island**: Web Speech en-US, soft SFX, stickers fly into a beach scene; completion saves stars to `spellBuddy.progress.v1`.
+- Parents gate (multiplication) kept; Parents now also edit level highlight, word mode, custom level words, and reset stars.
 
 ## Features
 - **Auto-speak + icon replay (v1.30)**: when the win or lose popup appears, the word is spoken automatically via the same en-US `speechSynthesis` path as the speak button (cancel any prior utterance, then speak). Speak control is **icon-only** (speaker / sound waves — no “US” label), still large enough for iPad taps. Pronunciation is separate from game SFX: **auto-speak and icon replay still work when SFX mute is on**. iOS: best-effort auto-speak if unlocked by earlier gameplay taps; icon tap remains the reliable replay. No Cambridge Dictionary media, scraping, or network audio.

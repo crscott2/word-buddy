@@ -1,10 +1,12 @@
-/* Word Buddy service worker — v1.30: network-first shell so version UI updates; skipWaiting + clients.claim; offline assets still cached */
-var CACHE = "word-buddy-v1.30";
+/* Word Buddy service worker — v2.0: network-first shell; skipWaiting + clients.claim; offline assets */
+var CACHE = "word-buddy-v2.0";
 var ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
+  "./js/island.js",
+  "./js/levels-data.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -12,7 +14,8 @@ var ASSETS = [
   "./audio/correct.wav",
   "./audio/win.wav",
   "./audio/lose.wav",
-  "./audio/blip.wav"
+  "./audio/blip.wav",
+  "./data/words.json"
 ];
 
 function isShellRequest(request) {
@@ -51,8 +54,6 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
 
-  // Network-first for HTML / CSS / JS / manifest so version bumps land on refresh.
-  // Offline: fall back to precached shell.
   if (isShellRequest(event.request)) {
     event.respondWith(
       fetch(event.request).then(function (response) {
@@ -76,7 +77,6 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
-  // Cache-first for audio, icons, and other same-origin assets (offline play).
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       if (cached) return cached;
