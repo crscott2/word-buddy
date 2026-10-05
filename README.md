@@ -1,6 +1,12 @@
-# Word Buddy — v2.0 (Hangman + Word Island)
+# Word Buddy — v2.1 (Hangman + Word Island + Parrot Spell)
 
 Public GitHub Pages PWA for Chris’s kid on **iPad in landscape**: crafty spelling games with Savvas myView Grade 1 levels.
+
+## v2.1
+- **Parrot Spell** (third home game, 🦜 Polly the felt parrot): pick a week on the shared level map → the word is spoken (en-US `speechSynthesis`, icon-only replay; tapping Polly also replays) → empty letter slots + big letter tiles (the word's letters shuffled + 2 distractors for words of ≤3 letters, 3 otherwise). Tap tiles in order: correct tile flies into the slot with the correct chime; wrong tile wiggles back with the soft miss sound (no penalty); after 2 misses on the same slot the right tile glows. Apostrophes/hyphens are pre-filled. Word done → spoken again + Polly reward (hop & flap, backflip, cracker chomp, party-hat dance, feather/star burst) → next word. Green progress bar only.
+- Plays the level's **spelling** words by default (random order); Parents → "Parrot Spell plays: Spelling words / Spelling + sight". Level custom words are included. **My words** on the Parrot Spell map plays the enabled Parents library.
+- Level complete → confetti + win sound + star saved under `spellBuddy.progress.v1` → `spell` (Hangman/Island stars untouched). Map: big star = current game; three tiny pips per week show which games (Hangman / Island / Parrot Spell) are cleared.
+- SW cache `word-buddy-v2.1`; `js/spell.js` added to the offline shell.
 
 ## v2.0
 - **Home menu**: pick **Hangman** (Cap’n Pip — unchanged gameplay) or **Word Island** (hear a word, tap the matching card, build a felt beach scene).

@@ -1,11 +1,12 @@
-/* Word Buddy service worker — v2.0: network-first shell; skipWaiting + clients.claim; offline assets */
-var CACHE = "word-buddy-v2.0";
+/* Word Buddy service worker — v2.1: network-first shell; skipWaiting + clients.claim; offline assets */
+var CACHE = "word-buddy-v2.1";
 var ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
   "./js/island.js",
+  "./js/spell.js",
   "./js/levels-data.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",

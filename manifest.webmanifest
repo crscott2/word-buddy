@@ -1,7 +1,7 @@
 {
-  "name": "Word Buddy — Hangman & Word Island",
+  "name": "Word Buddy — Hangman, Word Island & Parrot Spell",
   "short_name": "Word Buddy",
-  "description": "Crafty kid spelling: Hangman + Word Island build-a-scene. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA.",
+  "description": "Crafty kid spelling: Hangman + Word Island build-a-scene + Parrot Spell letter tiles. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

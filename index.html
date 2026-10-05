@@ -10,12 +10,12 @@
   <meta name="application-name" content="Word Buddy" />
   <meta name="mobile-web-app-capable" content="yes" />
   <!-- Landscape is primary UX; orientation left free for Safari A2HS -->
-  <meta name="description" content="Word Buddy: crafty spelling Hangman and Word Island build-a-scene. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA." />
+  <meta name="description" content="Word Buddy: crafty spelling Hangman, Word Island build-a-scene, and Parrot Spell letter tiles. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="css/style.css" />
-  <title>Word Buddy — Hangman &amp; Word Island</title>
+  <title>Word Buddy — Hangman, Word Island &amp; Parrot Spell</title>
 </head>
 <body>
   <div id="app">
@@ -25,7 +25,7 @@
         <h1>Word Buddy</h1>
       </button>
       <div class="top-meta">
-        <span class="version" title="App version">v2.0</span>
+        <span class="version" title="App version">v2.1</span>
         <button type="button" id="btn-mute" class="mute-btn" aria-pressed="false" aria-label="Mute sound" title="Mute / unmute">🔊</button>
         <button type="button" id="sound-unlock-hint" class="sound-unlock-hint" aria-hidden="false" title="Tap to enable sound">Tap 🔊 for sound</button>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
@@ -47,6 +47,11 @@
             <span class="home-game-icon" aria-hidden="true">🏝️</span>
             <span class="home-game-title">Word Island</span>
             <span class="home-game-sub">Hear a word · build a scene</span>
+          </button>
+          <button type="button" id="home-spell" class="home-game-card home-spell-card">
+            <span class="home-game-icon" aria-hidden="true">🦜</span>
+            <span class="home-game-title">Parrot Spell</span>
+            <span class="home-game-sub">Hear it · tap the letters</span>
           </button>
         </div>
       </div>
@@ -897,6 +902,90 @@
       </div>
     </main>
 
+    <!-- PARROT SPELL (v2.1) -->
+    <main id="screen-spell" class="screen hidden" aria-label="Parrot Spell">
+      <div class="game-nav">
+        <button type="button" id="spell-back-map" class="btn secondary small">← Weeks</button>
+        <span id="spell-level-label" class="game-level-label"></span>
+        <button type="button" id="spell-speak" class="btn-speak-us" aria-label="Hear the word again">
+          <svg class="speak-us-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M3.5 9.5v5h3.2L12 19.2V4.8L6.7 9.5H3.5z"/>
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.2 8.2a4.2 4.2 0 0 1 0 7.6"/>
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17.8 5.4a8 8 0 0 1 0 13.2"/>
+          </svg>
+        </button>
+      </div>
+      <div id="spell-progress" class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+        <div id="spell-progress-fill" class="progress-fill"></div>
+      </div>
+      <div class="spell-layout">
+        <div id="spell-polly-stage" class="spell-polly-stage" aria-label="Polly the parrot — tap to hear the word" role="button">
+          <div class="spell-polly-sun" aria-hidden="true"></div>
+          <div class="spell-polly-sea" aria-hidden="true"></div>
+          <svg class="polly" viewBox="0 0 160 190" aria-hidden="true">
+              <g class="polly-perch">
+                <rect x="10" y="150" width="140" height="14" rx="7" fill="#A87848" stroke="#6A3A18" stroke-width="3"/>
+                <path d="M18 157 H142" stroke="#C49A5C" stroke-width="2" stroke-dasharray="6 5"/>
+              </g>
+              <g class="polly-body">
+                <g class="polly-tail">
+                  <path d="M70 128 L52 182 L66 180 L78 132 Z" fill="#4D96FF" stroke="#2E5FA8" stroke-width="3" stroke-linejoin="round"/>
+                  <path d="M80 130 L76 186 L90 182 L88 130 Z" fill="#FFC84A" stroke="#C48820" stroke-width="3" stroke-linejoin="round"/>
+                </g>
+                <ellipse cx="82" cy="104" rx="34" ry="44" fill="#E0503A" stroke="#9A2E20" stroke-width="3.5"/>
+                <ellipse cx="88" cy="114" rx="18" ry="28" fill="#F4A08A" opacity="0.9"/>
+                <path d="M74 92 Q88 100 100 92 M74 108 Q88 116 102 108 M76 124 Q88 132 100 124" fill="none" stroke="#C04030" stroke-width="2" stroke-dasharray="4 4"/>
+                <g class="polly-wing">
+                  <path d="M58 88 Q34 112 46 146 Q66 136 72 104 Z" fill="#3CB54A" stroke="#22762E" stroke-width="3" stroke-linejoin="round"/>
+                  <path d="M50 120 Q58 116 64 106 M48 134 Q58 128 66 118" fill="none" stroke="#FFC84A" stroke-width="3" stroke-linecap="round"/>
+                </g>
+                <g class="polly-feet">
+                  <path d="M72 146 v8 M66 154 h14 M92 146 v8 M86 154 h14" stroke="#E0A030" stroke-width="4" stroke-linecap="round"/>
+                </g>
+                <g class="polly-head">
+                  <circle cx="86" cy="54" r="30" fill="#E0503A" stroke="#9A2E20" stroke-width="3.5"/>
+                  <path d="M70 30 Q74 14 84 24 Q86 10 96 22" fill="none" stroke="#FFC84A" stroke-width="5" stroke-linecap="round"/>
+                  <ellipse cx="98" cy="50" rx="13" ry="12" fill="#FFF8EE" stroke="#C8B8A0" stroke-width="2"/>
+                  <circle class="polly-eye" cx="100" cy="50" r="6" fill="#2A1A10"/>
+                  <circle cx="102" cy="47.5" r="2" fill="#FFF"/>
+                  <g class="polly-beak">
+                    <path class="beak-top" d="M108 58 Q130 56 126 76 Q118 66 106 70 Z" fill="#FFC84A" stroke="#B88418" stroke-width="3" stroke-linejoin="round"/>
+                    <path class="beak-low" d="M106 70 Q116 70 120 76 Q112 82 104 76 Z" fill="#E0A030" stroke="#B88418" stroke-width="2.5" stroke-linejoin="round"/>
+                  </g>
+                  <circle cx="80" cy="66" r="5" fill="#FF8FAB" opacity="0.7"/>
+                </g>
+                <g class="polly-hat">
+                  <path d="M68 30 L84 -6 L100 28 Z" fill="#9B7AD8" stroke="#6A4AAD" stroke-width="3" stroke-linejoin="round"/>
+                  <circle cx="84" cy="-6" r="6" fill="#FFC84A"/>
+                  <path d="M74 18 L94 18" stroke="#FFF59A" stroke-width="3" stroke-dasharray="4 3"/>
+                </g>
+              </g>
+              <g class="polly-cracker">
+                <rect x="120" y="60" width="26" height="22" rx="3" fill="#E8C890" stroke="#B89050" stroke-width="2.5"/>
+                <circle cx="127" cy="67" r="1.6" fill="#B89050"/><circle cx="139" cy="67" r="1.6" fill="#B89050"/><circle cx="133" cy="75" r="1.6" fill="#B89050"/>
+              </g>
+            </svg>
+          <div id="spell-burst" class="spell-burst" aria-hidden="true"></div>
+        </div>
+        <div id="spell-play" class="spell-play">
+          <div id="spell-slots" class="spell-slots" aria-label="Letter slots"></div>
+          <div id="spell-tiles" class="spell-tiles" role="group" aria-label="Letter tiles"></div>
+          <p id="spell-empty" class="spell-empty hidden">No words here yet — ask a grown-up to add some in Parents.</p>
+        </div>
+      </div>
+      <div id="spell-done" class="outcome hidden" role="dialog" aria-modal="true">
+        <div class="outcome-card win-word-card">
+          <p class="outcome-emoji" aria-hidden="true">🦜🎉</p>
+          <h2 class="outcome-title">Level done!</h2>
+          <div class="island-done-actions">
+            <button type="button" id="spell-again" class="btn primary big">Play again</button>
+            <button type="button" id="spell-done-map" class="btn secondary">More weeks</button>
+            <button type="button" id="spell-done-home" class="btn secondary">Games</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <!-- PARENT / WORDS SCREEN -->
     <main id="screen-words" class="screen hidden">
       <div class="parent-header">
@@ -916,11 +1005,18 @@
           </label>
         </div>
         <div class="parents-level-row">
-          <span class="toggle-label">Words in levels</span>
+          <span class="toggle-label">Hangman + Island words</span>
           <div class="mode-toggles" role="group" aria-label="Word types">
             <button type="button" class="btn small mode-btn" data-mode="both">Both</button>
             <button type="button" class="btn small mode-btn" data-mode="sight">Sight</button>
             <button type="button" class="btn small mode-btn" data-mode="spelling">Spelling</button>
+          </div>
+        </div>
+        <div class="parents-level-row">
+          <span class="toggle-label">Parrot Spell plays</span>
+          <div class="mode-toggles" role="group" aria-label="Parrot Spell word types">
+            <button type="button" class="btn small spell-mode-btn" data-spellmode="spelling">Spelling words</button>
+            <button type="button" class="btn small spell-mode-btn" data-spellmode="both">Spelling + sight</button>
           </div>
         </div>
         <div id="parent-level-words" class="parent-level-words"></div>
@@ -934,8 +1030,8 @@
         <button type="button" id="btn-reset-progress" class="btn secondary small">Reset level stars</button>
       </section>
 
-      <h3 class="parents-dict-heading">My word list (Hangman “My words”)</h3>
-      <p class="hint compact">Fry 100 + custom. Used when he taps <strong>My words</strong> on the Hangman map.</p>
+      <h3 class="parents-dict-heading">My word list (Hangman / Parrot Spell “My words”)</h3>
+      <p class="hint compact">Fry 100 + custom. Used when he taps <strong>My words</strong> on the Hangman or Parrot Spell map.</p>
 
       <div class="parents-layout">
       <div class="parents-forms">
@@ -1002,6 +1098,7 @@
 
   <script src="js/levels-data.js"></script>
   <script src="js/island.js"></script>
+  <script src="js/spell.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

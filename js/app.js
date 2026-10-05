@@ -8,9 +8,10 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.0";
+  var APP_VERSION = "2.1";
 
   /**
+   * v2.1: Parrot Spell (third game): hear a word, tap shuffled letter tiles into slots; stars per game
    * v2.0: Home menu + Savvas myView levels + Word Island build-a-scene; Hangman unchanged
    * v1.30: Auto-speak word when win/lose popup shows; speak button icon-only (en-US speechSynthesis)
    * - HTMLAudioElement (playsInline) = primary audible path (survives iPhone ringer switch)
@@ -567,7 +568,7 @@
     shipTimer: null,
     /* v2 navigation */
     screen: "home",
-    game: null, /* "hangman" | "island" */
+    game: null, /* "hangman" | "island" | "spell" */
     levelId: null,
     wordSource: "level", /* "level" | "library" */
     settings: null,
@@ -1698,7 +1699,7 @@
   }
 
   function hideAllScreens() {
-    ["screen-home","screen-map","screen-play","screen-island","screen-words"].forEach(function (id) {
+    ["screen-home","screen-map","screen-play","screen-island","screen-spell","screen-words"].forEach(function (id) {
       var el = $(id);
       if (el) el.classList.add("hidden");
     });
@@ -2133,12 +2134,13 @@
       unit: 1,
       week: 1,
       wordMode: "both", /* both | sight | spelling */
+      spellMode: "spelling", /* Parrot Spell: spelling | both */
       customByLevel: {} /* levelId -> [words] */
     };
   }
 
   function defaultProgress() {
-    return { hangman: {}, island: {} };
+    return { hangman: {}, island: {}, spell: {} };
   }
 
   function loadSettings() {
@@ -2151,6 +2153,7 @@
           unit: Math.min(5, Math.max(1, parseInt(p.unit, 10) || 1)),
           week: Math.min(6, Math.max(1, parseInt(p.week, 10) || 1)),
           wordMode: p.wordMode === "sight" || p.wordMode === "spelling" ? p.wordMode : "both",
+          spellMode: p.spellMode === "both" ? "both" : "spelling",
           customByLevel: p.customByLevel && typeof p.customByLevel === "object" ? p.customByLevel : {}
         };
       }
@@ -2171,7 +2174,8 @@
         var p = JSON.parse(raw);
         return {
           hangman: p.hangman && typeof p.hangman === "object" ? p.hangman : {},
-          island: p.island && typeof p.island === "object" ? p.island : {}
+          island: p.island && typeof p.island === "object" ? p.island : {},
+          spell: p.spell && typeof p.spell === "object" ? p.spell : {}
         };
       }
     } catch (e) {}
@@ -2212,16 +2216,30 @@
     return out;
   }
 
-  function wordsForLevel(levelId) {
+  function wordsForLevel(levelId, modeOverride) {
     var L = findLevel(levelId);
     if (!L) return [];
-    var mode = (state.settings && state.settings.wordMode) || "both";
+    var mode = modeOverride || (state.settings && state.settings.wordMode) || "both";
     var words = [];
     if (mode !== "spelling") words = words.concat(L.sightWords || []);
     if (mode !== "sight") words = words.concat(L.spellingWords || []);
     var custom = (state.settings && state.settings.customByLevel && state.settings.customByLevel[levelId]) || [];
     words = words.concat(custom);
     return dedupeWords(words);
+  }
+
+  /* Parrot Spell: spelling words by default; Parents can add sight words */
+  function spellWordsForLevel(levelId) {
+    var m = (state.settings && state.settings.spellMode) === "both" ? "both" : "spelling";
+    return wordsForLevel(levelId, m);
+  }
+
+  function libraryWords() {
+    var out = [];
+    for (var i = 0; i < state.library.length; i++) {
+      if (state.library[i].on) out.push(state.library[i].word);
+    }
+    return out;
   }
 
   function markLevelComplete(game, levelId) {
@@ -2243,6 +2261,7 @@
 
   function showHome() {
     stopSpeakingWord();
+    if (window.SpellGame && window.SpellGame.stop) window.SpellGame.stop();
     hideAllScreens();
     var home = $("screen-home");
     if (home) home.classList.remove("hidden");
@@ -2252,6 +2271,7 @@
 
   function showMap(game) {
     stopSpeakingWord();
+    if (window.SpellGame && window.SpellGame.stop) window.SpellGame.stop();
     state.game = game || state.game || "hangman";
     hideAllScreens();
     var map = $("screen-map");
@@ -2259,14 +2279,21 @@
     state.screen = "map";
     var title = $("map-title");
     if (title) {
-      title.textContent = state.game === "island" ? "Word Island — pick a week" : "Hangman — pick a week";
+      title.textContent = state.game === "island" ? "Word Island — pick a week" :
+        (state.game === "spell" ? "Parrot Spell — pick a week" : "Hangman — pick a week");
     }
     var custom = $("map-custom");
     if (custom) {
-      custom.classList.toggle("hidden", state.game !== "hangman");
+      custom.classList.toggle("hidden", state.game !== "hangman" && state.game !== "spell");
     }
     renderLevelMap();
   }
+
+  var MAP_GAMES = [
+    { id: "hangman", name: "Hangman" },
+    { id: "island", name: "Word Island" },
+    { id: "spell", name: "Parrot Spell" }
+  ];
 
   function renderLevelMap() {
     var box = $("level-map");
@@ -2296,10 +2323,17 @@
         btn.setAttribute("data-level", id);
         if (id === highlight) btn.classList.add("is-next");
         if (isLevelComplete(game, id)) btn.classList.add("is-done");
+        /* Big star = this game; tiny pips = which of the 3 games cleared this week */
+        var pips = MAP_GAMES.map(function (g) {
+          var on = isLevelComplete(g.id, id);
+          return '<span class="map-pip pip-' + g.id + (on ? " is-on" : "") + (g.id === game ? " is-current" : "") +
+            '" title="' + g.name + (on ? " ★" : "") + '"></span>';
+        }).join("");
         btn.innerHTML =
           '<span class="map-week-num">' + week + "</span>" +
           (isLevelComplete(game, id) ? '<span class="map-star" aria-label="done">★</span>' : "") +
-          (L ? '<span class="map-pattern">' + escapeHtml(L.pattern) + "</span>" : "");
+          (L ? '<span class="map-pattern">' + escapeHtml(L.pattern) + "</span>" : "") +
+          '<span class="map-pips" aria-hidden="true">' + pips + "</span>";
         btn.addEventListener("click", (function (levelId) {
           return function () {
             unlockAudio();
@@ -2344,6 +2378,30 @@
         /* Speak synchronously in this tap so iOS unlocks speech */
         window.IslandGame.speakCurrent();
       }
+    } else if (game === "spell") {
+      showSpellScreen();
+      if (window.SpellGame) {
+        window.SpellGame.startLevel(levelId);
+        /* Speak synchronously in this tap so iOS unlocks speech */
+        window.SpellGame.speakCurrent();
+      }
+    }
+  }
+
+  function showSpellScreen() {
+    hideAllScreens();
+    var scr = $("screen-spell");
+    if (scr) scr.classList.remove("hidden");
+    state.screen = "spell";
+  }
+
+  function startSpellLibrary() {
+    state.game = "spell";
+    state.levelId = null;
+    showSpellScreen();
+    if (window.SpellGame) {
+      window.SpellGame.startLibrary();
+      window.SpellGame.speakCurrent();
     }
   }
 
@@ -2404,6 +2462,9 @@
     document.querySelectorAll(".mode-btn").forEach(function (btn) {
       btn.classList.toggle("is-on", btn.getAttribute("data-mode") === state.settings.wordMode);
     });
+    document.querySelectorAll(".spell-mode-btn").forEach(function (btn) {
+      btn.classList.toggle("is-on", btn.getAttribute("data-spellmode") === (state.settings.spellMode || "spelling"));
+    });
     renderParentLevelWords();
   }
 
@@ -2438,6 +2499,9 @@
     var play = wordsForLevel(id);
     html += '<p class="hint compact">Play pool (' + play.length + "): " +
       play.slice().sort().map(function (w) { return escapeHtml(displayWord(w)); }).join(", ") + "</p>";
+    var spellPool = spellWordsForLevel(id);
+    html += '<p class="hint compact">Parrot Spell pool (' + spellPool.length + "): " +
+      spellPool.slice().sort().map(function (w) { return escapeHtml(displayWord(w)); }).join(", ") + "</p>";
     box.innerHTML = html;
     box.querySelectorAll(".remove-level-word").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -2453,6 +2517,7 @@
   function bindV2() {
     var homeHm = $("home-hangman");
     var homeIs = $("home-island");
+    var homeSp = $("home-spell");
     var mapBack = $("map-back-home");
     var mapCustom = $("map-custom");
     var btnHome = $("btn-home");
@@ -2465,10 +2530,22 @@
       unlockAudio();
       showMap("island");
     });
+    if (homeSp) homeSp.addEventListener("click", function () {
+      unlockAudio();
+      showMap("spell");
+    });
     if (mapBack) mapBack.addEventListener("click", showHome);
     if (mapCustom) mapCustom.addEventListener("click", function () {
       unlockAudio();
-      startHangmanLibrary();
+      if (state.game === "spell") startSpellLibrary();
+      else startHangmanLibrary();
+    });
+    document.querySelectorAll(".spell-mode-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.settings.spellMode = btn.getAttribute("data-spellmode") === "both" ? "both" : "spelling";
+        saveSettings();
+        renderParentsLevels();
+      });
     });
     if (btnHome) btnHome.addEventListener("click", function () {
       showHome();
@@ -2523,19 +2600,22 @@
     var resetProg = $("btn-reset-progress");
     if (resetProg) {
       resetProg.addEventListener("click", function () {
-        if (!confirm("Clear all level stars for Hangman and Word Island?")) return;
+        if (!confirm("Clear all level stars for Hangman, Word Island and Parrot Spell?")) return;
         state.progress = defaultProgress();
         saveProgress();
         renderLevelMap();
       });
     }
     if (window.IslandGame && window.IslandGame.bind) window.IslandGame.bind();
+    if (window.SpellGame && window.SpellGame.bind) window.SpellGame.bind();
   }
 
   function exposeWordBuddy() {
     window.WordBuddy = {
       version: APP_VERSION,
-      wordsForLevel: wordsForLevel,
+      wordsForLevel: function (levelId) { return wordsForLevel(levelId); },
+      spellWordsForLevel: spellWordsForLevel,
+      libraryWords: libraryWords,
       markLevelComplete: markLevelComplete,
       speakWord: speakWordUS,
       unlockAudio: unlockAudio,
@@ -2554,7 +2634,7 @@
   }
 
   function fireIslandConfetti() {
-    var host = $("screen-island") || document.body;
+    var host = (state.screen === "spell" ? $("screen-spell") : $("screen-island")) || document.body;
     var layer = document.createElement("div");
     layer.className = "confetti-layer is-on island-confetti";
     layer.setAttribute("aria-hidden", "true");
