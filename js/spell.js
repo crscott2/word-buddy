@@ -453,6 +453,27 @@
     });
   }
 
+  function clearIfLevel(levelId) {
+    if (!levelId || sp.levelId !== levelId) return;
+    stop();
+    sp.queue = [];
+    sp.words = [];
+    sp.index = 0;
+    sp.done = 0;
+    sp.current = null;
+    sp.slots = [];
+    sp.tiles = [];
+    sp.levelDone = false;
+    sp.levelId = null;
+    var slots = $("spell-slots");
+    if (slots) slots.innerHTML = "";
+    var tiles = $("spell-tiles");
+    if (tiles) tiles.innerHTML = "";
+    var overlay = $("spell-done");
+    if (overlay) overlay.classList.add("hidden");
+    updateProgress();
+  }
+
   window.SpellGame = {
     name: "Parrot Spell",
     bind: bind,
@@ -460,6 +481,7 @@
     startLibrary: startLibrary,
     replay: replay,
     stop: stop,
+    clearIfLevel: clearIfLevel,
     getCurrentWord: function () { return sp.current; },
     speakCurrent: function () { if (sp.current) call("speakWord", sp.current); },
     /* test/debug view of the round */
@@ -475,6 +497,7 @@
         busy: sp.busy,
         levelDone: sp.levelDone,
         source: sp.source,
+        levelId: sp.levelId,
         tiles: sp.tiles.map(function (t) { return t.ch; }).join("")
       };
     }

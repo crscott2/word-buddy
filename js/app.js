@@ -8,9 +8,10 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.1";
+  var APP_VERSION = "2.2";
 
   /**
+   * v2.2: Island+Spell primary (main star); Hangman bonus coins; per-level Parents reset
    * v2.1: Parrot Spell (third game): hear a word, tap shuffled letter tiles into slots; stars per game
    * v2.0: Home menu + Savvas myView levels + Word Island build-a-scene; Hangman unchanged
    * v1.30: Auto-speak word when win/lose popup shows; speak button icon-only (en-US speechSynthesis)
@@ -572,8 +573,16 @@
     levelId: null,
     wordSource: "level", /* "level" | "library" */
     settings: null,
-    progress: null
+    progress: null,
+    /* Hangman bonus (v2.2) — only while playing a school level */
+    hangmanRoundBonus: 0,
+    lastWordBonus: 0,
+    lastWordPerfect: false
   };
+
+  var BONUS_PER_WORD = 1;
+  var BONUS_PERFECT_EXTRA = 1;
+  var MIGRATE_HANGMAN_STAR_TO_BONUS = 10;
 
   var CONFETTI_MS = 3200;
 
@@ -1373,6 +1382,7 @@
     var title = els.outcomeTitle || $("outcome-title");
     var emoji = els.outcomeEmoji || $("outcome-emoji");
     var sparkles = els.outcomeSparkles || $("outcome-sparkles");
+    var bonusEl = $("outcome-bonus");
     var won = !!state.won;
 
     if (els.outcome) {
@@ -1402,6 +1412,16 @@
     if (sparkles) {
       if (won) buildWinSparkles(sparkles);
       else sparkles.innerHTML = "";
+    }
+    if (bonusEl) {
+      if (won && state.lastWordBonus > 0) {
+        var tip = state.lastWordPerfect ? " · perfect!" : "";
+        bonusEl.textContent = "+" + state.lastWordBonus + " 🪙" + tip;
+        bonusEl.classList.remove("hidden");
+      } else {
+        bonusEl.textContent = "";
+        bonusEl.classList.add("hidden");
+      }
     }
   }
 
@@ -1527,8 +1547,12 @@
     syncKeyboard();
 
     if (won) {
+      /* v2.2: Hangman level play earns bonus coins (never blocks primary completion) */
+      awardHangmanWordBonus(state.misses);
       runWinSequence();
     } else {
+      state.lastWordBonus = 0;
+      state.lastWordPerfect = false;
       runLoseSequence();
     }
   }
@@ -1671,7 +1695,16 @@
     updateProgressBar();
 
     if (clearedCount() >= state.roundTotal) {
+      if (state.wordSource === "level" && state.levelId && state.hangmanRoundBonus > 0) {
+        var badge = $("hangman-bonus-badge");
+        if (badge) {
+          badge.textContent = "🪙 " + getBonus(state.levelId) + " · +" + state.hangmanRoundBonus + " this round";
+          badge.classList.remove("hidden");
+        }
+      }
       fireConfetti(function () {
+        state.hangmanRoundBonus = 0;
+        syncHangmanBonusBadge();
         beginShuffledRound();
         startRound();
       });
@@ -2140,7 +2173,31 @@
   }
 
   function defaultProgress() {
-    return { hangman: {}, island: {}, spell: {} };
+    return { hangman: {}, island: {}, spell: {}, bonus: {} };
+  }
+
+  /** v2.2: old Hangman completion stars → bonus coins (once). Island/Spell stars kept. */
+  function migrateProgress(p) {
+    if (!p || typeof p !== "object") return defaultProgress();
+    var out = {
+      hangman: p.hangman && typeof p.hangman === "object" ? p.hangman : {},
+      island: p.island && typeof p.island === "object" ? p.island : {},
+      spell: p.spell && typeof p.spell === "object" ? p.spell : {},
+      bonus: p.bonus && typeof p.bonus === "object" ? p.bonus : {}
+    };
+    if (!p.hangmanBonusMigrated) {
+      Object.keys(out.hangman).forEach(function (id) {
+        if (out.hangman[id]) {
+          var cur = parseInt(out.bonus[id], 10) || 0;
+          out.bonus[id] = cur + MIGRATE_HANGMAN_STAR_TO_BONUS;
+        }
+      });
+      out.hangman = {};
+      out.hangmanBonusMigrated = true;
+    } else {
+      out.hangmanBonusMigrated = true;
+    }
+    return out;
   }
 
   function loadSettings() {
@@ -2171,12 +2228,8 @@
     try {
       var raw = localStorage.getItem(PROGRESS_KEY);
       if (raw) {
-        var p = JSON.parse(raw);
-        return {
-          hangman: p.hangman && typeof p.hangman === "object" ? p.hangman : {},
-          island: p.island && typeof p.island === "object" ? p.island : {},
-          spell: p.spell && typeof p.spell === "object" ? p.spell : {}
-        };
+        var migrated = migrateProgress(JSON.parse(raw));
+        return migrated;
       }
     } catch (e) {}
     return defaultProgress();
@@ -2184,6 +2237,9 @@
 
   function saveProgress() {
     try {
+      if (state.progress && !state.progress.hangmanBonusMigrated) {
+        state.progress.hangmanBonusMigrated = true;
+      }
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress));
     } catch (e) {}
   }
@@ -2244,14 +2300,95 @@
 
   function markLevelComplete(game, levelId) {
     if (!state.progress) state.progress = defaultProgress();
+    if (game !== "island" && game !== "spell") return; /* Hangman is bonus-only (v2.2) */
     if (!state.progress[game]) state.progress[game] = {};
     state.progress[game][levelId] = true;
     saveProgress();
     renderLevelMap();
   }
 
-  function isLevelComplete(game, levelId) {
+  function isGameComplete(game, levelId) {
     return !!(state.progress && state.progress[game] && state.progress[game][levelId]);
+  }
+
+  /** Main level star: both primary games (Island + Parrot Spell) done */
+  function isPrimaryComplete(levelId) {
+    return isGameComplete("island", levelId) && isGameComplete("spell", levelId);
+  }
+
+  function getBonus(levelId) {
+    if (!state.progress || !state.progress.bonus) return 0;
+    return parseInt(state.progress.bonus[levelId], 10) || 0;
+  }
+
+  function addBonus(levelId, pts) {
+    if (!levelId || !pts) return 0;
+    if (!state.progress) state.progress = defaultProgress();
+    if (!state.progress.bonus) state.progress.bonus = {};
+    var next = getBonus(levelId) + pts;
+    state.progress.bonus[levelId] = next;
+    saveProgress();
+    renderLevelMap();
+    syncHangmanBonusBadge();
+    return pts;
+  }
+
+  function awardHangmanWordBonus(misses) {
+    if (state.wordSource !== "level" || !state.levelId) {
+      state.lastWordBonus = 0;
+      state.lastWordPerfect = false;
+      return 0;
+    }
+    var perfect = (misses | 0) === 0;
+    var pts = BONUS_PER_WORD + (perfect ? BONUS_PERFECT_EXTRA : 0);
+    state.lastWordPerfect = perfect;
+    state.lastWordBonus = pts;
+    state.hangmanRoundBonus = (state.hangmanRoundBonus || 0) + pts;
+    addBonus(state.levelId, pts);
+    return pts;
+  }
+
+  function clearLevelProgress(levelId) {
+    if (!levelId) return;
+    if (!state.progress) state.progress = defaultProgress();
+    ["hangman", "island", "spell"].forEach(function (g) {
+      if (state.progress[g] && state.progress[g][levelId]) delete state.progress[g][levelId];
+    });
+    if (state.progress.bonus && state.progress.bonus[levelId] != null) {
+      delete state.progress.bonus[levelId];
+    }
+    saveProgress();
+    /* Clear in-progress mid-level state for this level */
+    if (window.IslandGame && window.IslandGame.clearIfLevel) {
+      window.IslandGame.clearIfLevel(levelId);
+    }
+    if (window.SpellGame && window.SpellGame.clearIfLevel) {
+      window.SpellGame.clearIfLevel(levelId);
+    }
+    if (state.levelId === levelId && state.wordSource === "level") {
+      state.hangmanRoundBonus = 0;
+      state.lastWordBonus = 0;
+      state.cleared = {};
+      state.playWords = [];
+      state.roundTotal = 0;
+    }
+    renderLevelMap();
+    renderParentLevelStatus();
+    syncHangmanBonusBadge();
+  }
+
+  function syncHangmanBonusBadge() {
+    var badge = $("hangman-bonus-badge");
+    if (!badge) return;
+    var show = state.game === "hangman" && state.wordSource === "level" && state.levelId;
+    if (!show) {
+      badge.classList.add("hidden");
+      return;
+    }
+    var total = getBonus(state.levelId);
+    badge.textContent = "🪙 " + total;
+    badge.classList.remove("hidden");
+    badge.setAttribute("aria-label", total + " bonus coins on this level");
   }
 
   function nextHighlightId() {
@@ -2280,7 +2417,8 @@
     var title = $("map-title");
     if (title) {
       title.textContent = state.game === "island" ? "Word Island — pick a week" :
-        (state.game === "spell" ? "Parrot Spell — pick a week" : "Hangman — pick a week");
+        (state.game === "spell" ? "Parrot Spell — pick a week" :
+          "Hangman bonus — pick a week");
     }
     var custom = $("map-custom");
     if (custom) {
@@ -2289,8 +2427,8 @@
     renderLevelMap();
   }
 
-  var MAP_GAMES = [
-    { id: "hangman", name: "Hangman" },
+  /* Primary games shown as map pips; Hangman is bonus coins (v2.2) */
+  var MAP_PRIMARY = [
     { id: "island", name: "Word Island" },
     { id: "spell", name: "Parrot Spell" }
   ];
@@ -2300,7 +2438,7 @@
     if (!box) return;
     box.innerHTML = "";
     var highlight = nextHighlightId();
-    var game = state.game || "hangman";
+    var game = state.game || "island";
     for (var unit = 1; unit <= 5; unit++) {
       var island = document.createElement("section");
       island.className = "map-unit unit-" + unit;
@@ -2322,18 +2460,24 @@
         btn.className = "map-week";
         btn.setAttribute("data-level", id);
         if (id === highlight) btn.classList.add("is-next");
-        if (isLevelComplete(game, id)) btn.classList.add("is-done");
-        /* Big star = this game; tiny pips = which of the 3 games cleared this week */
-        var pips = MAP_GAMES.map(function (g) {
-          var on = isLevelComplete(g.id, id);
+        var primaryDone = isPrimaryComplete(id);
+        if (primaryDone) btn.classList.add("is-done");
+        /* Big star = both primary games done; pips = Island / Parrot Spell; coins = Hangman bonus */
+        var pips = MAP_PRIMARY.map(function (g) {
+          var on = isGameComplete(g.id, id);
           return '<span class="map-pip pip-' + g.id + (on ? " is-on" : "") + (g.id === game ? " is-current" : "") +
-            '" title="' + g.name + (on ? " ★" : "") + '"></span>';
+            '" title="' + g.name + (on ? " done" : "") + '"></span>';
         }).join("");
+        var bonus = getBonus(id);
+        var bonusHtml = bonus > 0
+          ? '<span class="map-bonus" title="Hangman bonus coins">🪙' + bonus + "</span>"
+          : "";
         btn.innerHTML =
           '<span class="map-week-num">' + week + "</span>" +
-          (isLevelComplete(game, id) ? '<span class="map-star" aria-label="done">★</span>' : "") +
+          (primaryDone ? '<span class="map-star" aria-label="level done">★</span>' : "") +
           (L ? '<span class="map-pattern">' + escapeHtml(L.pattern) + "</span>" : "") +
-          '<span class="map-pips" aria-hidden="true">' + pips + "</span>";
+          '<span class="map-pips" aria-hidden="true">' + pips + "</span>" +
+          bonusHtml;
         btn.addEventListener("click", (function (levelId) {
           return function () {
             unlockAudio();
@@ -2364,10 +2508,13 @@
     if (L) label = "Unit " + L.unit + " · Week " + L.week;
     if (game === "hangman") {
       var hl = $("hangman-level-label");
-      if (hl) hl.textContent = label;
+      if (hl) hl.textContent = label + " · bonus";
+      state.hangmanRoundBonus = 0;
+      state.lastWordBonus = 0;
       beginShuffledRound();
       showPlay();
       startRound();
+      syncHangmanBonusBadge();
     } else if (game === "island") {
       hideAllScreens();
       var isl = $("screen-island");
@@ -2409,11 +2556,14 @@
     state.game = "hangman";
     state.levelId = null;
     state.wordSource = "library";
+    state.hangmanRoundBonus = 0;
+    state.lastWordBonus = 0;
     var hl = $("hangman-level-label");
     if (hl) hl.textContent = "My words";
     beginShuffledRound();
     showPlay();
     startRound();
+    syncHangmanBonusBadge();
   }
 
   function speakWordUS(word) {
@@ -2466,6 +2616,27 @@
       btn.classList.toggle("is-on", btn.getAttribute("data-spellmode") === (state.settings.spellMode || "spelling"));
     });
     renderParentLevelWords();
+    renderParentLevelStatus();
+  }
+
+  function renderParentLevelStatus() {
+    var box = $("parent-level-status");
+    if (!box || !state.settings) return;
+    var id = levelIdFor(state.settings.unit, state.settings.week);
+    var unit = state.settings.unit;
+    var week = state.settings.week;
+    function pip(game, label) {
+      var on = isGameComplete(game, id);
+      return '<span class="parent-star-pip' + (on ? " is-on" : "") + '">' +
+        (on ? "★" : "☆") + " " + label + "</span>";
+    }
+    var bonus = getBonus(id);
+    box.innerHTML =
+      '<p class="parent-status-line"><strong>Unit ' + unit + " Week " + week + "</strong> · " +
+      pip("island", "Word Island") + " · " +
+      pip("spell", "Parrot Spell") +
+      (isPrimaryComplete(id) ? ' · <span class="parent-star-pip is-on">★ Level done</span>' : "") +
+      '</p><p class="parent-status-line compact">Hangman bonus: 🪙 <strong>' + bonus + "</strong></p>";
   }
 
   function renderParentLevelWords() {
@@ -2510,8 +2681,10 @@
         state.settings.customByLevel[id] = list.filter(function (x) { return x !== w; });
         saveSettings();
         renderParentLevelWords();
+        renderParentLevelStatus();
       });
     });
+    renderParentLevelStatus();
   }
 
   function bindV2() {
@@ -2597,13 +2770,38 @@
         renderParentLevelWords();
       });
     }
+    var resetOne = $("btn-reset-one-level");
+    if (resetOne) {
+      resetOne.addEventListener("click", function () {
+        if (!state.settings) return;
+        var unit = state.settings.unit;
+        var week = state.settings.week;
+        var id = levelIdFor(unit, week);
+        if (!confirm("Reset Unit " + unit + " Week " + week + "? This clears its stars in all games.")) {
+          return;
+        }
+        clearLevelProgress(id);
+      });
+    }
     var resetProg = $("btn-reset-progress");
     if (resetProg) {
       resetProg.addEventListener("click", function () {
-        if (!confirm("Clear all level stars for Hangman, Word Island and Parrot Spell?")) return;
+        if (!confirm("Clear ALL level stars and Hangman bonus coins for Word Island, Parrot Spell, and Hangman?")) return;
         state.progress = defaultProgress();
+        state.progress.hangmanBonusMigrated = true;
         saveProgress();
+        if (window.IslandGame && window.IslandGame.clearIfLevel) {
+          /* clear whatever level is mid-progress */
+          window.IslandGame.clearIfLevel(state.levelId);
+        }
+        if (window.SpellGame && window.SpellGame.clearIfLevel) {
+          window.SpellGame.clearIfLevel(state.levelId);
+        }
+        state.hangmanRoundBonus = 0;
+        state.lastWordBonus = 0;
         renderLevelMap();
+        renderParentLevelStatus();
+        syncHangmanBonusBadge();
       });
     }
     if (window.IslandGame && window.IslandGame.bind) window.IslandGame.bind();
@@ -2617,6 +2815,15 @@
       spellWordsForLevel: spellWordsForLevel,
       libraryWords: libraryWords,
       markLevelComplete: markLevelComplete,
+      isGameComplete: isGameComplete,
+      isPrimaryComplete: isPrimaryComplete,
+      getBonus: getBonus,
+      addBonus: addBonus,
+      clearLevelProgress: clearLevelProgress,
+      getProgress: function () { return state.progress; },
+      getSettings: function () { return state.settings; },
+      getHangmanWord: function () { return state.word; },
+      getHangmanMisses: function () { return state.misses; },
       speakWord: speakWordUS,
       unlockAudio: unlockAudio,
       playCorrect: playCorrectLetter,
@@ -2690,6 +2897,7 @@
     saveLibrary(state.library); // persist library (and migration) — keep spellBuddy.words.*
     state.settings = loadSettings();
     state.progress = loadProgress();
+    saveProgress(); /* persist hangman→bonus migration if needed */
     buildKeyboard();
     bind();
     bindV2();

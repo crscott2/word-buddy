@@ -1,4 +1,14 @@
-# Word Buddy — v2.1 (Hangman + Word Island + Parrot Spell)
+# Word Buddy — v2.2 (Island + Spell primary, Hangman bonus)
+
+## v2.2
+- **Primary games**: Word Island + Parrot Spell earn the level’s main ★ (both must be done). Map shows two clear primary pips + the main star when complete.
+- **Hangman is bonus**: earn 🪙 coins (+1 per word solved, +1 extra for a perfect/no-miss solve) on school levels. Coins show on the map and on the Hangman win popup / badge. Never blocks level completion. Gameplay unchanged.
+- **Home**: two big primary cards; Hangman sits under a **Bonus** label with a gold coin pill.
+- **Progress migrate**: existing Hangman stars convert to 10 bonus coins each (Island/Spell stars kept).
+- **Parents**: reset **one** level (unit+week) with confirm — clears that level’s Island/Spell stars, Hangman bonus coins, and mid-level in-progress state; keeps custom words, Fry/My words, settings, and other levels. Reset-all still available (clears stars + all bonus coins).
+- **Parrot Spell default**: spelling words only (fresh install / no saved choice). Sight words only when Parents picks “Spelling + sight”.
+- SW cache `word-buddy-v2.2`.
+
 
 Public GitHub Pages PWA for Chris’s kid on **iPad in landscape**: crafty spelling games with Savvas myView Grade 1 levels.
 

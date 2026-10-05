@@ -10,12 +10,12 @@
   <meta name="application-name" content="Word Buddy" />
   <meta name="mobile-web-app-capable" content="yes" />
   <!-- Landscape is primary UX; orientation left free for Safari A2HS -->
-  <meta name="description" content="Word Buddy: crafty spelling Hangman, Word Island build-a-scene, and Parrot Spell letter tiles. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA." />
+  <meta name="description" content="Word Buddy: Word Island and Parrot Spell primary games, Hangman bonus coins. Savvas myView Grade 1 levels. Landscape-first for iPad. Offline PWA." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="css/style.css" />
-  <title>Word Buddy — Hangman, Word Island &amp; Parrot Spell</title>
+  <title>Word Buddy — Word Island, Parrot Spell &amp; Hangman Bonus</title>
 </head>
 <body>
   <div id="app">
@@ -25,7 +25,7 @@
         <h1>Word Buddy</h1>
       </button>
       <div class="top-meta">
-        <span class="version" title="App version">v2.1</span>
+        <span class="version" title="App version">v2.2</span>
         <button type="button" id="btn-mute" class="mute-btn" aria-pressed="false" aria-label="Mute sound" title="Mute / unmute">🔊</button>
         <button type="button" id="sound-unlock-hint" class="sound-unlock-hint" aria-hidden="false" title="Tap to enable sound">Tap 🔊 for sound</button>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
@@ -37,12 +37,7 @@
     <main id="screen-home" class="screen" aria-label="Choose a game">
       <div class="home-hero">
         <p class="home-tag">Pick a game</p>
-        <div class="home-games">
-          <button type="button" id="home-hangman" class="home-game-card hangman-card">
-            <span class="home-game-icon" aria-hidden="true">🏴‍☠️</span>
-            <span class="home-game-title">Hangman</span>
-            <span class="home-game-sub">Spell with Cap'n Pip</span>
-          </button>
+        <div class="home-games home-primary">
           <button type="button" id="home-island" class="home-game-card home-island-card">
             <span class="home-game-icon" aria-hidden="true">🏝️</span>
             <span class="home-game-title">Word Island</span>
@@ -52,6 +47,15 @@
             <span class="home-game-icon" aria-hidden="true">🦜</span>
             <span class="home-game-title">Parrot Spell</span>
             <span class="home-game-sub">Hear it · tap the letters</span>
+          </button>
+        </div>
+        <div class="home-bonus-wrap">
+          <p class="home-bonus-label">Bonus</p>
+          <button type="button" id="home-hangman" class="home-game-card hangman-card home-bonus-card">
+            <span class="home-bonus-pill" aria-hidden="true">🪙 Bonus</span>
+            <span class="home-game-icon" aria-hidden="true">🏴‍☠️</span>
+            <span class="home-game-title">Hangman</span>
+            <span class="home-game-sub">Earn coins with Cap'n Pip</span>
           </button>
         </div>
       </div>
@@ -72,6 +76,7 @@
       <div class="game-nav">
         <button type="button" id="hangman-back" class="btn secondary small">← Weeks</button>
         <span id="hangman-level-label" class="game-level-label"></span>
+        <span id="hangman-bonus-badge" class="hangman-bonus-badge hidden" aria-live="polite">🪙 0</span>
       </div>
       <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
       <div id="ship-layer" class="ship-layer" aria-hidden="true">
@@ -823,6 +828,7 @@
           <p id="outcome-emoji" class="outcome-emoji hidden" aria-hidden="true">🎉</p>
           <h2 id="outcome-title" class="outcome-title hidden"></h2>
           <p id="outcome-word" class="outcome-word"></p>
+          <p id="outcome-bonus" class="outcome-bonus hidden" aria-live="polite"></p>
           <button type="button" id="btn-speak-us" class="btn-speak-us" aria-label="Hear pronunciation of this word">
             <svg class="speak-us-icon" viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false">
               <path fill="currentColor" d="M3.5 9.5v5h3.2L12 19.2V4.8L6.7 9.5H3.5z"/>
@@ -902,7 +908,7 @@
       </div>
     </main>
 
-    <!-- PARROT SPELL (v2.1) -->
+    <!-- PARROT SPELL -->
     <main id="screen-spell" class="screen hidden" aria-label="Parrot Spell">
       <div class="game-nav">
         <button type="button" id="spell-back-map" class="btn secondary small">← Weeks</button>
@@ -1027,7 +1033,11 @@
             <button type="submit" class="btn primary">Add to level</button>
           </div>
         </form>
-        <button type="button" id="btn-reset-progress" class="btn secondary small">Reset level stars</button>
+        <div id="parent-level-status" class="parent-level-status" aria-live="polite"></div>
+        <div class="parents-reset-row">
+          <button type="button" id="btn-reset-one-level" class="btn secondary small">Reset this level</button>
+          <button type="button" id="btn-reset-progress" class="btn secondary small">Reset ALL level stars</button>
+        </div>
       </section>
 
       <h3 class="parents-dict-heading">My word list (Hangman / Parrot Spell “My words”)</h3>

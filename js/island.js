@@ -334,12 +334,28 @@
     });
   }
 
+  function clearIfLevel(levelId) {
+    if (!levelId || island.levelId !== levelId) return;
+    island.queue = [];
+    island.index = 0;
+    island.placed = [];
+    island.busy = false;
+    island.current = null;
+    island.choices = [];
+    island.words = [];
+    island.levelId = null;
+    clearScene();
+    updateProgress();
+  }
+
   window.IslandGame = {
     UNIT_COLORS: UNIT_COLORS,
     startLevel: startLevel,
     replay: replay,
     bind: bind,
+    clearIfLevel: clearIfLevel,
     getCurrentWord: function () { return island.current; },
+    getLevelId: function () { return island.levelId; },
     speakCurrent: function () {
       if (island.current) speak(island.current);
     }

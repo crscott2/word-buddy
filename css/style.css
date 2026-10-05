@@ -2455,6 +2455,47 @@ body::before {
   gap: 1.25rem;
   width: min(920px, 100%);
 }
+.home-games.home-primary {
+  width: min(920px, 100%);
+}
+.home-bonus-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  width: min(420px, 100%);
+  margin-top: 0.35rem;
+}
+.home-bonus-label {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #8A5A18;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.home-game-card.home-bonus-card {
+  position: relative;
+  min-height: 150px;
+  width: 100%;
+  padding: 1rem 0.85rem 1.1rem;
+  background: linear-gradient(165deg, #FFF6D8 0%, #F0D090 100%);
+  border-color: #B8860B;
+  box-shadow: 0 8px 0 #8A5A18, 0 12px 24px rgba(138,90,24,0.18);
+}
+.home-game-card.home-bonus-card:active { box-shadow: 0 4px 0 #8A5A18; }
+.home-bonus-pill {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.65rem;
+  background: #FFD24A;
+  color: #5C3418;
+  border: 2px solid #B8860B;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
 .home-game-card {
   display: flex;
   flex-direction: column;
@@ -2778,7 +2819,7 @@ body::before {
 /* ===== v2.1 Parrot Spell ===== */
 .home-game-card.home-spell-card { background: linear-gradient(165deg, #F0FFE8 0%, #C8E8A8 100%); }
 @media (min-width: 641px) {
-  .home-games { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(1080px, 100%); }
+  .home-games.home-primary { grid-template-columns: 1fr 1fr; width: min(920px, 100%); }
 }
 @media (min-width: 641px) and (max-width: 900px) {
   .home-game-card { min-height: 190px; padding: 1.2rem 0.6rem; }
@@ -3094,4 +3135,58 @@ body::before {
 #screen-spell .game-nav .btn-speak-us { margin: 0 0 0 auto; width: 60px; height: 60px; min-width: 60px; min-height: 60px; }
 @media (orientation: landscape) {
   .polly { width: min(96%, 270px); }
+}
+
+/* ===== v2.2 primary/bonus map + parents reset ===== */
+.map-bonus {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-top: 2px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #FFE8A0;
+  border: 1.5px solid #C4A030;
+  color: #5C3418;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.map-pips .map-pip.pip-island,
+.map-pips .map-pip.pip-spell {
+  width: 11px;
+  height: 11px;
+}
+.hangman-bonus-badge {
+  font-weight: 900;
+  font-size: 0.95rem;
+  color: #5C3418;
+  background: #FFE8A0;
+  border: 2px solid #C4A030;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  white-space: nowrap;
+}
+.outcome-bonus {
+  margin: 0.15rem 0 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #8A5A18;
+}
+.parent-level-status {
+  margin: 0.65rem 0 0.35rem;
+  padding: 0.55rem 0.7rem;
+  background: #FFF8EE;
+  border: 2px solid #E0C8A0;
+  border-radius: 12px;
+}
+.parent-status-line { margin: 0.15rem 0; color: #5C3418; }
+.parent-status-line.compact { font-size: 0.95rem; }
+.parent-star-pip { font-weight: 800; opacity: 0.55; }
+.parent-star-pip.is-on { opacity: 1; color: #2E6FA8; }
+.parents-reset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
