@@ -1,4 +1,12 @@
-# Word Buddy — v2.3.1 (recorded word voice)
+# Word Buddy — v2.4 (per-game word lists)
+
+## v2.4
+- **Word Island = sight words, Parrot Spell = spelling words** by default (Hangman bonus keeps “both”).
+- **Parents → School levels** has one clearly labelled toggle per game (“Word Island words from / Parrot Spell words from / Hangman (bonus) words from”: Sight words · Spelling words · Both lists). The selected option is highlighted with a ✓; the pools each game will play this week are listed underneath.
+- Fix: before, Word Island had no setting of its own (it shared Hangman’s “Both” toggle), and the Parrot Spell toggle saved but never showed which option was selected, so it looked like it did nothing.
+- One-time settings migration (`settingsVersion: 2` in `spellBuddy.settings.v1`): existing installs move to Island=sight, Parrot Spell=spelling; Hangman choice, highlight week, and custom words are kept. Later Parents changes persist.
+- Changing a toggle drops any in-memory round built from the old list (stars/coins untouched). A week with no words of the chosen kind falls back to both lists; Word Island never awards a star for an empty level.
+- SW app cache `word-buddy-v2.4` (word-clip cache unchanged).
 
 ## v2.3.1
 - Re-recorded 9 word clips: stack, stem, step, store, stuck (leading "s" kept — cut at the first energy dip / high-frequency onset after the "Okay." carrier), each, met, net (respelled vowels, different carrier word), mitt.

@@ -8,9 +8,13 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.3.1";
+  var APP_VERSION = "2.4";
+  var SETTINGS_VERSION = 2; /* v2.4: per-game word sources (Island sight / Parrot Spell spelling) */
 
   /**
+   * v2.4: Per-game word source. Word Island = sight words, Parrot Spell = spelling words by default;
+   *       Parents toggles per game (Island / Parrot Spell / Hangman) with a visible selected state;
+   *       one-time settings migration (settingsVersion 2); toggling rebuilds any in-memory round
    * v2.3.1: Re-recorded stack/stem/store/stuck/mitt (+ any improved) clips; clip URLs carry ?v=<rev>
    *         from js/word-audio.js so the SW word cache (cache-first) picks up the new bytes
    * v2.3: Recorded word voice (Kokoro-82M af_heart) — speakWord() plays audio/words/<key>.mp3 in all games;
@@ -2334,9 +2338,11 @@
     return {
       unit: 1,
       week: 1,
-      wordMode: "both", /* both | sight | spelling */
-      spellMode: "spelling", /* Parrot Spell: spelling | both */
-      customByLevel: {} /* levelId -> [words] */
+      wordMode: "both", /* Hangman (bonus): both | sight | spelling */
+      islandMode: "sight", /* Word Island: sight | spelling | both */
+      spellMode: "spelling", /* Parrot Spell: spelling | sight | both */
+      customByLevel: {}, /* levelId -> [words] */
+      settingsVersion: SETTINGS_VERSION
     };
   }
 
@@ -2374,20 +2380,40 @@
       if (raw) {
         var p = JSON.parse(raw);
         var d = defaultSettings();
-        return {
+        var out = {
           unit: Math.min(5, Math.max(1, parseInt(p.unit, 10) || 1)),
           week: Math.min(6, Math.max(1, parseInt(p.week, 10) || 1)),
-          wordMode: p.wordMode === "sight" || p.wordMode === "spelling" ? p.wordMode : "both",
-          spellMode: p.spellMode === "both" ? "both" : "spelling",
-          customByLevel: p.customByLevel && typeof p.customByLevel === "object" ? p.customByLevel : {}
+          wordMode: normalizeMode(p.wordMode, "both"),
+          islandMode: normalizeMode(p.islandMode, d.islandMode),
+          spellMode: normalizeMode(p.spellMode, d.spellMode),
+          customByLevel: p.customByLevel && typeof p.customByLevel === "object" ? p.customByLevel : {},
+          settingsVersion: parseInt(p.settingsVersion, 10) || 1
         };
+        if (out.settingsVersion < SETTINGS_VERSION) {
+          /* v2.4 one-time migration: before this, Word Island shared Hangman's "Both" setting and
+             Parrot Spell could be left on "Spelling + sight". Reset both games to their new defaults;
+             Hangman's choice, levels, custom words are kept. Later Parents changes persist. */
+          out.islandMode = d.islandMode;
+          out.spellMode = d.spellMode;
+          out.settingsVersion = SETTINGS_VERSION;
+          out.migrated = true;
+        }
+        return out;
       }
     } catch (e) {}
     return defaultSettings();
   }
 
+  function normalizeMode(v, fallback) {
+    return v === "sight" || v === "spelling" || v === "both" ? v : fallback;
+  }
+
   function saveSettings() {
     try {
+      if (state.settings) {
+        delete state.settings.migrated;
+        state.settings.settingsVersion = SETTINGS_VERSION;
+      }
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
     } catch (e) {}
   }
@@ -2444,18 +2470,60 @@
     var L = findLevel(levelId);
     if (!L) return [];
     var mode = modeOverride || (state.settings && state.settings.wordMode) || "both";
-    var words = [];
-    if (mode !== "spelling") words = words.concat(L.sightWords || []);
-    if (mode !== "sight") words = words.concat(L.spellingWords || []);
+    var words = levelListFor(L, mode);
+    /* A week with no words of the chosen kind falls back to both lists (never an empty level) */
+    if (!words.length && mode !== "both") words = levelListFor(L, "both");
     var custom = (state.settings && state.settings.customByLevel && state.settings.customByLevel[levelId]) || [];
     words = words.concat(custom);
     return dedupeWords(words);
   }
 
-  /* Parrot Spell: spelling words by default; Parents can add sight words */
+  function levelListFor(L, mode) {
+    var words = [];
+    if (mode !== "spelling") words = words.concat(L.sightWords || []);
+    if (mode !== "sight") words = words.concat(L.spellingWords || []);
+    return words;
+  }
+
+  /* Word Island: sight words by default (Parents: sight / spelling / both) */
+  function islandWordsForLevel(levelId) {
+    return wordsForLevel(levelId, normalizeMode(state.settings && state.settings.islandMode, "sight"));
+  }
+
+  /* Parrot Spell: spelling words by default (Parents: spelling / sight / both) */
   function spellWordsForLevel(levelId) {
-    var m = (state.settings && state.settings.spellMode) === "both" ? "both" : "spelling";
-    return wordsForLevel(levelId, m);
+    return wordsForLevel(levelId, normalizeMode(state.settings && state.settings.spellMode, "spelling"));
+  }
+
+  /** Parents changed a game's word source: drop any in-memory round built from the old list.
+   *  Stars / coins are untouched; the next start of that game rebuilds from the new list. */
+  function invalidateRounds(game) {
+    if (game === "island" && window.IslandGame && window.IslandGame.clearIfLevel && window.IslandGame.getLevelId) {
+      window.IslandGame.clearIfLevel(window.IslandGame.getLevelId());
+    }
+    if (game === "spell" && window.SpellGame && window.SpellGame.clearIfLevel && window.SpellGame.getState) {
+      var st = window.SpellGame.getState();
+      if (st.source === "level") window.SpellGame.clearIfLevel(st.levelId);
+    }
+    if (game === "hangman" && state.wordSource === "level" && state.levelId) {
+      /* On the play screen rebuild now; otherwise the next level start rebuilds (startGameLevel) */
+      if (state.screen === "play") {
+        beginShuffledRound();
+        startRound();
+      }
+    }
+  }
+
+  function setGameMode(game, mode) {
+    if (!state.settings) return;
+    var key = game === "island" ? "islandMode" : (game === "spell" ? "spellMode" : "wordMode");
+    var fallback = game === "island" ? "sight" : (game === "spell" ? "spelling" : "both");
+    var next = normalizeMode(mode, fallback);
+    var changed = state.settings[key] !== next;
+    state.settings[key] = next;
+    saveSettings();
+    renderParentsLevels();
+    if (changed) invalidateRounds(game);
   }
 
   function libraryWords() {
@@ -2674,7 +2742,7 @@
     var label = "";
     var L = findLevel(levelId);
     if (L) label = "Unit " + L.unit + " · Week " + L.week;
-    prefetchWordClips(wordsForLevel(levelId).concat(spellWordsForLevel(levelId)));
+    prefetchWordClips(game === "island" ? islandWordsForLevel(levelId) : (game === "spell" ? spellWordsForLevel(levelId) : wordsForLevel(levelId)));
     if (game === "hangman") {
       var hl = $("hangman-level-label");
       if (hl) hl.textContent = label + " · bonus";
@@ -2759,12 +2827,16 @@
     }
     unitSel.value = String(state.settings.unit);
     weekSel.value = String(state.settings.week);
-    document.querySelectorAll(".mode-btn").forEach(function (btn) {
-      btn.classList.toggle("is-on", btn.getAttribute("data-mode") === state.settings.wordMode);
-    });
-    document.querySelectorAll(".spell-mode-btn").forEach(function (btn) {
-      btn.classList.toggle("is-on", btn.getAttribute("data-spellmode") === (state.settings.spellMode || "spelling"));
-    });
+    function markToggles(selector, attr, value) {
+      document.querySelectorAll(selector).forEach(function (btn) {
+        var on = btn.getAttribute(attr) === value;
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+    markToggles(".island-mode-btn", "data-islandmode", state.settings.islandMode || "sight");
+    markToggles(".spell-mode-btn", "data-spellmode", state.settings.spellMode || "spelling");
+    markToggles(".mode-btn", "data-mode", state.settings.wordMode || "both");
     renderParentLevelWords();
     renderParentLevelStatus();
   }
@@ -2817,12 +2889,15 @@
       }).join("") + "</ul></div>";
     }
     html += "</div>";
-    var play = wordsForLevel(id);
-    html += '<p class="hint compact">Play pool (' + play.length + "): " +
-      play.slice().sort().map(function (w) { return escapeHtml(displayWord(w)); }).join(", ") + "</p>";
-    var spellPool = spellWordsForLevel(id);
-    html += '<p class="hint compact">Parrot Spell pool (' + spellPool.length + "): " +
-      spellPool.slice().sort().map(function (w) { return escapeHtml(displayWord(w)); }).join(", ") + "</p>";
+    function poolLine(label, list, mode, cls) {
+      var builtIn = levelListFor(L, mode).length;
+      var note = !builtIn && mode !== "both" ? " <em>(no " + mode + " words this week — using both lists)</em>" : "";
+      return '<p class="hint compact ' + cls + '">' + label + " (" + list.length + "): " +
+        list.slice().sort().map(function (w) { return escapeHtml(displayWord(w)); }).join(", ") + note + "</p>";
+    }
+    html += poolLine("Word Island plays", islandWordsForLevel(id), state.settings.islandMode || "sight", "pool-island");
+    html += poolLine("Parrot Spell plays", spellWordsForLevel(id), state.settings.spellMode || "spelling", "pool-spell");
+    html += poolLine("Hangman plays", wordsForLevel(id), state.settings.wordMode || "both", "pool-hangman");
     box.innerHTML = html;
     box.querySelectorAll(".remove-level-word").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -2863,11 +2938,14 @@
       if (state.game === "spell") startSpellLibrary();
       else startHangmanLibrary();
     });
+    document.querySelectorAll(".island-mode-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        setGameMode("island", btn.getAttribute("data-islandmode"));
+      });
+    });
     document.querySelectorAll(".spell-mode-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        state.settings.spellMode = btn.getAttribute("data-spellmode") === "both" ? "both" : "spelling";
-        saveSettings();
-        renderParentsLevels();
+        setGameMode("spell", btn.getAttribute("data-spellmode"));
       });
     });
     if (btnHome) btnHome.addEventListener("click", function () {
@@ -2892,13 +2970,7 @@
     });
     document.querySelectorAll(".mode-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        state.settings.wordMode = btn.getAttribute("data-mode") || "both";
-        saveSettings();
-        renderParentsLevels();
-        if (state.wordSource === "level" && state.screen === "play") {
-          beginShuffledRound();
-          startRound();
-        }
+        setGameMode("hangman", btn.getAttribute("data-mode"));
       });
     });
     var addLevelForm = $("add-level-word-form");
@@ -2963,6 +3035,7 @@
       version: APP_VERSION,
       wordsForLevel: function (levelId) { return wordsForLevel(levelId); },
       spellWordsForLevel: spellWordsForLevel,
+      islandWordsForLevel: islandWordsForLevel,
       libraryWords: libraryWords,
       markLevelComplete: markLevelComplete,
       isGameComplete: isGameComplete,
@@ -3048,6 +3121,7 @@
     state.library = loadLibrary();
     saveLibrary(state.library); // persist library (and migration) — keep spellBuddy.words.*
     state.settings = loadSettings();
+    if (state.settings.migrated) saveSettings(); /* v2.4 one-time per-game word-source migration */
     state.progress = loadProgress();
     saveProgress(); /* persist hangman→bonus migration if needed */
     buildKeyboard();

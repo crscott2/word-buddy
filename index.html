@@ -25,7 +25,7 @@
         <h1>Word Buddy</h1>
       </button>
       <div class="top-meta">
-        <span class="version" title="App version">v2.3.1</span>
+        <span class="version" title="App version">v2.4</span>
         <button type="button" id="btn-mute" class="mute-btn" aria-pressed="false" aria-label="Mute sound" title="Mute / unmute">🔊</button>
         <button type="button" id="sound-unlock-hint" class="sound-unlock-hint" aria-hidden="false" title="Tap to enable sound">Tap 🔊 for sound</button>
         <button type="button" id="btn-parents" class="linkish" aria-label="Parents: open word list">Parents</button>
@@ -1010,19 +1010,29 @@
             <select id="parent-week"></select>
           </label>
         </div>
+        <p class="hint compact">Which list each game uses for the school week. Custom words you add to a level are included in every game.</p>
         <div class="parents-level-row">
-          <span class="toggle-label">Hangman + Island words</span>
-          <div class="mode-toggles" role="group" aria-label="Word types">
-            <button type="button" class="btn small mode-btn" data-mode="both">Both</button>
-            <button type="button" class="btn small mode-btn" data-mode="sight">Sight</button>
-            <button type="button" class="btn small mode-btn" data-mode="spelling">Spelling</button>
+          <span class="toggle-label">Word Island words from</span>
+          <div class="mode-toggles" role="group" aria-label="Word Island word list">
+            <button type="button" class="btn small island-mode-btn" data-islandmode="sight" aria-pressed="false">Sight words</button>
+            <button type="button" class="btn small island-mode-btn" data-islandmode="spelling" aria-pressed="false">Spelling words</button>
+            <button type="button" class="btn small island-mode-btn" data-islandmode="both" aria-pressed="false">Both lists</button>
           </div>
         </div>
         <div class="parents-level-row">
-          <span class="toggle-label">Parrot Spell plays</span>
-          <div class="mode-toggles" role="group" aria-label="Parrot Spell word types">
-            <button type="button" class="btn small spell-mode-btn" data-spellmode="spelling">Spelling words</button>
-            <button type="button" class="btn small spell-mode-btn" data-spellmode="both">Spelling + sight</button>
+          <span class="toggle-label">Parrot Spell words from</span>
+          <div class="mode-toggles" role="group" aria-label="Parrot Spell word list">
+            <button type="button" class="btn small spell-mode-btn" data-spellmode="spelling" aria-pressed="false">Spelling words</button>
+            <button type="button" class="btn small spell-mode-btn" data-spellmode="sight" aria-pressed="false">Sight words</button>
+            <button type="button" class="btn small spell-mode-btn" data-spellmode="both" aria-pressed="false">Both lists</button>
+          </div>
+        </div>
+        <div class="parents-level-row">
+          <span class="toggle-label">Hangman (bonus) words from</span>
+          <div class="mode-toggles" role="group" aria-label="Hangman word list">
+            <button type="button" class="btn small mode-btn" data-mode="sight" aria-pressed="false">Sight words</button>
+            <button type="button" class="btn small mode-btn" data-mode="spelling" aria-pressed="false">Spelling words</button>
+            <button type="button" class="btn small mode-btn" data-mode="both" aria-pressed="false">Both lists</button>
           </div>
         </div>
         <div id="parent-level-words" class="parent-level-words"></div>

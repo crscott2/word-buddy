@@ -2780,10 +2780,20 @@ body::before {
   min-width: 9rem;
 }
 .mode-toggles { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.mode-btn.is-on {
+.mode-btn.is-on,
+.mode-toggles .btn.is-on {
   background: #6BBF6B;
   color: #fff;
   border-color: #3A8F3A;
+}
+/* v2.4: selected word source is obvious (all three game toggles) */
+.mode-toggles .btn.is-on::before { content: "✓ "; }
+.island-empty {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #5C3418;
+  text-align: center;
+  padding: 1rem;
 }
 .toggle-label { font-weight: 800; color: #5C3418; }
 .parent-level-words {

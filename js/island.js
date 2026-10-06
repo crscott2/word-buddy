@@ -85,8 +85,10 @@
     return window.WordBuddy || {};
   }
 
+  /* v2.4: Island's own word source (sight words by default; Parents can switch) */
   function wordsForLevel(levelId) {
     var host = getHost();
+    if (host.islandWordsForLevel) return host.islandWordsForLevel(levelId);
     if (host.wordsForLevel) return host.wordsForLevel(levelId);
     return [];
   }
@@ -147,11 +149,11 @@
           if (levels[i].id === island.levelId) { cur = levels[i]; break; }
         }
       }
-      if (cur && host.wordsForLevel) {
+      if (cur && (host.islandWordsForLevel || host.wordsForLevel)) {
         var extras = [];
         levels.forEach(function (L) {
           if (L.unit === cur.unit && L.id !== cur.id) {
-            extras = extras.concat(host.wordsForLevel(L.id));
+            extras = extras.concat(wordsForLevel(L.id));
           }
         });
         extras.forEach(function (w) {
@@ -226,6 +228,15 @@
 
   function startRound(speakNow) {
     island.busy = false;
+    if (!island.queue.length) {
+      /* Nothing to play (no words for this level/source): friendly note, never a free star */
+      island.current = null;
+      island.choices = [];
+      var box = $("island-cards");
+      if (box) box.innerHTML = '<p class="island-empty">No words here yet — ask a grown-up to pick words in Parents.</p>';
+      updateProgress();
+      return;
+    }
     if (island.index >= island.queue.length) {
       showLevelDone();
       return;

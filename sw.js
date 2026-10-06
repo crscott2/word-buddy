@@ -1,7 +1,7 @@
-/* Word Buddy service worker — v2.3.1: network-first shell; skipWaiting + clients.claim; offline assets;
+/* Word Buddy service worker — v2.4: network-first shell; skipWaiting + clients.claim; offline assets;
    recorded word clips (audio/words/*.mp3) cache-first in their own cache that survives version bumps,
    with Range (206) support so iOS Safari can play them from the cache. */
-var CACHE = "word-buddy-v2.3.1";
+var CACHE = "word-buddy-v2.4";
 var WORD_CACHE = "word-buddy-words-v1"; /* kept across versions; a re-recorded clip gets a new URL (?v=rev from js/word-audio.js) */
 var ASSETS = [
   "./",
