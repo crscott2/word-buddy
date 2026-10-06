@@ -8,9 +8,11 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.3";
+  var APP_VERSION = "2.3.1";
 
   /**
+   * v2.3.1: Re-recorded stack/stem/store/stuck/mitt (+ any improved) clips; clip URLs carry ?v=<rev>
+   *         from js/word-audio.js so the SW word cache (cache-first) picks up the new bytes
    * v2.3: Recorded word voice (Kokoro-82M af_heart) — speakWord() plays audio/words/<key>.mp3 in all games;
    *       custom words fall back to en-US speechSynthesis (prefers Enhanced/Premium/Siri voices)
    * v2.2: Island+Spell primary (main star); Hangman bonus coins; per-level Parents reset
@@ -1356,7 +1358,9 @@
     var key = wordAudioKey(word);
     if (!/^[a-z]+$/.test(key)) return null;
     if (!wordAudioKeys()[key] || wordAudio.missing[key]) return null;
-    return WORD_AUDIO_DIR + key + ".mp3";
+    /* Re-recorded clips get a new URL (?v=rev) so cache-first SW + HTTP caches fetch the new bytes */
+    var rev = window.WORD_BUDDY_AUDIO && window.WORD_BUDDY_AUDIO.rev && window.WORD_BUDDY_AUDIO.rev[key];
+    return WORD_AUDIO_DIR + key + ".mp3" + (rev ? "?v=" + rev : "");
   }
 
   function ensureWordPlayer() {

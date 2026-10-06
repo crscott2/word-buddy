@@ -1,4 +1,8 @@
-# Word Buddy — v2.3 (recorded word voice)
+# Word Buddy — v2.3.1 (recorded word voice)
+
+## v2.3.1
+- Re-recorded word clips that Whisper heard as the wrong word (see commit message for the list). Kept the leading "s" in st- words by cutting at the first energy dip after the "Okay." carrier.
+- `js/word-audio.js` has a `rev` map; re-recorded clips load as `audio/words/<key>.mp3?v=<rev>`, so the cache-first word cache (`word-buddy-words-v1`, kept across versions) fetches the new bytes and drops the old copy. SW app cache `word-buddy-v2.3.1`.
 
 ## v2.3
 - **Recorded word voice**: every built-in word (30 Savvas levels' sight + spelling words, plus the Fry 100 "My words" seed list) has its own clip in `audio/words/<key>.mp3` (key = lowercase, apostrophe dropped: `don't` → `dont.mp3`). Voice: Kokoro-82M `af_heart`, rendered offline, trimmed, loudness-normalized, mono MP3 64 kbps. `js/word-audio.js` lists the available keys.

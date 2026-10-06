@@ -1,8 +1,8 @@
-/* Word Buddy service worker — v2.3: network-first shell; skipWaiting + clients.claim; offline assets;
+/* Word Buddy service worker — v2.3.1: network-first shell; skipWaiting + clients.claim; offline assets;
    recorded word clips (audio/words/*.mp3) cache-first in their own cache that survives version bumps,
    with Range (206) support so iOS Safari can play them from the cache. */
-var CACHE = "word-buddy-v2.3";
-var WORD_CACHE = "word-buddy-words-v1"; /* bump only when the clips themselves are re-recorded */
+var CACHE = "word-buddy-v2.3.1";
+var WORD_CACHE = "word-buddy-words-v1"; /* kept across versions; a re-recorded clip gets a new URL (?v=rev from js/word-audio.js) */
 var ASSETS = [
   "./",
   "./index.html",
@@ -96,6 +96,13 @@ function wordClipResponse(request) {
       return fetch(url, { credentials: "same-origin" }).then(function (response) {
         if (response && response.status === 200) {
           cache.put(url, response.clone());
+          /* A re-recorded clip (?v=rev) supersedes older cached copies of the same file */
+          var path = new URL(url).pathname;
+          cache.keys().then(function (reqs) {
+            reqs.forEach(function (r) {
+              if (r.url !== url && new URL(r.url).pathname === path) cache.delete(r);
+            });
+          });
           return rangeResponse(request, response);
         }
         return response;
