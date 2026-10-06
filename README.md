@@ -1,7 +1,7 @@
 # Word Buddy — v2.3.1 (recorded word voice)
 
 ## v2.3.1
-- Re-recorded word clips that Whisper heard as the wrong word (see commit message for the list). Kept the leading "s" in st- words by cutting at the first energy dip after the "Okay." carrier.
+- Re-recorded 9 word clips: stack, stem, step, store, stuck (leading "s" kept — cut at the first energy dip / high-frequency onset after the "Okay." carrier), each, met, net (respelled vowels, different carrier word), mitt.
 - `js/word-audio.js` has a `rev` map; re-recorded clips load as `audio/words/<key>.mp3?v=<rev>`, so the cache-first word cache (`word-buddy-words-v1`, kept across versions) fetches the new bytes and drops the old copy. SW app cache `word-buddy-v2.3.1`.
 
 ## v2.3
