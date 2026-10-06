@@ -1,5 +1,8 @@
-/* Word Buddy service worker — v2.2: network-first shell; skipWaiting + clients.claim; offline assets */
-var CACHE = "word-buddy-v2.2";
+/* Word Buddy service worker — v2.3: network-first shell; skipWaiting + clients.claim; offline assets;
+   recorded word clips (audio/words/*.mp3) cache-first in their own cache that survives version bumps,
+   with Range (206) support so iOS Safari can play them from the cache. */
+var CACHE = "word-buddy-v2.3";
+var WORD_CACHE = "word-buddy-words-v1"; /* bump only when the clips themselves are re-recorded */
 var ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +11,7 @@ var ASSETS = [
   "./js/island.js",
   "./js/spell.js",
   "./js/levels-data.js",
+  "./js/word-audio.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -42,7 +46,7 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
-        keys.filter(function (k) { return k !== CACHE; }).map(function (k) {
+        keys.filter(function (k) { return k !== CACHE && k !== WORD_CACHE; }).map(function (k) {
           return caches.delete(k);
         })
       );
@@ -52,8 +56,61 @@ self.addEventListener("activate", function (event) {
   );
 });
 
+function isWordClip(request) {
+  return /\/audio\/words\/[a-z]+\.mp3$/i.test(new URL(request.url).pathname);
+}
+
+/** Serve a full cached response, sliced to 206 if the media element asked for a byte range */
+function rangeResponse(request, full) {
+  var range = request.headers.get("range");
+  if (!range) return Promise.resolve(full);
+  return full.clone().arrayBuffer().then(function (buf) {
+    var m = /bytes=(\d*)-(\d*)/.exec(range);
+    var size = buf.byteLength;
+    var start = m && m[1] !== "" ? parseInt(m[1], 10) : 0;
+    var end = m && m[2] !== "" ? parseInt(m[2], 10) : size - 1;
+    if (m && m[1] === "" && m[2] !== "") { start = Math.max(0, size - parseInt(m[2], 10)); end = size - 1; }
+    end = Math.min(end, size - 1);
+    if (start >= size || start > end) {
+      return new Response(null, { status: 416, headers: { "Content-Range": "bytes */" + size } });
+    }
+    return new Response(buf.slice(start, end + 1), {
+      status: 206,
+      statusText: "Partial Content",
+      headers: {
+        "Content-Type": full.headers.get("Content-Type") || "audio/mpeg",
+        "Content-Range": "bytes " + start + "-" + end + "/" + size,
+        "Content-Length": String(end - start + 1),
+        "Accept-Ranges": "bytes"
+      }
+    });
+  });
+}
+
+function wordClipResponse(request) {
+  var url = request.url.split("#")[0];
+  return caches.open(WORD_CACHE).then(function (cache) {
+    return cache.match(url).then(function (cached) {
+      if (cached) return rangeResponse(request, cached);
+      /* Fetch the whole file (no Range) so it can be cached, then slice if needed */
+      return fetch(url, { credentials: "same-origin" }).then(function (response) {
+        if (response && response.status === 200) {
+          cache.put(url, response.clone());
+          return rangeResponse(request, response);
+        }
+        return response;
+      });
+    });
+  });
+}
+
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
+
+  if (isWordClip(event.request)) {
+    event.respondWith(wordClipResponse(event.request));
+    return;
+  }
 
   if (isShellRequest(event.request)) {
     event.respondWith(

@@ -1,4 +1,12 @@
-# Word Buddy — v2.2 (Island + Spell primary, Hangman bonus)
+# Word Buddy — v2.3 (recorded word voice)
+
+## v2.3
+- **Recorded word voice**: every built-in word (30 Savvas levels' sight + spelling words, plus the Fry 100 "My words" seed list) has its own clip in `audio/words/<key>.mp3` (key = lowercase, apostrophe dropped: `don't` → `dont.mp3`). Voice: Kokoro-82M `af_heart`, rendered offline, trimmed, loudness-normalized, mono MP3 64 kbps. `js/word-audio.js` lists the available keys.
+- **One `speakWord(word)` path** for Hangman (popup auto-speak + icon replay), Word Island, and Parrot Spell (incl. tapping Polly): plays the clip through a single reusable `HTMLAudioElement` (playsInline, primed in the first tap like the SFX players). Word audio still ignores the SFX mute.
+- **Fallback**: words without a clip (parent-added custom words) or a clip that fails to load use the device's en-US `speechSynthesis`, preferring an installed Enhanced / Premium / Siri US voice (novelty voices skipped).
+- **Service worker**: word clips are cache-first in their own cache (`word-buddy-words-v1`, survives app version bumps; Range/206 aware for iOS Safari); the current level's / My-words clips are prefetched on start. HTML/CSS/JS stay network-first. SW cache `word-buddy-v2.3`.
+- Temporary `/voices/` samples page removed.
+- Word voice: Kokoro-82M (Apache-2.0) — https://huggingface.co/hexgrad/Kokoro-82M
 
 ## v2.2
 - **Primary games**: Word Island + Parrot Spell earn the level’s main ★ (both must be done). Map shows two clear primary pips + the main star when complete.

@@ -8,9 +8,11 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.2";
+  var APP_VERSION = "2.3";
 
   /**
+   * v2.3: Recorded word voice (Kokoro-82M af_heart) — speakWord() plays audio/words/<key>.mp3 in all games;
+   *       custom words fall back to en-US speechSynthesis (prefers Enhanced/Premium/Siri voices)
    * v2.2: Island+Spell primary (main star); Hangman bonus coins; per-level Parents reset
    * v2.1: Parrot Spell (third game): hear a word, tap shuffled letter tiles into slots; stars per game
    * v2.0: Home menu + Savvas myView levels + Word Island build-a-scene; Hangman unchanged
@@ -241,6 +243,8 @@
    */
   function unlockAudio() {
     ensureHtmlPlayers();
+    /* Word voice ignores SFX mute — always prime its element in the gesture */
+    primeWordPlayerQuiet();
 
     if (!audio.muted) {
       /* Prefer marking unlocked after a real play in-gesture when possible */
@@ -1247,43 +1251,42 @@
     voicesReady: false
   };
 
+  /* Novelty / joke voices on Apple devices — never use for a spelling word */
+  var NOVELTY_VOICE_RE = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/i;
+  var QUALITY_VOICE_RE = /enhanced|premium|siri|neural|natural/i;
+
+  function scoreUsVoice(v) {
+    var lang = String(v.lang || "").replace("_", "-");
+    var name = String(v.name || "");
+    var uri = String(v.voiceURI || "");
+    var score = 0;
+    if (/^en-US$/i.test(lang)) score += 100;
+    else if (/^en-US/i.test(lang)) score += 90;
+    else if (/^en/i.test(lang) && /us|american/i.test(name)) score += 80;
+    else if (/^en/i.test(lang)) score += 40;
+    else return -1;
+    if (QUALITY_VOICE_RE.test(name) || QUALITY_VOICE_RE.test(uri)) score += 50;
+    if (NOVELTY_VOICE_RE.test(name) && !QUALITY_VOICE_RE.test(name + " " + uri)) score -= 60;
+    if (v.localService) score += 2;
+    return score;
+  }
+
+  /** Best installed US English voice: Enhanced/Premium/Siri first, then any en-US, then any English */
   function pickUsVoice() {
     if (!window.speechSynthesis) return null;
     var voices = window.speechSynthesis.getVoices() || [];
     if (!voices.length) return null;
     speakUs.voicesReady = true;
-    var i;
-    var v;
-    /* Prefer explicit en-US voices */
-    for (i = 0; i < voices.length; i++) {
-      v = voices[i];
-      if (/^en-US$/i.test(v.lang || "")) {
-        speakUs.preferred = v;
-        return v;
+    var best = null;
+    var bestScore = -1;
+    for (var i = 0; i < voices.length; i++) {
+      var sc = scoreUsVoice(voices[i]);
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = voices[i];
       }
     }
-    for (i = 0; i < voices.length; i++) {
-      v = voices[i];
-      if (/^en[-_]?US/i.test(v.lang || "")) {
-        speakUs.preferred = v;
-        return v;
-      }
-    }
-    for (i = 0; i < voices.length; i++) {
-      v = voices[i];
-      if (/en/i.test(v.lang || "") && /us|american/i.test(v.name || "")) {
-        speakUs.preferred = v;
-        return v;
-      }
-    }
-    for (i = 0; i < voices.length; i++) {
-      v = voices[i];
-      if (/^en/i.test(v.lang || "")) {
-        speakUs.preferred = v;
-        return v;
-      }
-    }
-    speakUs.preferred = voices[0] || null;
+    speakUs.preferred = best || voices[0] || null;
     return speakUs.preferred;
   }
 
@@ -1301,9 +1304,104 @@
     }
   }
 
-  function stopSpeakingWord() {
+  /* ---- Recorded word voice (v2.3): audio/words/<key>.mp3, Kokoro-82M af_heart ----
+   * One reusable HTMLAudioElement (playsInline) — once it has played inside a tap, iOS lets
+   * later timer-driven plays (Hangman popup auto-speak) through. Primed quietly by unlockAudio().
+   * Not affected by the SFX mute: pronunciation is intentional learning audio. */
+  var WORD_AUDIO_DIR = "audio/words/";
+  var SILENT_WAV = (function () {
+    /* 20 ms of 8 kHz 8-bit silence as a data: URI (priming source) */
+    var n = 160;
+    var bytes = [];
+    function str(t) { for (var i = 0; i < t.length; i++) bytes.push(t.charCodeAt(i)); }
+    function u32(x) { bytes.push(x & 255, (x >> 8) & 255, (x >> 16) & 255, (x >> 24) & 255); }
+    function u16(x) { bytes.push(x & 255, (x >> 8) & 255); }
+    str("RIFF"); u32(36 + n); str("WAVE"); str("fmt "); u32(16); u16(1); u16(1);
+    u32(8000); u32(8000); u16(1); u16(8); str("data"); u32(n);
+    for (var j = 0; j < n; j++) bytes.push(128);
+    var bin = "";
+    for (var k = 0; k < bytes.length; k++) bin += String.fromCharCode(bytes[k]);
+    try { return "data:audio/wav;base64," + window.btoa(bin); } catch (e) { return ""; }
+  })();
+
+  var wordAudio = {
+    el: null,
+    primed: false,
+    token: 0,
+    keys: null, /* { key: true } from js/word-audio.js */
+    missing: {}, /* keys whose clip failed to load this session */
+    lastKind: "" /* "clip" | "speech" | "" — for tests/debug */
+  };
+
+  /** "Don't" -> "dont"; lowercase, apostrophes dropped. Non a–z (spaces, hyphens) -> no clip. */
+  function wordAudioKey(word) {
+    return String(word || "")
+      .toLowerCase()
+      .replace(/[\u2018\u2019\u02BC']/g, "")
+      .trim();
+  }
+
+  function wordAudioKeys() {
+    if (wordAudio.keys) return wordAudio.keys;
+    var map = {};
+    var src = window.WORD_BUDDY_AUDIO;
+    if (src && src.keys && src.keys.length) {
+      for (var i = 0; i < src.keys.length; i++) map[src.keys[i]] = true;
+    }
+    wordAudio.keys = map;
+    return map;
+  }
+
+  function wordClipUrl(word) {
+    var key = wordAudioKey(word);
+    if (!/^[a-z]+$/.test(key)) return null;
+    if (!wordAudioKeys()[key] || wordAudio.missing[key]) return null;
+    return WORD_AUDIO_DIR + key + ".mp3";
+  }
+
+  function ensureWordPlayer() {
+    if (wordAudio.el) return wordAudio.el;
+    var el = makeHtmlAudio(SILENT_WAV || "", false);
+    el.preload = "auto";
+    wordAudio.el = el;
+    return el;
+  }
+
+  /** Play+pause a silent source in the tap so the word element is gesture-unlocked on iOS
+   *  (unmuted on purpose: WebKit only lifts the gesture rule for audible-capable playback) */
+  function primeWordPlayerQuiet() {
+    if (wordAudio.primed || !SILENT_WAV) return;
+    var el = ensureWordPlayer();
+    if (!el.paused) return;
+    var t = ++wordAudio.token;
+    try {
+      if (el.getAttribute("src") !== SILENT_WAV) el.src = SILENT_WAV;
+      el.muted = false;
+      var p = el.play();
+      var done = function () {
+        wordAudio.primed = true;
+        if (wordAudio.token !== t) return; /* a real word started meanwhile — leave it alone */
+        try { el.pause(); el.currentTime = 0; } catch (e) {}
+      };
+      if (p && typeof p.then === "function") {
+        p.then(done).catch(function () {});
+      } else {
+        done();
+      }
+    } catch (e2) {}
+  }
+
+  function setSpeakingUi(on) {
     var btn = els.btnSpeakUs || $("btn-speak-us");
-    if (btn) btn.classList.remove("is-speaking");
+    if (btn) btn.classList.toggle("is-speaking", !!on && state.screen === "play");
+  }
+
+  function stopSpeakingWord() {
+    setSpeakingUi(false);
+    wordAudio.token++;
+    if (wordAudio.el) {
+      try { wordAudio.el.pause(); } catch (e0) {}
+    }
     if (window.speechSynthesis) {
       try {
         window.speechSynthesis.cancel();
@@ -1311,30 +1409,18 @@
     }
   }
 
-  /**
-   * Speak the current word in US English (Web Speech API).
-   * Independent of game SFX mute — pronunciation is intentional learning audio.
-   * Tap replay is reliable on iOS (user gesture). Auto-speak on popup show is
-   * best-effort (may need prior unlock from gameplay taps).
-   */
-  function speakCurrentWordUS() {
-    var word = state.word;
-    if (!word) return;
+  /** Fallback: device voice via Web Speech API (en-US, best installed voice) */
+  function speakWithSynth(word) {
+    wordAudio.lastKind = "speech";
     var btn = els.btnSpeakUs || $("btn-speak-us");
     if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance === "undefined") {
-      if (btn) {
-        btn.setAttribute("aria-label", "Speech not supported on this device");
-      }
-      return;
+      if (btn) btn.setAttribute("aria-label", "Speech not supported on this device");
+      setSpeakingUi(false);
+      return false;
     }
-
-    /* Cancel any prior utterance, then speak the current word. */
-    try {
-      window.speechSynthesis.cancel();
-    } catch (e) { /* ignore */ }
-
-    var voice = speakUs.preferred || pickUsVoice();
-    var utter = new window.SpeechSynthesisUtterance(String(word));
+    try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+    var voice = pickUsVoice() || speakUs.preferred;
+    var utter = new window.SpeechSynthesisUtterance(String(displayWord(word)));
     utter.lang = "en-US";
     utter.rate = 0.92;
     utter.pitch = 1;
@@ -1342,24 +1428,102 @@
       utter.voice = voice;
       if (voice.lang) utter.lang = voice.lang;
     }
-
-    if (btn) btn.classList.add("is-speaking");
-    utter.onend = function () {
-      if (btn) btn.classList.remove("is-speaking");
-    };
-    utter.onerror = function () {
-      if (btn) btn.classList.remove("is-speaking");
-    };
-
+    setSpeakingUi(true);
+    utter.onend = function () { setSpeakingUi(false); };
+    utter.onerror = function () { setSpeakingUi(false); };
     try {
       window.speechSynthesis.speak(utter);
       /* iOS sometimes needs a nudge if paused after cancel */
       if (window.speechSynthesis.paused) {
         try { window.speechSynthesis.resume(); } catch (e2) { /* ignore */ }
       }
+      return true;
     } catch (err) {
-      if (btn) btn.classList.remove("is-speaking");
+      setSpeakingUi(false);
+      return false;
     }
+  }
+
+  /**
+   * speakWord(word) — the ONE pronunciation path for Hangman, Word Island, and Parrot Spell.
+   * Recorded clip when we have one; otherwise (parent-added custom words, or a clip that
+   * fails to load) the device's en-US speech voice. Call inside the tap when possible.
+   */
+  function speakWord(word) {
+    if (!word) return;
+    var url = wordClipUrl(word);
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+    }
+    if (!url) {
+      speakWithSynth(word);
+      return;
+    }
+    var el = ensureWordPlayer();
+    var key = wordAudioKey(word);
+    var t = ++wordAudio.token;
+    var fellBack = false;
+    function fallback() {
+      if (fellBack || wordAudio.token !== t) return;
+      fellBack = true;
+      wordAudio.missing[key] = true;
+      speakWithSynth(word);
+    }
+    wordAudio.lastKind = "clip";
+    try {
+      el.pause();
+    } catch (e1) {}
+    el.onerror = function () { fallback(); };
+    el.onended = function () { if (wordAudio.token === t) setSpeakingUi(false); };
+    el.muted = false;
+    el.volume = 1;
+    if (el.getAttribute("src") !== url) {
+      el.src = url;
+    }
+    try { el.currentTime = 0; } catch (e2) {}
+    setSpeakingUi(true);
+    try {
+      var p = el.play();
+      if (p && typeof p.then === "function") {
+        p.then(function () {
+          wordAudio.primed = true;
+        }).catch(function (err) {
+          /* NotAllowedError = autoplay block (not a missing file): keep the clip, try the voice */
+          if (err && err.name === "AbortError") return;
+          if (err && err.name === "NotAllowedError") {
+            if (wordAudio.token === t && !fellBack) { fellBack = true; speakWithSynth(word); }
+            return;
+          }
+          fallback();
+        });
+      }
+    } catch (e3) {
+      fallback();
+    }
+  }
+
+  /** Warm the SW cache with a pool's clips (cache-first on the SW side). Low priority. */
+  function prefetchWordClips(words) {
+    if (!words || !words.length || !window.fetch) return;
+    if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return;
+    var seen = {};
+    var urls = [];
+    for (var i = 0; i < words.length && urls.length < 150; i++) {
+      var u = wordClipUrl(words[i]);
+      if (u && !seen[u]) { seen[u] = true; urls.push(u); }
+    }
+    var idx = 0;
+    function next() {
+      if (idx >= urls.length) return;
+      var u = urls[idx++];
+      fetch(u).then(next, next);
+    }
+    setTimeout(function () { next(); next(); }, 1200);
+  }
+
+  function speakCurrentWordUS() {
+    if (!state.word) return;
+    speakWord(state.word);
   }
 
   function fillOutcomeCard() {
@@ -2506,6 +2670,7 @@
     var label = "";
     var L = findLevel(levelId);
     if (L) label = "Unit " + L.unit + " · Week " + L.week;
+    prefetchWordClips(wordsForLevel(levelId).concat(spellWordsForLevel(levelId)));
     if (game === "hangman") {
       var hl = $("hangman-level-label");
       if (hl) hl.textContent = label + " · bonus";
@@ -2550,6 +2715,7 @@
       window.SpellGame.startLibrary();
       window.SpellGame.speakCurrent();
     }
+    prefetchWordClips(libraryWords());
   }
 
   function startHangmanLibrary() {
@@ -2560,31 +2726,11 @@
     state.lastWordBonus = 0;
     var hl = $("hangman-level-label");
     if (hl) hl.textContent = "My words";
+    prefetchWordClips(libraryWords());
     beginShuffledRound();
     showPlay();
     startRound();
     syncHangmanBonusBadge();
-  }
-
-  function speakWordUS(word) {
-    if (!word) return;
-    if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance === "undefined") return;
-    try { window.speechSynthesis.cancel(); } catch (e) {}
-    var voice = speakUs.preferred || pickUsVoice();
-    var utter = new window.SpeechSynthesisUtterance(String(displayWord(word)));
-    utter.lang = "en-US";
-    utter.rate = 0.92;
-    utter.pitch = 1;
-    if (voice) {
-      utter.voice = voice;
-      if (voice.lang) utter.lang = voice.lang;
-    }
-    try {
-      window.speechSynthesis.speak(utter);
-      if (window.speechSynthesis.paused) {
-        try { window.speechSynthesis.resume(); } catch (e2) {}
-      }
-    } catch (err) {}
   }
 
   function renderParentsLevels() {
@@ -2824,7 +2970,9 @@
       getSettings: function () { return state.settings; },
       getHangmanWord: function () { return state.word; },
       getHangmanMisses: function () { return state.misses; },
-      speakWord: speakWordUS,
+      speakWord: speakWord,
+      wordClipUrl: wordClipUrl,
+      lastSpeakKind: function () { return wordAudio.lastKind; },
       unlockAudio: unlockAudio,
       playCorrect: playCorrectLetter,
       playMiss: playPirateMiss,
