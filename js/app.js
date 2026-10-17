@@ -8,12 +8,15 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.4.2";
+  var APP_VERSION = "2.4.3";
   var SETTINGS_VERSION = 2; /* v2.4: per-game word sources (Island sight / Parrot Spell spelling) */
 
   /**
+   * v2.4.3: Home-screen iPad was still silent on v2.4.2. Set audioSession
+   *         "playback" (ringer switch), keep touchend/click unlock until a real
+   *         play() fulfills, one shared <audio> for clips, cache-bust media URLs.
    * v2.4.2: Audio/media bypass the service worker so iOS gets a real 206. Range
-   *         is stripped only for HTML/JS/CSS. First-tap AudioContext unlock unchanged.
+   *         is stripped only for HTML/JS/CSS.
    * v2.4.1: A Range request must not be served as a sliced app.js (iOS 206). Startup
    *         no longer dies if localStorage.setItem throws, so buttons still bind.
    * v2.4: Per-game word source. Word Island = sight words, Parrot Spell = spelling words by default;
@@ -36,6 +39,9 @@
     ctx: null,
     muted: false,
     unlocked: false,
+    /* True only after some play() promise fulfills. ctx "running" is not enough. */
+    playConfirmed: false,
+    lastPlayError: "",
     unlockArmed: false,
     unlockHandler: null,
     visibilityBound: false,
@@ -50,13 +56,34 @@
     preferHtml: true
   };
 
+  /* ?v= app version so a v2.4.1 full-200 cached for these URLs cannot be replayed. */
+  function effectUrl(name) {
+    return "audio/" + name + ".wav?v=" + APP_VERSION;
+  }
+
   var AUDIO_URLS = {
-    miss: "audio/miss.wav",
-    correct: "audio/correct.wav",
-    win: "audio/win.wav",
-    lose: "audio/lose.wav",
-    blip: "audio/blip.wav"
+    miss: effectUrl("miss"),
+    correct: effectUrl("correct"),
+    win: effectUrl("win"),
+    lose: effectUrl("lose"),
+    blip: effectUrl("blip")
   };
+
+  function formatErr(err) {
+    if (!err) return "unknown";
+    var name = err.name ? String(err.name) : "";
+    var msg = err.message ? String(err.message) : String(err);
+    return name ? name + ": " + msg : msg;
+  }
+
+  /** iOS 17+ home-screen: "playback" keeps <audio> and Web Audio audible with the ringer off. */
+  function setAudioSessionPlayback() {
+    try {
+      var session = navigator.audioSession;
+      if (session && "type" in session) session.type = "playback";
+    } catch (e) {}
+  }
+  setAudioSessionPlayback();
 
   function loadMutePref() {
     try {
@@ -133,9 +160,7 @@
     try {
       el.muted = false;
       var p = el.play();
-      if (p && typeof p.then === "function") {
-        p.catch(function () {});
-      }
+      notePlayPromise(p);
       return true;
     } catch (e) {
       return false;
@@ -187,35 +212,6 @@
     htmlPause(audio.html.blip);
   }
 
-  /** Quiet play+pause kick so later one-shots work after unmute / cold start */
-  function primeHtmlPlayersQuiet() {
-    ensureHtmlPlayers();
-    var kick = audio.html.blip;
-    if (!kick) return;
-    try {
-      var prevVol = kick.volume;
-      kick.volume = 0.01;
-      var p = kick.play();
-      function restore() {
-        try {
-          kick.pause();
-          kick.currentTime = 0;
-          kick.volume = prevVol;
-        } catch (e) {}
-        audio.html.primed = true;
-      }
-      if (p && typeof p.then === "function") {
-        p.then(restore).catch(function () {
-          try {
-            kick.volume = prevVol;
-          } catch (e2) {}
-        });
-      } else {
-        restore();
-      }
-    } catch (e3) {}
-  }
-
   /** Audible unmute confirmation — MUST be called inside the unmute tap */
   function playUnmuteBlip() {
     if (audio.muted) return;
@@ -225,10 +221,20 @@
   }
 
   function audioIsReady() {
-    if (audio.muted) return true;
-    if (audio.unlocked) return true;
-    if (audio.html.primed) return true;
-    return !!(audio.ctx && audio.ctx.state === "running");
+    return !!audio.playConfirmed;
+  }
+
+  /** A fulfilled play() is the only signal that iOS actually unlocked output. */
+  function notePlayPromise(p) {
+    if (!p || typeof p.then !== "function") return;
+    p.then(function () {
+      audio.playConfirmed = true;
+      audio.lastPlayError = "";
+      markUnlockProgress();
+    }).catch(function (err) {
+      if (err && err.name === "AbortError") return;
+      audio.lastPlayError = formatErr(err);
+    });
   }
 
   function syncSoundHint() {
@@ -240,57 +246,32 @@
   }
 
   function markUnlockProgress() {
-    var ready = audioIsReady();
-    if (ready) audio.unlocked = true;
+    if (audio.playConfirmed) audio.unlocked = true;
     syncSoundHint();
-    if (audio.unlocked || audio.muted) disarmAudioUnlock();
+    /* Stay armed across taps until a play() promise fulfills. Mute is not success. */
+    if (audio.playConfirmed) disarmAudioUnlock();
   }
 
   /**
-   * iOS-safe unlock — MUST run synchronously inside a user gesture.
-   * 1) Quiet-prime HTMLAudioElements (no looping ambience)
-   * 2) AudioContext + resume + silent buffer
+   * iOS-safe unlock — MUST run synchronously inside touchend/click.
+   * No await before resume() or play(). Listeners stay until a play() fulfills.
    */
   function unlockAudio() {
+    setAudioSessionPlayback();
     ensureHtmlPlayers();
-    /* Word voice ignores SFX mute — always prime its element in the gesture */
-    primeWordPlayerQuiet();
-
-    if (!audio.muted) {
-      /* Prefer marking unlocked after a real play in-gesture when possible */
-      if (!audio.html.primed) primeHtmlPlayersQuiet();
-    } else {
-      primeHtmlPlayersQuiet();
-    }
-
     var ctx = getAudioCtx();
-    if (ctx) {
+    if (ctx && !audio.muted) {
       try {
         if (typeof ctx.resume === "function") ctx.resume();
       } catch (e) {}
       playSilentUnlockBuffer(ctx);
+    } else if (ctx && audio.playConfirmed) {
+      try {
+        if (typeof ctx.resume === "function") ctx.resume();
+      } catch (e2) {}
     }
-
-    function afterRunning() {
-      if (audio.html.primed || (ctx && ctx.state === "running")) {
-        audio.unlocked = true;
-      }
-      markUnlockProgress();
-    }
-
-    if (ctx && ctx.state === "running") {
-      afterRunning();
-    } else if (ctx && typeof ctx.resume === "function") {
-      ctx
-        .resume()
-        .then(afterRunning)
-        .catch(function () {
-          markUnlockProgress();
-        });
-      setTimeout(afterRunning, 120);
-    } else {
-      afterRunning();
-    }
+    /* Word voice ignores SFX mute — keep priming the shared element until a real play works. */
+    if (!audio.playConfirmed) primeWordPlayerQuiet();
   }
 
   function onUnlockGesture() {
@@ -301,8 +282,7 @@
   function disarmAudioUnlock() {
     if (!audio.unlockArmed || !audio.unlockHandler) return;
     var h = audio.unlockHandler;
-    document.removeEventListener("touchstart", h, true);
-    document.removeEventListener("pointerdown", h, true);
+    document.removeEventListener("touchend", h, true);
     document.removeEventListener("click", h, true);
     audio.unlockArmed = false;
     audio.unlockHandler = null;
@@ -312,8 +292,9 @@
     if (audio.unlockArmed) return;
     audio.unlockArmed = true;
     audio.unlockHandler = onUnlockGesture;
-    document.addEventListener("touchstart", onUnlockGesture, true);
-    document.addEventListener("pointerdown", onUnlockGesture, true);
+    /* touchend and click are the gestures iOS counts. pointerdown/touchstart are not,
+       and a play() there can be paused before touchend, so the real tap stays silent. */
+    document.addEventListener("touchend", onUnlockGesture, true);
     document.addEventListener("click", onUnlockGesture, true);
   }
 
@@ -1323,24 +1304,10 @@
   }
 
   /* ---- Recorded word voice (v2.3): audio/words/<key>.mp3, Kokoro-82M af_heart ----
-   * One reusable HTMLAudioElement (playsInline) — once it has played inside a tap, iOS lets
-   * later timer-driven plays (Hangman popup auto-speak) through. Primed quietly by unlockAudio().
+   * One reusable HTMLAudioElement (playsInline) — once play() fulfills inside a tap, iOS lets
+   * later timer-driven plays (Hangman popup auto-speak) through. Primed from unlockAudio().
    * Not affected by the SFX mute: pronunciation is intentional learning audio. */
   var WORD_AUDIO_DIR = "audio/words/";
-  var SILENT_WAV = (function () {
-    /* 20 ms of 8 kHz 8-bit silence as a data: URI (priming source) */
-    var n = 160;
-    var bytes = [];
-    function str(t) { for (var i = 0; i < t.length; i++) bytes.push(t.charCodeAt(i)); }
-    function u32(x) { bytes.push(x & 255, (x >> 8) & 255, (x >> 16) & 255, (x >> 24) & 255); }
-    function u16(x) { bytes.push(x & 255, (x >> 8) & 255); }
-    str("RIFF"); u32(36 + n); str("WAVE"); str("fmt "); u32(16); u16(1); u16(1);
-    u32(8000); u32(8000); u16(1); u16(8); str("data"); u32(n);
-    for (var j = 0; j < n; j++) bytes.push(128);
-    var bin = "";
-    for (var k = 0; k < bytes.length; k++) bin += String.fromCharCode(bytes[k]);
-    try { return "data:audio/wav;base64," + window.btoa(bin); } catch (e) { return ""; }
-  })();
 
   var wordAudio = {
     el: null,
@@ -1348,7 +1315,8 @@
     token: 0,
     keys: null, /* { key: true } from js/word-audio.js */
     missing: {}, /* keys whose clip failed to load this session */
-    lastKind: "" /* "clip" | "speech" | "" — for tests/debug */
+    lastKind: "", /* "clip" | "speech" | "" — for tests/debug */
+    lastError: ""
   };
 
   /** "Don't" -> "dont"; lowercase, apostrophes dropped. Non a–z (spaces, hyphens) -> no clip. */
@@ -1374,42 +1342,60 @@
     var key = wordAudioKey(word);
     if (!/^[a-z]+$/.test(key)) return null;
     if (!wordAudioKeys()[key] || wordAudio.missing[key]) return null;
-    /* Re-recorded clips get a new URL (?v=rev) so HTTP caches fetch the new bytes.
-       The service worker does not intercept audio (iOS needs a real 206). */
+    /* Re-recorded clips keep their rev, and every URL also carries the app version.
+       v2.4.1 stored full 200s for the unversioned paths; iOS will replay that cached
+       body for a Range request and stay silent. A new query misses it. */
     var rev = window.WORD_BUDDY_AUDIO && window.WORD_BUDDY_AUDIO.rev && window.WORD_BUDDY_AUDIO.rev[key];
-    return WORD_AUDIO_DIR + key + ".mp3" + (rev ? "?v=" + rev : "");
+    var v = (rev ? String(rev) + "-" : "") + APP_VERSION;
+    return WORD_AUDIO_DIR + key + ".mp3?v=" + v;
   }
 
   function ensureWordPlayer() {
     if (wordAudio.el) return wordAudio.el;
-    var el = makeHtmlAudio(SILENT_WAV || "", false);
+    /* Real media URL, not a data: URI — iOS often ignores a data-URI prime. */
+    var el = makeHtmlAudio(AUDIO_URLS.blip, false);
     el.preload = "auto";
+    el.volume = 1;
     wordAudio.el = el;
     return el;
   }
 
-  /** Play+pause a silent source in the tap so the word element is gesture-unlocked on iOS
-   *  (unmuted on purpose: WebKit only lifts the gesture rule for audible-capable playback) */
+  /** play() a real file on the shared element inside the gesture, then pause once it starts.
+   *  Unmuted on purpose: a muted play() does not unlock iOS. */
   function primeWordPlayerQuiet() {
-    if (wordAudio.primed || !SILENT_WAV) return;
+    if (audio.playConfirmed || wordAudio.primed) return;
     var el = ensureWordPlayer();
     if (!el.paused) return;
     var t = ++wordAudio.token;
     try {
-      if (el.getAttribute("src") !== SILENT_WAV) el.src = SILENT_WAV;
       el.muted = false;
+      el.volume = 0.08;
+      if (el.getAttribute("src") !== AUDIO_URLS.blip) el.src = AUDIO_URLS.blip;
       var p = el.play();
       var done = function () {
         wordAudio.primed = true;
+        audio.playConfirmed = true;
         if (wordAudio.token !== t) return; /* a real word started meanwhile — leave it alone */
-        try { el.pause(); el.currentTime = 0; } catch (e) {}
+        try {
+          el.pause();
+          el.currentTime = 0;
+          el.volume = 1;
+        } catch (e) {}
+        markUnlockProgress();
       };
       if (p && typeof p.then === "function") {
-        p.then(done).catch(function () {});
+        p.then(done).catch(function (err) {
+          if (err && err.name === "AbortError") return;
+          audio.lastPlayError = formatErr(err);
+          wordAudio.lastError = audio.lastPlayError;
+        });
       } else {
         done();
       }
-    } catch (e2) {}
+    } catch (e2) {
+      audio.lastPlayError = formatErr(e2);
+      wordAudio.lastError = audio.lastPlayError;
+    }
   }
 
   function setSpeakingUi(on) {
@@ -1472,6 +1458,7 @@
    */
   function speakWord(word) {
     if (!word) return;
+    setAudioSessionPlayback();
     var url = wordClipUrl(word);
     if (window.speechSynthesis) {
       try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
@@ -1491,10 +1478,17 @@
       speakWithSynth(word);
     }
     wordAudio.lastKind = "clip";
+    wordAudio.lastError = "";
     try {
       el.pause();
     } catch (e1) {}
-    el.onerror = function () { fallback(); };
+    el.onerror = function () {
+      var mediaErr = el.error;
+      wordAudio.lastError = mediaErr
+        ? "media " + mediaErr.code + (mediaErr.message ? " " + mediaErr.message : "")
+        : "media error";
+      fallback();
+    };
     el.onended = function () { if (wordAudio.token === t) setSpeakingUi(false); };
     el.muted = false;
     el.volume = 1;
@@ -1508,17 +1502,28 @@
       if (p && typeof p.then === "function") {
         p.then(function () {
           wordAudio.primed = true;
+          audio.playConfirmed = true;
+          wordAudio.lastError = "";
+          markUnlockProgress();
         }).catch(function (err) {
           /* NotAllowedError = autoplay block (not a missing file): keep the clip, try the voice */
           if (err && err.name === "AbortError") return;
+          wordAudio.lastError = formatErr(err);
+          audio.lastPlayError = wordAudio.lastError;
           if (err && err.name === "NotAllowedError") {
             if (wordAudio.token === t && !fellBack) { fellBack = true; speakWithSynth(word); }
             return;
           }
           fallback();
         });
+      } else {
+        wordAudio.primed = true;
+        audio.playConfirmed = true;
+        markUnlockProgress();
       }
     } catch (e3) {
+      wordAudio.lastError = formatErr(e3);
+      audio.lastPlayError = wordAudio.lastError;
       fallback();
     }
   }
@@ -2184,6 +2189,165 @@
     if (el && el.addEventListener) el.addEventListener(type, fn);
   }
 
+  function audioSessionType() {
+    try {
+      if (navigator.audioSession && "type" in navigator.audioSession) {
+        return String(navigator.audioSession.type);
+      }
+    } catch (e) {}
+    return "(unsupported)";
+  }
+
+  function pingControllingWorker() {
+    return new Promise(function (resolve) {
+      var ctrl = null;
+      try { ctrl = navigator.serviceWorker && navigator.serviceWorker.controller; } catch (e0) {}
+      if (!ctrl) { resolve("no-controller"); return; }
+      var ch = new MessageChannel();
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        resolve("no-PING (worker older than 2.4.3)");
+      }, 800);
+      ch.port1.onmessage = function (ev) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        var data = ev.data || {};
+        resolve(data.cache ? String(data.cache) : "pong");
+      };
+      try {
+        ctrl.postMessage({ type: "PING" }, [ch.port2]);
+      } catch (err) {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          resolve("ping-error " + formatErr(err));
+        }
+      }
+    });
+  }
+
+  /**
+   * Parents diagnostic. play() for the clip and the blip run synchronously in this click.
+   * The status line is what Chris should read back if it is still silent.
+   */
+  function runSoundTest() {
+    setAudioSessionPlayback();
+    var ctx = getAudioCtx();
+    if (ctx) {
+      try { if (typeof ctx.resume === "function") ctx.resume(); } catch (eR) {}
+      playSilentUnlockBuffer(ctx);
+    }
+    var clipUrl = wordClipUrl("the") || ("audio/words/the.mp3?v=" + APP_VERSION);
+    var lines = [
+      "v" + APP_VERSION,
+      "audioSession: " + audioSessionType(),
+      "AudioContext: " + (ctx ? ctx.state : "none"),
+      "clip: " + clipUrl
+    ];
+    var status = els.soundTestStatus || $("sound-test-status");
+    function show() {
+      if (status) status.textContent = lines.join("\n");
+    }
+    var clipAt = lines.length;
+    lines.push("clip play: …");
+    var fxAt = lines.length;
+    lines.push("effect play: …");
+    show();
+
+    var el = ensureWordPlayer();
+    var t = ++wordAudio.token;
+    wordAudio.lastKind = "clip";
+    wordAudio.lastError = "";
+    try { el.pause(); } catch (e1) {}
+    el.muted = false;
+    el.volume = 1;
+    el.onerror = function () {
+      if (wordAudio.token !== t) return;
+      var mediaErr = el.error;
+      lines[clipAt] = "clip play: media " + (mediaErr ? mediaErr.code + (mediaErr.message ? " " + mediaErr.message : "") : "error");
+      show();
+    };
+    if (el.getAttribute("src") !== clipUrl) el.src = clipUrl;
+    try { el.currentTime = 0; } catch (e2) {}
+    try {
+      var clipP = el.play();
+      if (clipP && typeof clipP.then === "function") {
+        clipP.then(function () {
+          audio.playConfirmed = true;
+          wordAudio.primed = true;
+          lines[clipAt] = "clip play: ok";
+          if (ctx) lines[2] = "AudioContext: " + ctx.state;
+          markUnlockProgress();
+          show();
+        }).catch(function (err) {
+          lines[clipAt] = "clip play: " + formatErr(err);
+          audio.lastPlayError = formatErr(err);
+          show();
+        });
+      } else {
+        lines[clipAt] = "clip play: called";
+        audio.playConfirmed = true;
+        markUnlockProgress();
+      }
+    } catch (errClip) {
+      lines[clipAt] = "clip play: " + formatErr(errClip);
+      audio.lastPlayError = formatErr(errClip);
+    }
+
+    var fx = ensureHtmlPlayers().blip;
+    try { fx.pause(); } catch (e3) {}
+    try { fx.currentTime = 0; } catch (e4) {}
+    fx.muted = false;
+    fx.volume = 1;
+    try {
+      var fxP = fx.play();
+      if (fxP && typeof fxP.then === "function") {
+        fxP.then(function () {
+          audio.playConfirmed = true;
+          lines[fxAt] = "effect play: ok (blip.wav)";
+          if (ctx) lines[2] = "AudioContext: " + ctx.state;
+          markUnlockProgress();
+          show();
+        }).catch(function (errFx) {
+          lines[fxAt] = "effect play: " + formatErr(errFx);
+          show();
+        });
+      } else {
+        lines[fxAt] = "effect play: called";
+        audio.playConfirmed = true;
+      }
+    } catch (errFx2) {
+      lines[fxAt] = "effect play: " + formatErr(errFx2);
+    }
+    show();
+
+    if (ctx && typeof ctx.resume === "function") {
+      try {
+        ctx.resume().then(function () {
+          lines[2] = "AudioContext: " + ctx.state;
+          show();
+        }).catch(function (errResume) {
+          lines[2] = "AudioContext: " + ctx.state + " resume " + formatErr(errResume);
+          show();
+        });
+      } catch (e5) {}
+    }
+
+    pingControllingWorker().then(function (cacheName) {
+      lines.push("sw: " + cacheName);
+      show();
+    });
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (keys) {
+        lines.push("caches: " + (keys && keys.length ? keys.join(", ") : "(none)"));
+        show();
+      }).catch(function () {});
+    }
+  }
+
   function bind() {
     listen(els.btnParents, "click", openParentGate);
     if (els.btnMute) {
@@ -2219,6 +2383,11 @@
     }
     listen(els.btnBackPlay, "click", function () {
       showHome();
+    });
+    listen(els.btnSoundTest, "click", function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+      /* play() must run in this turn — do not await before runSoundTest. */
+      runSoundTest();
     });
     listen(els.btnNext, "click", function () {
       stopSpeakingWord();
@@ -2330,6 +2499,8 @@
     els.gatePad = $("gate-pad");
     els.gateCheck = $("gate-check");
     els.btnBackPlay = $("btn-back-play");
+    els.btnSoundTest = $("btn-sound-test");
+    els.soundTestStatus = $("sound-test-status");
     els.addOneForm = $("add-one-form");
     els.wordInput = $("word-input");
     els.pasteForm = $("paste-form");
@@ -3177,6 +3348,7 @@
     try { cacheEls(); } catch (e0) {}
     try { audio.muted = loadMutePref(); } catch (eMute) { audio.muted = false; }
     try { syncMuteButton(); } catch (eSync) {}
+    try { setAudioSessionPlayback(); } catch (eSes) {}
     try { armAudioUnlock(); } catch (eArm) {}
     try { bindAudioVisibility(); } catch (eVis) {}
     try { syncSoundHint(); } catch (eHint) {}

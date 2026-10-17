@@ -3183,6 +3183,15 @@ body::before {
   font-weight: 900;
   color: #8A5A18;
 }
+.parents-sound-test { margin: 0.35rem 0 0.85rem; }
+.sound-test-status {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  color: #5C3418;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
 .parent-level-status {
   margin: 0.65rem 0 0.35rem;
   padding: 0.55rem 0.7rem;

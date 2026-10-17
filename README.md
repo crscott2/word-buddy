@@ -1,4 +1,11 @@
-# Word Buddy — v2.4.2 (sound works on iPad again)
+# Word Buddy — v2.4.3 (iPad sound unlock + Parents sound test)
+
+## v2.4.3
+- **iPad home screen still had no sound on v2.4.2.** The badge can show a new version while an older worker (or the HTTP cache it filled with full 200s) is still what serves `audio/`. Clip and effect URLs now end in `?v=2.4.3` so those cached bodies are not reused. Media still bypasses the service worker.
+- **Ringer / silent switch:** when `navigator.audioSession` exists (iOS 17+), it is set to `playback` so a home-screen app still plays with the switch on silent.
+- **Unlock:** `AudioContext.resume()`, a silent Web Audio buffer, and `play()` on one shared `<audio>` run synchronously inside `touchend` and `click`, on every tap, until a `play()` promise actually fulfills. `pointerdown` is not used. Listeners are not removed just because the context says `running`.
+- **Parents → Sound test** (behind the times-table gate) plays the word “the” and the blip, then shows AudioContext state, the audio session, any `play()` error, and which service-worker cache is in control.
+- SW cache `word-buddy-v2.4.3`. Reopen the home-screen app until the badge says v2.4.3, then tap Sound test. Clearing website data is not the first step.
 
 ## v2.4.2
 - **Fix: no sound on iPad after v2.4.1.** That worker answered every request, including audio, with a full 200 (Range stripped). iOS Safari will not play `<audio>` unless a Range request gets a real **206**. Word clips and effect WAVs both went silent. Web Audio tones and the speech fallback never got a chance to be the thing you heard, because the media elements failed first.

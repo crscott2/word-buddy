@@ -1,4 +1,4 @@
-/* Word Buddy service worker — v2.4.2
+/* Word Buddy service worker — v2.4.3
    HTML/JS/CSS/manifest are network-first. iOS sends Range on those too; a 206
    slice of app.js does not parse, so shell fetches drop Range and only a
    complete 200 is cached or returned. skipWaiting + clients.claim. Old app
@@ -8,7 +8,7 @@
    Range request receives a real 206 from the network (or its own HTTP cache).
    A full 200, or a 206 synthesized from a cached blob, stays silent on iPad.
    word-buddy-words-v1 is left in place and is not served. */
-var CACHE = "word-buddy-v2.4.2";
+var CACHE = "word-buddy-v2.4.3";
 var WORD_CACHE = "word-buddy-words-v1"; /* not read; kept so activate does not wipe it */
 var ASSETS = [
   "./",
@@ -91,8 +91,12 @@ self.addEventListener("activate", function (event) {
 });
 
 self.addEventListener("message", function (event) {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+  var data = event.data || {};
+  if (data.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  if (data.type === "PING" && event.ports && event.ports[0]) {
+    event.ports[0].postMessage({ cache: CACHE });
   }
 });
 
