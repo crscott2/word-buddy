@@ -1,4 +1,10 @@
-# Word Buddy — v2.4.1 (buttons work again)
+# Word Buddy — v2.4.2 (sound works on iPad again)
+
+## v2.4.2
+- **Fix: no sound on iPad after v2.4.1.** That worker answered every request, including audio, with a full 200 (Range stripped). iOS Safari will not play `<audio>` unless a Range request gets a real **206**. Word clips and effect WAVs both went silent. Web Audio tones and the speech fallback never got a chance to be the thing you heard, because the media elements failed first.
+- Audio and video are not intercepted. The browser talks to GitHub Pages and gets a normal 206. Range is still stripped for HTML, JS, CSS, and the manifest only, so a sliced `app.js` cannot come back.
+- The word-clip cache (`word-buddy-words-v1`) is no longer served. A cached full file answered to a Range request is the same silence. First-tap unlock of the audio element and AudioContext is unchanged. Custom words with no clip still use en-US `speechSynthesis`.
+- SW cache `word-buddy-v2.4.2`. Reopening the home-screen app once or twice is enough. Clearing website data is not required.
 
 ## v2.4.1
 - **Fix: no button did anything** (games, Parents, mute). iOS Safari home-screen sends `Range` on asset requests. The service worker forwarded that header, GitHub Pages answered **206**, and the page ran a **sliced `app.js`** that failed to parse — so click handlers were never attached. Shell fetches now drop `Range` and only cache complete 200 responses. Word clips are still sliced from a full file.

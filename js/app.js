@@ -8,10 +8,12 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.4.1";
+  var APP_VERSION = "2.4.2";
   var SETTINGS_VERSION = 2; /* v2.4: per-game word sources (Island sight / Parrot Spell spelling) */
 
   /**
+   * v2.4.2: Audio/media bypass the service worker so iOS gets a real 206. Range
+   *         is stripped only for HTML/JS/CSS. First-tap AudioContext unlock unchanged.
    * v2.4.1: A Range request must not be served as a sliced app.js (iOS 206). Startup
    *         no longer dies if localStorage.setItem throws, so buttons still bind.
    * v2.4: Per-game word source. Word Island = sight words, Parrot Spell = spelling words by default;
@@ -1372,7 +1374,8 @@
     var key = wordAudioKey(word);
     if (!/^[a-z]+$/.test(key)) return null;
     if (!wordAudioKeys()[key] || wordAudio.missing[key]) return null;
-    /* Re-recorded clips get a new URL (?v=rev) so cache-first SW + HTTP caches fetch the new bytes */
+    /* Re-recorded clips get a new URL (?v=rev) so HTTP caches fetch the new bytes.
+       The service worker does not intercept audio (iOS needs a real 206). */
     var rev = window.WORD_BUDDY_AUDIO && window.WORD_BUDDY_AUDIO.rev && window.WORD_BUDDY_AUDIO.rev[key];
     return WORD_AUDIO_DIR + key + ".mp3" + (rev ? "?v=" + rev : "");
   }
@@ -1520,7 +1523,7 @@
     }
   }
 
-  /** Warm the SW cache with a pool's clips (cache-first on the SW side). Low priority. */
+  /** Warm the HTTP cache with a pool's clips. The SW does not intercept audio. */
   function prefetchWordClips(words) {
     if (!words || !words.length || !window.fetch) return;
     if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return;
