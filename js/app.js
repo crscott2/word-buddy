@@ -8,10 +8,12 @@
   var MUTE_KEY = "spellBuddy.audioMuted.v1";
   var SETTINGS_KEY = "spellBuddy.settings.v1";
   var PROGRESS_KEY = "spellBuddy.progress.v1";
-  var APP_VERSION = "2.4";
+  var APP_VERSION = "2.4.1";
   var SETTINGS_VERSION = 2; /* v2.4: per-game word sources (Island sight / Parrot Spell spelling) */
 
   /**
+   * v2.4.1: A Range request must not be served as a sliced app.js (iOS 206). Startup
+   *         no longer dies if localStorage.setItem throws, so buttons still bind.
    * v2.4: Per-game word source. Word Island = sight words, Parrot Spell = spelling words by default;
    *       Parents toggles per game (Island / Parrot Spell / Hangman) with a visible selected state;
    *       one-time settings migration (settingsVersion 2); toggling rebuilds any in-memory round
@@ -290,7 +292,8 @@
   }
 
   function onUnlockGesture() {
-    unlockAudio();
+    /* Capture-phase: a throw here stops every button's click listener. */
+    try { unlockAudio(); } catch (e) {}
   }
 
   function disarmAudioUnlock() {
@@ -700,9 +703,15 @@
   }
 
   function saveLibrary(library) {
-    state.library = sortLibrary(library);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.library));
-    syncPlaySession();
+    try {
+      state.library = sortLibrary(library || []);
+    } catch (e) {
+      state.library = library || state.library || [];
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.library));
+    } catch (e2) {}
+    try { syncPlaySession(); } catch (e3) {}
   }
 
   function enabledWordList() {
@@ -1182,6 +1191,7 @@
 
   function buildKeyboard() {
     var kb = els.keyboard;
+    if (!kb) return;
     kb.innerHTML = "";
     var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (var i = 0; i < alphabet.length; i++) {
@@ -1779,8 +1789,10 @@
 
   function startRound() {
     stopSpeakingWord();
-    els.outcome.classList.add("hidden");
-    els.outcome.classList.remove("is-win");
+    if (els.outcome) {
+      els.outcome.classList.add("hidden");
+      els.outcome.classList.remove("is-win");
+    }
     var card = els.outcomeCard || $("outcome-card");
     if (card) {
       card.classList.remove("win-word-card");
@@ -2165,8 +2177,12 @@
     renderWordList();
   }
 
+  function listen(el, type, fn) {
+    if (el && el.addEventListener) el.addEventListener(type, fn);
+  }
+
   function bind() {
-    els.btnParents.addEventListener("click", openParentGate);
+    listen(els.btnParents, "click", openParentGate);
     if (els.btnMute) {
       els.btnMute.addEventListener("click", function (e) {
         e.preventDefault();
@@ -2181,7 +2197,7 @@
         unlockAudio();
       });
     }
-    els.gateCancel.addEventListener("click", closeParentGate);
+    listen(els.gateCancel, "click", closeParentGate);
     if (els.gatePad) {
       els.gatePad.addEventListener("click", function (e) {
         var t = e.target.closest("button");
@@ -2198,10 +2214,10 @@
         if (dig != null) appendGateDigit(dig);
       });
     }
-    els.btnBackPlay.addEventListener("click", function () {
+    listen(els.btnBackPlay, "click", function () {
       showHome();
     });
-    els.btnNext.addEventListener("click", function () {
+    listen(els.btnNext, "click", function () {
       stopSpeakingWord();
       if (state.won) advanceAfterWin();
       else nextWord();
@@ -2214,17 +2230,17 @@
       });
     }
 
-    els.addOneForm.addEventListener("submit", function (e) {
+    listen(els.addOneForm, "submit", function (e) {
       e.preventDefault();
-      var n = addWordsFromText(els.wordInput.value);
-      els.wordInput.value = "";
+      var n = addWordsFromText(els.wordInput && els.wordInput.value);
+      if (els.wordInput) els.wordInput.value = "";
       if (n) renderWordList();
     });
 
-    els.pasteForm.addEventListener("submit", function (e) {
+    listen(els.pasteForm, "submit", function (e) {
       e.preventDefault();
-      var n = addWordsFromText(els.pasteInput.value);
-      els.pasteInput.value = "";
+      var n = addWordsFromText(els.pasteInput && els.pasteInput.value);
+      if (els.pasteInput) els.pasteInput.value = "";
       if (n) renderWordList();
     });
 
@@ -2239,7 +2255,7 @@
       });
     }
 
-    els.btnResetSamples.addEventListener("click", function () {
+    listen(els.btnResetSamples, "click", function () {
       if (
         !confirm(
           "Replace the library with the Fry 100 sight words (all On)?"
@@ -2374,11 +2390,34 @@
     return out;
   }
 
+  /** Keep parent-added words even if one entry is junk. Never throw. */
+  function coerceCustomMap(raw) {
+    var out = {};
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+    Object.keys(raw).forEach(function (id) {
+      var v = raw[id];
+      if (typeof v === "string") v = [v];
+      if (!Array.isArray(v)) return;
+      var list = [];
+      var seen = {};
+      v.forEach(function (w) {
+        if (typeof w !== "string") return;
+        var n = w.trim();
+        if (!n || seen[n]) return;
+        seen[n] = true;
+        list.push(n);
+      });
+      if (list.length) out[id] = list;
+    });
+    return out;
+  }
+
   function loadSettings() {
     try {
       var raw = localStorage.getItem(SETTINGS_KEY);
       if (raw) {
         var p = JSON.parse(raw);
+        if (!p || typeof p !== "object" || Array.isArray(p)) return defaultSettings();
         var d = defaultSettings();
         var out = {
           unit: Math.min(5, Math.max(1, parseInt(p.unit, 10) || 1)),
@@ -2386,7 +2425,7 @@
           wordMode: normalizeMode(p.wordMode, "both"),
           islandMode: normalizeMode(p.islandMode, d.islandMode),
           spellMode: normalizeMode(p.spellMode, d.spellMode),
-          customByLevel: p.customByLevel && typeof p.customByLevel === "object" ? p.customByLevel : {},
+          customByLevel: coerceCustomMap(p.customByLevel),
           settingsVersion: parseInt(p.settingsVersion, 10) || 1
         };
         if (out.settingsVersion < SETTINGS_VERSION) {
@@ -2473,15 +2512,21 @@
     var words = levelListFor(L, mode);
     /* A week with no words of the chosen kind falls back to both lists (never an empty level) */
     if (!words.length && mode !== "both") words = levelListFor(L, "both");
-    var custom = (state.settings && state.settings.customByLevel && state.settings.customByLevel[levelId]) || [];
+    var customRaw = state.settings && state.settings.customByLevel && state.settings.customByLevel[levelId];
+    var custom = Array.isArray(customRaw) ? customRaw : [];
     words = words.concat(custom);
     return dedupeWords(words);
   }
 
+  function asWordList(v) {
+    return Array.isArray(v) ? v : [];
+  }
+
   function levelListFor(L, mode) {
     var words = [];
-    if (mode !== "spelling") words = words.concat(L.sightWords || []);
-    if (mode !== "sight") words = words.concat(L.spellingWords || []);
+    if (!L) return words;
+    if (mode !== "spelling") words = words.concat(asWordList(L.sightWords));
+    if (mode !== "sight") words = words.concat(asWordList(L.spellingWords));
     return words;
   }
 
@@ -3090,6 +3135,12 @@
   }
 
 
+  function kickWaitingWorker(reg) {
+    if (reg && reg.waiting) {
+      try { reg.waiting.postMessage({ type: "SKIP_WAITING" }); } catch (e) {}
+    }
+  }
+
   function registerSW() {
     if (!("serviceWorker" in navigator)) return;
     var hadController = !!navigator.serviceWorker.controller;
@@ -3101,7 +3152,15 @@
     });
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("./sw.js").then(function (reg) {
+        kickWaitingWorker(reg);
         try { reg.update(); } catch (e) {}
+        reg.addEventListener("updatefound", function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener("statechange", function () {
+            if (nw.state === "installed") kickWaitingWorker(reg);
+          });
+        });
         document.addEventListener("visibilitychange", function () {
           if (document.visibilityState === "visible") {
             try { reg.update(); } catch (e2) {}
@@ -3112,26 +3171,41 @@
   }
 
   function init() {
-    cacheEls();
-    audio.muted = loadMutePref();
-    syncMuteButton();
-    armAudioUnlock();
-    bindAudioVisibility();
-    syncSoundHint();
-    state.library = loadLibrary();
-    saveLibrary(state.library); // persist library (and migration) — keep spellBuddy.words.*
-    state.settings = loadSettings();
-    if (state.settings.migrated) saveSettings(); /* v2.4 one-time per-game word-source migration */
-    state.progress = loadProgress();
-    saveProgress(); /* persist hangman→bonus migration if needed */
-    buildKeyboard();
-    bind();
-    bindV2();
-    exposeWordBuddy();
-    ensureSpeechVoices();
-    registerSW();
-    /* v2: land on home menu; do not auto-start Hangman */
-    showHome();
+    try { cacheEls(); } catch (e0) {}
+    try { audio.muted = loadMutePref(); } catch (eMute) { audio.muted = false; }
+    try { syncMuteButton(); } catch (eSync) {}
+    try { armAudioUnlock(); } catch (eArm) {}
+    try { bindAudioVisibility(); } catch (eVis) {}
+    try { syncSoundHint(); } catch (eHint) {}
+    /* Storage writes must not abort startup. A throw here used to skip bind(),
+       so Parents and every game button did nothing. */
+    try {
+      state.library = loadLibrary();
+      saveLibrary(state.library);
+    } catch (eLib) {
+      if (!state.library || !state.library.length) {
+        try { state.library = seedFry(); } catch (eSeed) { state.library = []; }
+      }
+    }
+    try {
+      state.settings = loadSettings();
+      if (state.settings && state.settings.migrated) saveSettings();
+    } catch (eSet) {
+      state.settings = defaultSettings();
+    }
+    try {
+      state.progress = loadProgress();
+      saveProgress();
+    } catch (eProg) {
+      if (!state.progress) state.progress = defaultProgress();
+    }
+    try { buildKeyboard(); } catch (eKb) {}
+    try { bind(); } catch (eBind) {}
+    try { bindV2(); } catch (eV2) {}
+    try { exposeWordBuddy(); } catch (eEx) {}
+    try { ensureSpeechVoices(); } catch (eVoice) {}
+    try { registerSW(); } catch (eSw) {}
+    try { showHome(); } catch (eHome) {}
     var ver = document.querySelector(".version");
     if (ver) ver.textContent = "v" + APP_VERSION;
   }

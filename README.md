@@ -1,4 +1,11 @@
-# Word Buddy — v2.4 (per-game word lists)
+# Word Buddy — v2.4.1 (buttons work again)
+
+## v2.4.1
+- **Fix: no button did anything** (games, Parents, mute). iOS Safari home-screen sends `Range` on asset requests. The service worker forwarded that header, GitHub Pages answered **206**, and the page ran a **sliced `app.js`** that failed to parse — so click handlers were never attached. Shell fetches now drop `Range` and only cache complete 200 responses. Word clips are still sliced from a full file.
+- A `localStorage` write error (quota) used to throw inside startup **before** `bind()`, with the same dead-button result. Storage, settings migration, and binding are isolated so one failure cannot skip the others. Stars and custom words are kept; a junk custom-word entry is dropped without discarding the rest.
+- Empty word pools still fall back to both lists, and a level with no words shows the empty-pool note instead of awarding a star.
+- A tiny inline script in `<head>` tells a waiting worker to `skipWaiting` and reloads once when it takes control, even if `app.js` itself failed to parse.
+- SW cache `word-buddy-v2.4.1` (word-clip cache unchanged). Reopening the home-screen app once or twice picks this up while online. Clearing website data is not required.
 
 ## v2.4
 - **Word Island = sight words, Parrot Spell = spelling words** by default (Hangman bonus keeps “both”).

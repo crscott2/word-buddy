@@ -1,8 +1,15 @@
-/* Word Buddy service worker — v2.4: network-first shell; skipWaiting + clients.claim; offline assets;
-   recorded word clips (audio/words/*.mp3) cache-first in their own cache that survives version bumps,
-   with Range (206) support so iOS Safari can play them from the cache. */
-var CACHE = "word-buddy-v2.4";
-var WORD_CACHE = "word-buddy-words-v1"; /* kept across versions; a re-recorded clip gets a new URL (?v=rev from js/word-audio.js) */
+/* Word Buddy service worker — v2.4.1
+   Network-first for the shell (HTML / JS / CSS / manifest) so a bad cached copy
+   cannot trap the home-screen app. skipWaiting + clients.claim so an update
+   takes over the open page. Old app caches are deleted on activate.
+   Word clips stay in their own cache (word-buddy-words-v1) across versions.
+
+   iOS Safari sends Range on asset requests. GitHub Pages answers 206, and a
+   partial app.js does not parse — every button then does nothing. Shell fetches
+   drop Range and only cache complete 200 responses. Word clips are still
+   served as 206 slices from a full cached file so audio keeps working. */
+var CACHE = "word-buddy-v2.4.1";
+var WORD_CACHE = "word-buddy-words-v1";
 var ASSETS = [
   "./",
   "./index.html",
@@ -32,11 +39,35 @@ function isShellRequest(request) {
   return false;
 }
 
+function isSwScript(url) {
+  return /\/sw\.js$/i.test(url.pathname);
+}
+
+/** Full-file GET. Never forwards Range (that becomes a 206 slice of JS/CSS/HTML). */
+function fetchFull(url) {
+  return fetch(url, { cache: "no-store", credentials: "same-origin" });
+}
+
+function putIfComplete(cache, url, response) {
+  if (!response || response.status !== 200) return;
+  var copy;
+  try { copy = response.clone(); } catch (e) { return; }
+  try {
+    cache.put(url, copy).catch(function () {});
+  } catch (e2) {}
+}
+
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE).then(function (cache) {
-      return cache.addAll(ASSETS);
+      return Promise.all(ASSETS.map(function (url) {
+        return fetchFull(new URL(url, self.location).toString()).then(function (response) {
+          putIfComplete(cache, url, response);
+        }).catch(function () {});
+      }));
     }).then(function () {
+      return self.skipWaiting();
+    }).catch(function () {
       return self.skipWaiting();
     })
   );
@@ -54,6 +85,12 @@ self.addEventListener("activate", function (event) {
       return self.clients.claim();
     })
   );
+});
+
+self.addEventListener("message", function (event) {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 function isWordClip(request) {
@@ -91,21 +128,68 @@ function wordClipResponse(request) {
   var url = request.url.split("#")[0];
   return caches.open(WORD_CACHE).then(function (cache) {
     return cache.match(url).then(function (cached) {
-      if (cached) return rangeResponse(request, cached);
-      /* Fetch the whole file (no Range) so it can be cached, then slice if needed */
-      return fetch(url, { credentials: "same-origin" }).then(function (response) {
+      if (cached && cached.status === 200) return rangeResponse(request, cached);
+      return fetchFull(url).then(function (response) {
         if (response && response.status === 200) {
-          cache.put(url, response.clone());
-          /* A re-recorded clip (?v=rev) supersedes older cached copies of the same file */
+          putIfComplete(cache, url, response);
           var path = new URL(url).pathname;
           cache.keys().then(function (reqs) {
             reqs.forEach(function (r) {
               if (r.url !== url && new URL(r.url).pathname === path) cache.delete(r);
             });
-          });
+          }).catch(function () {});
           return rangeResponse(request, response);
         }
         return response;
+      });
+    });
+  }).catch(function () {
+    return fetch(request).catch(function () {
+      return new Response("", { status: 504, statusText: "Offline" });
+    });
+  });
+}
+
+function matchCached(cache, request) {
+  var url = request.url.split("#")[0];
+  return cache.match(url).then(function (hit) {
+    if (hit && hit.status === 200) return hit;
+    return cache.match(url, { ignoreSearch: true }).then(function (hit2) {
+      if (hit2 && hit2.status === 200) return hit2;
+      if (request.mode === "navigate" || /\/$/.test(new URL(url).pathname) || /index\.html$/i.test(url)) {
+        return cache.match("./index.html");
+      }
+      return undefined;
+    });
+  });
+}
+
+function shellResponse(request) {
+  var url = request.url.split("#")[0];
+  return fetchFull(url).then(function (response) {
+    /* 200 only. A 206 here is a sliced script/page and must not reach the document. */
+    if (response && response.status === 200) {
+      var copy;
+      try { copy = response.clone(); } catch (e) { copy = null; }
+      if (copy) {
+        caches.open(CACHE).then(function (cache) {
+          putIfComplete(cache, url, copy);
+        }).catch(function () {});
+      }
+      return response;
+    }
+    return caches.open(CACHE).then(function (cache) {
+      return matchCached(cache, request).then(function (cached) {
+        if (cached) return cached;
+        if (response && response.status !== 206) return response;
+        return new Response("", { status: 502, statusText: "Partial shell blocked" });
+      });
+    });
+  }).catch(function () {
+    return caches.open(CACHE).then(function (cache) {
+      return matchCached(cache, request).then(function (cached) {
+        if (cached) return cached;
+        return new Response("", { status: 504, statusText: "Offline" });
       });
     });
   });
@@ -113,6 +197,11 @@ function wordClipResponse(request) {
 
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
+  var url;
+  try { url = new URL(event.request.url); } catch (e) { return; }
+  if (url.origin !== self.location.origin) return;
+  /* Let the browser update sw.js itself; never serve a cached worker script. */
+  if (isSwScript(url)) return;
 
   if (isWordClip(event.request)) {
     event.respondWith(wordClipResponse(event.request));
@@ -120,40 +209,9 @@ self.addEventListener("fetch", function (event) {
   }
 
   if (isShellRequest(event.request)) {
-    event.respondWith(
-      fetch(event.request).then(function (response) {
-        if (response && response.ok && event.request.url.indexOf(self.location.origin) === 0) {
-          var copy = response.clone();
-          caches.open(CACHE).then(function (cache) {
-            cache.put(event.request, copy);
-          });
-        }
-        return response;
-      }).catch(function () {
-        return caches.match(event.request).then(function (cached) {
-          if (cached) return cached;
-          if (event.request.mode === "navigate") {
-            return caches.match("./index.html");
-          }
-          return undefined;
-        });
-      })
-    );
+    event.respondWith(shellResponse(event.request));
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      if (cached) return cached;
-      return fetch(event.request).then(function (response) {
-        var copy = response.clone();
-        if (response.ok && event.request.url.indexOf(self.location.origin) === 0) {
-          caches.open(CACHE).then(function (cache) {
-            cache.put(event.request, copy);
-          });
-        }
-        return response;
-      });
-    })
-  );
+  event.respondWith(shellResponse(event.request));
 });
